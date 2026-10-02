@@ -74,3 +74,5 @@
 .hub .shelf:nth-of-type(even){background-position:130px 70px}
 .hub .hero{background-image:url(assets/sunflower.svg),url(assets/pattern-light.svg),linear-gradient(120deg,var(--teal) 0%,var(--teal2) 55%,#14917f 100%)!important;background-repeat:no-repeat,repeat,no-repeat!important;background-size:clamp(90px,14vw,150px),220px,auto!important;background-position:right -40px center,0 0,0 0!important}
 .hub .cta{background-image:url(assets/pattern-light.svg),linear-gradient(120deg,var(--teal),#14917f);background-size:220px,auto}
+.hub .card.more{justify-content:center;align-items:center;background:var(--c);min-height:180px}
+.hub .card.more a{color:#fff;font-weight:800;font-size:17px;text-decoration:none;padding:20px;text-align:center}
