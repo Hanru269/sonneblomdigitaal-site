@@ -1,28 +1,63 @@
-.nav{display:none;gap:18px;font-weight:600;font-size:14.5px}
-.nav a{text-decoration:none;color:#fff}.nav a:hover{color:var(--sun)}
-@media (min-width:720px){.nav{display:flex}}
-.chips{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px}
-.chips a{text-decoration:none;font-weight:600;border:2px solid var(--ink);padding:8px 14px;background:#fff}
-.chips a:hover{background:var(--sun)}
-.series:nth-of-type(even){background:var(--sand2)}
-.grid{display:grid;grid-template-columns:1fr;gap:22px;margin-top:22px}
-@media (min-width:600px){.grid{grid-template-columns:repeat(2,1fr)}}
-@media (min-width:900px){#meer .grid{grid-template-columns:repeat(3,1fr)}}
-.card{background:#fff;border:3px solid var(--ink);display:flex;flex-direction:column}
-.card img{width:100%;height:auto;display:block;border-bottom:3px solid var(--ink);aspect-ratio:4/3;object-fit:cover}
-.card .body{padding:16px 18px 18px;display:flex;flex-direction:column;gap:8px;flex:1}
-.card h3{font-size:17px;line-height:1.3;font-weight:800}
-.price{font-weight:800;color:var(--price)}
-.buys{display:flex;gap:10px;margin-top:auto;flex-wrap:wrap}
-.buy{text-decoration:none;font-weight:800;padding:9px 18px;background:var(--sun);border:2px solid var(--ink);font-size:14.5px}
-.buy.alt{background:#fff}.buy:hover{background:var(--ink);color:#fff}
-.bundles{list-style:none;display:grid;gap:10px;margin-top:16px}
-.bundles li{background:#fff;border:2px solid var(--ink);padding:12px 16px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
-.bundles a{font-weight:600}
-.code{background:var(--ink);color:#fff;padding:20px 22px;margin:14px 0 22px;border-left:8px solid var(--sun)}
-.code .big{font-size:28px;font-weight:800;color:var(--sun);letter-spacing:2px}
-.shops{display:flex;flex-wrap:wrap;gap:12px;margin-top:28px}
-.btn.ghost{background:#fff}
-.foot{flex-direction:row!important;justify-content:space-between;flex-wrap:wrap}
-.foot a{color:#fff}
-@media (min-width:900px){.grid.pod{grid-template-columns:repeat(3,1fr)}}
+/* Sonneblom hub (index.html only; body.hub). Overrides the plain web-design styles in style.css. */
+.hub{--teal:#0b5c55;--teal2:#0f766e;--sun:#f6b81a;--coral:#ef5d3a;--cream:#fff8e8;--ink:#1f2a33;--muted:#4b5a66;
+  background:var(--cream) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Cg fill='%23f6b81a' fill-opacity='.10'%3E%3Ccircle cx='20' cy='20' r='6'/%3E%3Ccircle cx='80' cy='70' r='4'/%3E%3Cpath d='M60 10l3 7 7 3-7 3-3 7-3-7-7-3 7-3z'/%3E%3C/g%3E%3C/svg%3E");
+  font-size:15.5px;line-height:1.5}
+.hub *{border-radius:0}
+.hub header.top{background:var(--teal);border-bottom:3px solid var(--sun)}
+.hub .bar{min-height:56px}
+.hub .nav{display:none;gap:16px;font-weight:600;font-size:14px}
+.hub .nav a{text-decoration:none;color:#fff}.hub .nav a:hover{color:var(--sun)}
+@media (min-width:720px){.hub .nav{display:flex}}
+.hub .lang button{border-radius:0;padding:5px 11px}
+.hub .lang button:first-child{border-radius:999px 0 0 999px}.hub .lang button:last-child{border-radius:0 999px 999px 0}
+.hub .btn{border-radius:999px;padding:11px 22px;font-size:15px;box-shadow:0 3px 0 rgba(0,0,0,.15)}
+.hub .btn.ghost{background:#fff;border-color:#fff;color:var(--teal)}
+/* hero */
+.hub .hero{position:relative;overflow:hidden;padding:40px 0 44px;color:#fff;
+  background:url(assets/sunflower.svg) no-repeat right -40px center/clamp(160px,30vw,340px),
+             linear-gradient(120deg,var(--teal) 0%,var(--teal2) 55%,#14917f 100%)}
+@media (max-width:640px){.hub .hero{background-position:right -70px top 20px,0 0;background-size:150px,auto}}
+.hub .hero h1{font-size:clamp(30px,5.5vw,50px);max-width:14em;line-height:1.08}
+.hub .hero p{font-size:clamp(16px,2vw,18.5px);margin:14px 0 22px;color:#e2f3ef;max-width:34em}
+.hub .hero .link{color:#fff;padding:10px 4px}
+/* category chips */
+.hub .chipbar{background:#fff;border-bottom:1px solid #eadfc4;position:sticky;top:59px;z-index:5}
+.hub .chips{display:flex;gap:8px;overflow-x:auto;padding-top:10px;padding-bottom:10px;scrollbar-width:none}
+.hub .chips a{flex:none;text-decoration:none;font-weight:600;font-size:14px;padding:7px 14px;border-radius:999px;color:#fff;background:var(--c)}
+.hub .chips a:hover{filter:brightness(1.1)}
+/* coloured shelves */
+.hub section{padding:28px 0;border-top:0}
+.hub .shelf{background:var(--bg)}
+.red{--c:#c8372d;--bg:#fdecea}.orange{--c:#e0711b;--bg:#fff1e3}.blue{--c:#2f74c0;--bg:#e8f1fb}
+.purple{--c:#7a4fb5;--bg:#f2ecfa}.green{--c:#2f8a57;--bg:#e8f6ee}.teal{--c:#0f766e;--bg:#e3f4f1}.gold{--c:#b7791f;--bg:#fff6d6}
+.hub .head{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 14px;margin-bottom:14px;border-left:6px solid var(--c);padding-left:12px}
+.hub .head h2{font-size:clamp(22px,3.2vw,28px);margin:0;color:var(--c)}
+.hub .head .lead{margin:0;color:var(--muted);font-size:14.5px}
+.hub .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+@media (min-width:700px){.hub .grid{grid-template-columns:repeat(3,1fr)}}
+@media (min-width:980px){.hub .grid{grid-template-columns:repeat(4,1fr)}}
+.hub .card{background:#fff;border-radius:14px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 2px 10px rgba(31,42,51,.08);border:1px solid rgba(31,42,51,.06);transition:transform .15s,box-shadow .15s}
+.hub .card:hover{transform:translateY(-3px);box-shadow:0 8px 20px rgba(31,42,51,.14)}
+.hub .card img{width:100%;height:auto;display:block;aspect-ratio:4/3;object-fit:cover;border-bottom:3px solid var(--c)}
+.hub .card .body{padding:10px 12px 12px;display:flex;flex-direction:column;gap:4px;flex:1}
+.hub .card h3{font-size:14.5px;line-height:1.3;font-weight:700}
+.hub .price{font-weight:800;color:var(--coral)}
+.hub .buys{display:flex;gap:6px;margin-top:auto;padding-top:6px;flex-wrap:wrap}
+.hub .buy{text-decoration:none;font-weight:700;font-size:13px;padding:6px 14px;border-radius:999px;background:var(--c);color:#fff}
+.hub .buy.alt{background:#fff;color:var(--c);box-shadow:inset 0 0 0 2px var(--c)}
+.hub .buy:hover{filter:brightness(1.1)}
+/* specials */
+.hub .code{background:linear-gradient(120deg,var(--coral),#f08a3c);color:#fff;padding:14px 18px;margin:0 0 14px;border-radius:14px}
+.hub .code .big{font-size:26px;font-weight:800;letter-spacing:2px;color:#fff}
+.hub .bundles{list-style:none;display:grid;gap:8px;grid-template-columns:1fr}
+@media (min-width:700px){.hub .bundles{grid-template-columns:repeat(2,1fr)}}
+.hub .bundles li{background:#fff;border-radius:10px;padding:10px 14px;display:flex;justify-content:space-between;gap:10px;box-shadow:0 1px 6px rgba(31,42,51,.07)}
+.hub .bundles a{font-weight:600}
+.hub .shops{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+.hub .shops .btn.ghost{box-shadow:inset 0 0 0 2px var(--teal),0 3px 0 rgba(0,0,0,.1)}
+/* newsletter + footer */
+.hub .cta{background:linear-gradient(120deg,var(--teal),#14917f);padding:32px 0}
+.hub .cta p{margin:6px 0 16px;color:#e2f3ef}
+.hub footer{background:#083f3a;padding:18px 0}
+.hub .foot{flex-direction:row!important;justify-content:space-between;flex-wrap:wrap}
+.hub .foot a{color:#fff}
