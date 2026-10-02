@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow"><meta name="referrer" content="no-referrer">
+<title>Sonneblom HQ</title>
+<meta name="theme-color" content="#0b5c55">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Sonneblom HQ">
+<link rel="stylesheet" href="hq.css">
+</head>
+<body>
+<section id="lock" class="lock">
+  <form id="unlock" autocomplete="on">
+    <img src="icon-192.png" alt="" width="72" height="72">
+    <h1>Sonneblom HQ</h1>
+    <input type="text" name="username" value="hq" autocomplete="username" hidden>
+    <input id="pw" type="password" autocomplete="current-password" placeholder="Password" required>
+    <label class="rem"><input id="remember" type="checkbox" checked> Remember on this device</label>
+    <button type="submit">Unlock</button>
+    <p id="err" class="err" hidden>Wrong password.</p>
+  </form>
+</section>
+<main id="app" hidden>
+  <header class="top">
+    <div><b>🌻 Sonneblom HQ</b><small id="updated"></small></div>
+    <div class="acts"><button id="reload" title="Refresh">↻</button><button id="lockbtn" title="Lock">🔒</button></div>
+  </header>
+  <nav class="tabs" id="tabs">
+    <button data-t="overview" class="on">Overview</button><button data-t="products">Products</button>
+    <button data-t="sales">Sales</button><button data-t="channels">Channels</button>
+  </nav>
+  <section data-p="overview">
+    <div class="kpis" id="kpis"></div>
+    <div class="card"><h2>Views over time (Etsy)</h2><div id="trend"></div></div>
+    <div class="card"><h2>Movement</h2><div class="chips" id="evf"></div><ul class="feed" id="feed"></ul></div>
+    <div class="card"><h2>Top products by views</h2><div id="top"></div></div>
+  </section>
+  <section data-p="products" hidden>
+    <div class="card"><div class="filters"><input id="q" placeholder="Search products"><select id="ch"><option value="">All channels</option><option>Etsy</option><option>Gumroad</option></select>
+    <select id="sort"><option value="views">Most views</option><option value="sales">Most sales</option><option value="favs">Most favourites</option><option value="price">Price</option><option value="title">A–Z</option></select></div>
+    <div id="plist"></div></div>
+  </section>
+  <section data-p="sales" hidden>
+    <div class="kpis" id="skpis"></div>
+    <div class="card"><h2>All sales</h2><div id="slist"></div></div>
+    <div class="card muted"><h2>Ads &amp; reconciliation</h2><p>Coming next: ad spend per channel, fees, Printify production costs and net profit per sale, so every rand and dollar reconciles.</p></div>
+  </section>
+  <section data-p="channels" hidden><div id="chans"></div></section>
+</main>
+<script src="app.js"></script>
+</body>
+</html>
