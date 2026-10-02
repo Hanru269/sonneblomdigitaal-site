@@ -13,15 +13,16 @@
 .hub .btn{border-radius:999px;padding:11px 22px;font-size:15px;box-shadow:0 3px 0 rgba(0,0,0,.15)}
 .hub .btn.ghost{background:#fff;border-color:#fff;color:var(--teal)}
 /* hero */
-.hub .hero{position:relative;overflow:hidden;padding:40px 0 44px;color:#fff;
-  background:url(assets/sunflower.svg) no-repeat right -40px center/clamp(160px,30vw,340px),
+.hub .hero{position:relative;overflow:hidden;padding:16px 0 18px;color:#fff;
+  background:url(assets/sunflower.svg) no-repeat right -40px center/clamp(90px,14vw,150px),
              linear-gradient(120deg,var(--teal) 0%,var(--teal2) 55%,#14917f 100%)}
-@media (max-width:640px){.hub .hero{background-position:right -70px top 20px,0 0;background-size:150px,auto}}
-.hub .hero h1{font-size:clamp(30px,5.5vw,50px);max-width:14em;line-height:1.08}
-.hub .hero p{font-size:clamp(16px,2vw,18.5px);margin:14px 0 22px;color:#e2f3ef;max-width:34em}
-.hub .hero .link{color:#fff;padding:10px 4px}
+@media (max-width:640px){.hub .hero{background-position:right -40px top 10px,0 0;background-size:90px,auto}.hub .hero p{display:none}}
+.hub .hero h1{font-size:clamp(22px,3.4vw,32px);max-width:18em;line-height:1.15}
+.hub .hero p{font-size:15px;margin:4px 0 10px;color:#e2f3ef;max-width:40em}
+.hub .hero .btn{padding:7px 18px;font-size:14px}
+.hub .hero .link{color:#fff;padding:6px 4px;font-size:14px}
 /* category chips */
-.hub .chipbar{background:#fff;border-bottom:1px solid #eadfc4;position:sticky;top:59px;z-index:5}
+.hub .chipbar{background:#fff;border-bottom:1px solid #eadfc4;position:sticky;top:59px;z-index:5;box-shadow:0 2px 6px rgba(0,0,0,.05)}
 .hub .chips{display:flex;gap:8px;overflow-x:auto;padding-top:10px;padding-bottom:10px;scrollbar-width:none}
 .hub .chips a{flex:none;text-decoration:none;font-weight:600;font-size:14px;padding:7px 14px;border-radius:999px;color:#fff;background:var(--c)}
 .hub .chips a:hover{filter:brightness(1.1)}
@@ -61,3 +62,10 @@
 .hub footer{background:#083f3a;padding:18px 0}
 .hub .foot{flex-direction:row!important;justify-content:space-between;flex-wrap:wrap}
 .hub .foot a{color:#fff}
+/* slim hero (owner: banner as thin as the header) */
+.hub .hero{padding:12px 0}
+.hub .hero .wrap{display:flex;align-items:center;justify-content:space-between;gap:10px 20px;flex-wrap:wrap;padding-right:130px}
+.hub .hero h1{font-size:clamp(18px,2.4vw,24px);max-width:none;line-height:1.2;margin:0}
+.hub .hero p{display:none}
+.hub .hero .row{gap:12px}
+@media (max-width:640px){.hub .hero .wrap{padding-right:70px}}
