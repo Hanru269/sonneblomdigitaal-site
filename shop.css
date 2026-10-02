@@ -69,3 +69,8 @@
 .hub .hero p{display:none}
 .hub .hero .row{gap:12px}
 @media (max-width:640px){.hub .hero .wrap{padding-right:70px}}
+/* watermark pattern (sunflowers + stars) over every coloured shelf */
+.hub,.hub .shelf{background-image:url(assets/pattern.svg);background-size:260px}
+.hub .shelf:nth-of-type(even){background-position:130px 70px}
+.hub .hero{background-image:url(assets/sunflower.svg),url(assets/pattern-light.svg),linear-gradient(120deg,var(--teal) 0%,var(--teal2) 55%,#14917f 100%)!important;background-repeat:no-repeat,repeat,no-repeat!important;background-size:clamp(90px,14vw,150px),220px,auto!important;background-position:right -40px center,0 0,0 0!important}
+.hub .cta{background-image:url(assets/pattern-light.svg),linear-gradient(120deg,var(--teal),#14917f);background-size:220px,auto}
