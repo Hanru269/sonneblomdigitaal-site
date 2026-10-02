@@ -72,7 +72,10 @@
     const prev = H.length > 1 ? H[H.length - 2] : null;
     const dv = prev ? views - prev.etsy_views : 0;
     const apify30 = ok(s.apify) ? s.apify.actors.reduce((a, x) => a + (x.users30 || 0), 0) : 0;
-    $("#kpis").innerHTML = kpi(P.length, "Listings live", COL.Etsy) + kpi(views, "Etsy views", COL.Etsy, dv > 0 ? "+" + dv + " since yesterday" : "") +
+    const m = D.manual || {}, mAt = k => m[k + "_at"] ? "as of " + m[k + "_at"] : "";
+    $("#kpis").innerHTML = kpi(P.length, "Listings live", COL.Etsy) + kpi(views, "Etsy listing views", COL.Etsy, dv > 0 ? "+" + dv + " since yesterday" : "") +
+      kpi(m.etsy_ads_views ?? "–", "Etsy Ads views", COL.Etsy, mAt("etsy_ads_views")) + kpi(m.gumroad_views ?? "–", "Gumroad views", COL.Gumroad, mAt("gumroad_views")) +
+      kpi(m.pinterest_impressions ?? "–", "Pinterest impressions", COL.Pinterest, mAt("pinterest_impressions")) +
       kpi(favs, "Etsy favourites", "#c8372d") + kpi(S.length, "Sales (all time)", "#2f8a57") + kpi(money(rev), "Revenue (gross)", "#2f8a57") +
       kpi(apify30, "Apify users (30d)", COL.Apify);
     trend(H);
@@ -117,14 +120,15 @@
       <div class="stats">${stats.map(([v, l]) => `<div><b>${v}</b>${l}</div>`).join("")}</div>${note ? `<p class="note">${note}</p>` : ""}</div>`;
     const sum = c => S.filter(z => z.channel === c);
     $("#chans").innerHTML = '<div class="ch">' +
-      card("Etsy", "https://www.etsy.com/your/shops/me/dashboard", ok(et) ? [[et.listings.length, "listings"], [et.listings.reduce((a, z) => a + z.views, 0), "views"], [sum("Etsy").length, "sales"], [money(sum("Etsy").reduce((a, z) => a + z.amount, 0)), "revenue"]] : [["!", et.error]],
-        ok(et) ? `${et.listings.filter(z => z.physical).length} print-on-demand, ${et.listings.filter(z => !z.physical).length} digital.` : "") +
-      card("Gumroad", "https://app.gumroad.com/dashboard", ok(gr) ? [[gr.listings.length, "products"], [sum("Gumroad").length, "sales"], [money(sum("Gumroad").reduce((a, z) => a + z.amount, 0)), "revenue"]] : [["!", gr.error]],
-        "Gumroad doesn't share page views through its API. 10 new products/day limit; the rest of the catalogue is being added daily.") +
+      card("Etsy", "https://www.etsy.com/your/shops/me/dashboard", ok(et) ? [[et.listings.length, "listings"], [et.listings.reduce((a, z) => a + z.views, 0), "listing views"], [m.etsy_ads_views ?? "–", "Etsy Ads views"], [sum("Etsy").length, "sales"], [money(sum("Etsy").reduce((a, z) => a + z.amount, 0)), "revenue"]] : [["!", et.error]],
+        ok(et) ? `${et.listings.filter(z => z.physical).length} print-on-demand, ${et.listings.filter(z => !z.physical).length} digital. Listing views come from the Etsy API (it lags a day or two); Etsy Ads views aren't in the API, so they're copied from the Etsy Ads page${m.etsy_ads_views_at ? " (" + m.etsy_ads_views_at + ")" : ""}.` : "") +
+      card("Gumroad", "https://app.gumroad.com/dashboard", ok(gr) ? [[gr.listings.length, "products"], [m.gumroad_views ?? "–", "views"], [sum("Gumroad").length, "sales"], [money(sum("Gumroad").reduce((a, z) => a + z.amount, 0)), "revenue"]] : [["!", gr.error]],
+        "Views aren't in Gumroad's API, so they're copied from the Gumroad dashboard" + (m.gumroad_views_at ? " (" + m.gumroad_views_at + ")" : "") + ". 10 new products/day limit; the rest of the catalogue is being added daily.") +
       card("Printify", "https://printify.com/app/store/products", ok(pr) ? [[pr.published, "products live"], [pr.orders, "orders"]] : [["!", pr.error]], "Physical orders are paid on Etsy; Printify charges production + shipping per order.") +
       card("Apify", "https://console.apify.com/actors", ok(ap) ? [[ap.actors.length, "actors"], [ap.actors.filter(z => z.public).length, "public"], [ap.actors.reduce((a, z) => a + z.runs, 0), "runs"], [ap.actors.reduce((a, z) => a + (z.users30 || 0), 0), "users (30d)"]] : [["!", ap.error]]) +
       card("x402 API", "https://164.160.90.241.sslip.io", ok(x) ? [[x.balance_usdc, "USDC balance"], [x.external_tx_since_oct2, "payments since 2 Oct"]] : [["!", x.error]], "AgentEdge pay-per-call API; owner test payments are excluded.") +
       card("KDP", "https://kdpreports.amazon.com", [[m.kdp_books ?? "–", "books live"], [m.kdp_sales ?? "–", "sales"]], "Amazon KDP has no API: send me the numbers from the KDP report and I'll add them.") +
-      card("Pinterest", "https://www.pinterest.com/business/hub/", [[m.pinterest_pins ?? "121", "pins uploaded"]], "Pin stats come later via Pinterest Analytics.") + "</div>";
+      card("Pinterest", "https://www.pinterest.com/business/hub/", [[m.pinterest_pins ?? "121", "pins uploaded"], [m.pinterest_impressions ?? "–", "impressions"], [m.pinterest_clicks ?? "–", "outbound clicks"]],
+        m.pinterest_impressions_at ? "From Pinterest Analytics (" + m.pinterest_impressions_at + ")." : "Pinterest has no API access for this account: send me the impressions and outbound clicks from Pinterest Analytics.") + "</div>";
   }
 })();
