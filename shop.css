@@ -76,3 +76,53 @@
 .hub .cta{background-image:url(assets/pattern-light.svg),linear-gradient(120deg,var(--teal),#14917f);background-size:220px,auto}
 .hub .card.more{justify-content:center;align-items:center;background:var(--c);min-height:180px}
 .hub .card.more a{color:#fff;font-weight:800;font-size:17px;text-decoration:none;padding:20px;text-align:center}
+
+/* ===== Heritage theme (2026-10-03, owner: less "Temu", more classic Afrikaans but professional).
+   Keeps the pastel shelves + sunflower watermark; koffie/oker palette, serif headings, square corners. ===== */
+@font-face{font-family:"Libre Baskerville";font-weight:400 700;font-display:swap;src:url(/fonts/libre-baskerville.woff2) format("woff2")}
+@font-face{font-family:"Source Sans 3";font-weight:400 700;font-display:swap;src:url(/fonts/source-sans-3.woff2) format("woff2")}
+.hub{--koffie:#2e2418;--koffie2:#463726;--oker:#c9972b;--oker2:#e2b553;--room:#fbf6ea;--steen:#9b3d27;--ink:#2b241c;--muted:#5e5446;--line:#e3d7bd;
+  --teal:var(--koffie);--teal2:var(--koffie2);--coral:var(--steen);
+  font-family:"Source Sans 3",system-ui,-apple-system,"Segoe UI",Arial,sans-serif;font-size:16px;color:var(--ink)}
+.hub h1,.hub h2,.hub .brand span,.hub .more-h,.hub .info h1{font-family:"Libre Baskerville",Georgia,"Times New Roman",serif;font-weight:700;letter-spacing:-.005em}
+.hub h3{font-weight:600}
+/* shelf accent colours: earthy, muted (pastel backgrounds unchanged) */
+.red{--c:#9b3d27}.orange{--c:#a8601f}.blue{--c:#3b5875}.purple{--c:#5f4a6e}.green{--c:#56683a}.teal{--c:#6b4a2b;--bg:#f6eedf}.gold{--c:#8a6418}
+/* header + hero + footer in koffie with an oker rule */
+.hub header.top{background:var(--koffie);border-bottom:3px solid var(--oker)}
+.hub .brand span{font-size:19px;font-weight:700}
+.hub .nav a{font-weight:600;letter-spacing:.02em}.hub .nav a:hover{color:var(--oker2)}
+.hub .hero{background-image:url(/assets/sunflower.svg),url(/assets/pattern-light.svg),linear-gradient(180deg,var(--koffie2),var(--koffie))!important}
+.hub .hero h1{font-weight:700;letter-spacing:0}
+.hub .cta{background-image:url(/assets/pattern-light.svg),linear-gradient(180deg,var(--koffie2),var(--koffie))}
+.hub footer{background:#211a11}
+/* square, quieter controls */
+.hub .btn,.hub .buy,.hub .chips a,.hub .lang button,.hub .lang button:first-child,.hub .lang button:last-child,
+.hub .card,.hub .code,.hub .bundles li,.pd .narrow,.gallery #main,.thumbs button,.info,.mini{border-radius:2px}
+.hub .btn{box-shadow:none;font-weight:700;letter-spacing:.03em;background:var(--oker);border-color:var(--oker);color:var(--koffie)}
+.hub .btn:hover{background:var(--oker2);border-color:var(--oker2)}
+.hub .btn.ghost{background:transparent;color:var(--koffie);border-color:var(--koffie);box-shadow:none}
+.hub .shops .btn.ghost{box-shadow:none}.hub .btn.ghost:hover{background:var(--koffie);color:#fff}
+.hub .lang button{border-color:var(--oker)}.hub .lang button[aria-pressed="true"]{background:var(--oker);color:var(--koffie)}
+/* category bar: tabs with a coloured underline instead of candy pills */
+.hub .chipbar{background:var(--room);border-bottom:1px solid var(--line);box-shadow:none}
+.hub .chips{gap:4px}
+.hub .chips a{background:transparent;color:var(--ink);font-weight:600;padding:7px 12px;border-bottom:3px solid var(--c)}
+.hub .chips a:hover{background:var(--bg);filter:none}
+/* section headings: serif title over a thin rule */
+.hub .head{border-left:0;padding-left:0;border-bottom:1px solid color-mix(in srgb,var(--c) 35%,transparent);padding-bottom:8px;gap:2px 16px}
+.hub .head h2{color:var(--c);font-size:clamp(22px,3vw,28px)}
+/* cards: paper-like, thin border, no bounce */
+.hub .card{border:1px solid var(--line);box-shadow:0 1px 2px rgba(46,36,24,.06);transition:box-shadow .15s}
+.hub .card:hover{transform:none;box-shadow:0 4px 14px rgba(46,36,24,.12)}
+.hub .card img{border-bottom:1px solid var(--line)}
+.hub .card h3{font-size:15px;line-height:1.3}
+.hub .price{color:var(--steen);font-weight:700}
+.hub .buy{background:var(--c);font-weight:600;letter-spacing:.02em}
+.hub .buy.alt{box-shadow:inset 0 0 0 1px var(--c)}
+/* specials box: room paper with an oker frame instead of the orange gradient */
+.hub .code{background:var(--room);color:var(--ink);border:1px solid var(--oker);border-left:5px solid var(--steen);box-shadow:none}
+.hub .code .big{color:var(--steen);font-family:"Libre Baskerville",Georgia,serif}
+.hub .bundles li{border:1px solid var(--line);box-shadow:none}
+.hub .card.more{border:0}
+.pd .narrow h1{color:var(--c)}
