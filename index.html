@@ -11,6 +11,13 @@
 <link rel="stylesheet" href="style.css"><link rel="stylesheet" href="shop.css">
 </head>
 <body class="hub">
+<div class="promo" aria-live="polite"><p class="msg on"><span class="en">Gifts printed to order and shipped worldwide</span><span class="af">Geskenke op bestelling gedruk en wêreldwyd gestuur</span></p></div>
+<style>.promo{position:relative;background:#1f6f5c;color:#fff;text-align:center;font-size:.9rem;min-height:2.3em;overflow:hidden}
+.promo .msg{margin:0;padding:.55em 16px;position:absolute;inset:0;opacity:0;transition:opacity .6s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.promo .msg.on{opacity:1;position:relative}.promo a{color:#ffd23f;text-decoration:underline}
+@media (max-width:600px){.promo .msg{white-space:normal}}</style>
+<script>(function(){var m=document.querySelectorAll('.promo .msg'),i=0;if(m.length<2||matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+setInterval(function(){m[i].classList.remove('on');i=(i+1)%m.length;m[i].classList.add('on')},4500)})();</script>
 <header class="top"><div class="wrap bar">
   <a class="brand" href="#top"><img src="assets/sunflower.svg" alt="" width="30" height="30"><span>Sonneblom</span></a>
   <nav class="nav"><a href="#shop"><span class="en">Shop</span><span class="af">Winkel</span></a><a href="shop/"><span class="en">All products</span><span class="af">Alle produkte</span></a><a href="#specials"><span class="en">Specials</span><span class="af">Spesiaal</span></a><a href="#newsletter"><span class="en">Newsletter</span><span class="af">Nuusbrief</span></a></nav>
