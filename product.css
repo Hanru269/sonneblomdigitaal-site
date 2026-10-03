@@ -28,7 +28,3 @@
 .hub footer{color:#fff}
 .hub .pnav{display:flex;gap:14px}.pnav a{white-space:nowrap}
 @media (max-width:480px){.hub .pnav{gap:10px;font-size:12.5px}.hub .brand span{display:none}}
-/* heritage theme: square corners on product pages too (see shop.css) */
-.pd .narrow,.gallery #main,.thumbs button,.info,.mini{border-radius:2px}
-.info,.pd .narrow,.gallery #main,.mini{box-shadow:0 1px 2px rgba(46,36,24,.06);border:1px solid #e3d7bd}
-.mini b{color:#9b3d27}

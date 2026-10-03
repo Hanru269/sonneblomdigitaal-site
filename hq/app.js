@@ -2,7 +2,8 @@
 (function () {
   const $ = s => document.querySelector(s);
   const KEY = "hq-pass";
-  const COL = { Etsy: "#e0711b", Gumroad: "#ef5d3a", Printify: "#2f74c0", Apify: "#7a4fb5", "x402 API": "#0f766e", KDP: "#b7791f", Pinterest: "#c8372d" };
+  const COL = { Etsy: "#e0711b", Gumroad: "#ef5d3a", Printify: "#2f74c0", Apify: "#7a4fb5", "x402 API": "#0f766e", KDP: "#b7791f", Pinterest: "#c8372d", Facebook: "#1877f2" };
+  let fbSort = "reactions";
   const ICON = { sale: "💰", fav: "❤️", views: "👀", new: "🆕", usage: "⚙️", warn: "⚠️", info: "ℹ️" };
   let D = null, evFilter = "";
 
@@ -77,7 +78,9 @@
       kpi(m.etsy_ads_views ?? "–", "Etsy Ads views", COL.Etsy, mAt("etsy_ads_views")) + kpi(m.gumroad_views ?? "–", "Gumroad views", COL.Gumroad, mAt("gumroad_views")) +
       kpi(m.pinterest_impressions ?? "–", "Pinterest impressions", COL.Pinterest, mAt("pinterest_impressions")) +
       kpi(favs, "Etsy favourites", "#c8372d") + kpi(S.length, "Sales (all time)", "#2f8a57") + kpi(money(rev), "Revenue (gross)", "#2f8a57") +
-      kpi(apify30, "Apify users (30d)", COL.Apify);
+      kpi(apify30, "Apify users (30d)", COL.Apify) +
+      (ok(s.facebook) ? kpi(s.facebook.followers, "Facebook followers", COL.Facebook) +
+        (s.facebook.ads && !s.facebook.ads.error ? kpi(s.facebook.ads.clicks, "Facebook ad clicks", COL.Facebook, "R" + s.facebook.ads.spend.toFixed(2) + " spent") : "") : "");
     trend(H);
     feed();
     $("#top").innerHTML = P.filter(p => p.views != null).sort((a, b) => b.views - a.views).slice(0, 8).map(row).join("");
@@ -88,6 +91,35 @@
       <div class="m"><span class="badge" style="--c:${COL[x.channel] || "#555"}">${x.channel}</span>${new Date(x.ts).toLocaleDateString()} · ${esc(x.country || "")}${x.referrer ? " · via " + esc(x.referrer.replace(/^https?:\/\//, "").split("/")[0]) : ""}</div></div>
       <div class="n"><b>${money(x.amount)}</b>${x.fee ? "<br>fee " + money(x.fee) : ""}</div></div>`).join("") : "<p class='m'>No sales yet.</p>";
     channels();
+    facebook();
+  }
+  function facebook() {
+    const f = D.snapshot.facebook;
+    if (!ok(f)) { $("#fkpis").innerHTML = "<p class='m'>" + esc(f ? f.error : "No Facebook data yet (next update).") + "</p>"; return; }
+    const P = f.posts || [], a = f.ads || {}, tot = k => P.reduce((x, p) => x + (p[k] || 0), 0);
+    const day = (f.daily.page_media_view || []);
+    $("#fkpis").innerHTML = kpi(f.followers, "Followers", COL.Facebook) + kpi(P.length, "Posts published", COL.Facebook) +
+      kpi(tot("views"), "Post views", COL.Facebook) + kpi(tot("reactions"), "Reactions", "#c8372d") + kpi(tot("clicks"), "Post clicks", "#2f8a57") +
+      kpi(day.length ? day[day.length - 1].value : "–", "Page views (last day)", COL.Facebook);
+    $("#fads").innerHTML = a.error ? "<p class='m'>" + esc(a.error) + "</p>" : a.status ? `
+      <div class="stats" style="display:flex;gap:16px;flex-wrap:wrap"><div><b>${esc(a.status)}</b>status</div><div><b>R${a.spend.toFixed(2)}</b>of R${a.budget_cap} spent</div>
+      <div><b>${a.impressions}</b>impressions</div><div><b>${a.reach}</b>people reached</div><div><b>${a.clicks}</b>link clicks</div>
+      <div><b>R${a.cpc.toFixed(2)}</b>per click</div><div><b>${a.ctr.toFixed(2)}%</b>click rate</div></div>
+      <div style="height:8px;background:var(--bg);border-radius:4px;margin-top:10px"><div style="height:8px;border-radius:4px;background:${COL.Facebook};width:${Math.min(100, a.spend / a.budget_cap * 100)}%"></div></div>
+      <p class="m" style="color:var(--muted);margin-top:6px">${esc(a.name)} · ${esc(a.balance)} · pauses automatically at R${a.budget_cap}, or after R250 if a click costs over R12 or under 1% click.</p>` : "<p class='m'>No campaign.</p>";
+    if (day.length > 1) {
+      const W = 640, Ht = 140, p = 28, mx = Math.max(1, ...day.map(d => d.value)), xs = day.map((_, i) => p + i * (W - 2 * p) / (day.length - 1)), ys = day.map(d => Ht - p - d.value / mx * (Ht - 2 * p));
+      $("#ftrend").innerHTML = `<svg viewBox="0 0 ${W} ${Ht}" width="100%"><polyline fill="none" stroke="${COL.Facebook}" stroke-width="3" points="${xs.map((x, i) => x + "," + ys[i]).join(" ")}"/>
+        ${xs.map((x, i) => `<circle cx="${x}" cy="${ys[i]}" r="3.5" fill="${COL.Facebook}"/>`).join("")}<text x="${p}" y="${Ht - 6}">${day[0].day.slice(5)}</text>
+        <text x="${W - p}" y="${Ht - 6}" text-anchor="end">${day[day.length - 1].day.slice(5)}</text><text x="${p}" y="14">${mx} views</text></svg>`;
+    } else $("#ftrend").innerHTML = "<p class='m' style='color:var(--muted)'>Fills in day by day.</p>";
+    const opts = [["reactions", "Reactions"], ["clicks", "Clicks"], ["views", "Views"], ["ts", "Newest"]];
+    $("#fsort").innerHTML = opts.map(([k, l]) => `<button data-k="${k}" class="${k === fbSort ? "on" : ""}">${l}</button>`).join("");
+    $("#fsort").querySelectorAll("button").forEach(b => b.onclick = () => { fbSort = b.dataset.k; facebook(); });
+    const L = [...P].sort((x, y) => fbSort === "ts" ? y.ts.localeCompare(x.ts) : (y[fbSort] || 0) - (x[fbSort] || 0));
+    $("#fposts").innerHTML = L.map(p => `<a class="row" href="${esc(p.url)}" target="_blank" rel="noopener"><img src="${esc(p.img || "icon-192.png")}" alt="" loading="lazy">
+      <div><div class="t">${esc(p.text || "(photo)")}</div><div class="m">${ago(p.ts)} · ${p.reach} reached</div></div>
+      <div class="n"><b>${p.reactions}</b> 👍<br>${p.clicks} clicks · ${p.views} views</div></a>`).join("") || "<p class='m'>No posts yet.</p>";
   }
   function trend(H) {
     if (H.length < 2) { $("#trend").innerHTML = "<p class='m' style='color:var(--muted)'>The chart fills in as daily snapshots build up.</p>"; return; }
@@ -127,6 +159,9 @@
       card("Printify", "https://printify.com/app/store/products", ok(pr) ? [[pr.published, "products live"], [pr.orders, "orders"]] : [["!", pr.error]], "Physical orders are paid on Etsy; Printify charges production + shipping per order.") +
       card("Apify", "https://console.apify.com/actors", ok(ap) ? [[ap.actors.length, "actors"], [ap.actors.filter(z => z.public).length, "public"], [ap.actors.reduce((a, z) => a + z.runs, 0), "runs"], [ap.actors.reduce((a, z) => a + (z.users30 || 0), 0), "users (30d)"]] : [["!", ap.error]]) +
       card("x402 API", "https://164.160.90.241.sslip.io", ok(x) ? [[x.balance_usdc, "USDC balance"], [x.external_tx_since_oct2, "payments since 2 Oct"]] : [["!", x.error]], "AgentEdge pay-per-call API; owner test payments are excluded.") +
+      (ok(s.facebook) ? card("Facebook", "https://business.facebook.com/latest/home", [[s.facebook.followers, "followers"], [(s.facebook.posts || []).length, "posts"],
+        [(s.facebook.posts || []).reduce((a, z) => a + z.reactions, 0), "reactions"], [s.facebook.ads && s.facebook.ads.clicks != null ? s.facebook.ads.clicks : "–", "ad clicks"],
+        [s.facebook.ads && s.facebook.ads.spend != null ? "R" + s.facebook.ads.spend.toFixed(0) : "–", "ad spend"]], "Pulled automatically from the Facebook Graph API every 3 hours. Comments and shares need one more permission (pages_read_user_content).") : "") +
       card("KDP", "https://kdpreports.amazon.com", [[m.kdp_books ?? "–", "books live"], [m.kdp_sales ?? "–", "sales"]], "Amazon KDP has no API: send me the numbers from the KDP report and I'll add them.") +
       card("Pinterest", "https://www.pinterest.com/business/hub/", [[m.pinterest_pins ?? "121", "pins uploaded"], [m.pinterest_impressions ?? "–", "impressions"], [m.pinterest_clicks ?? "–", "outbound clicks"]],
         m.pinterest_impressions_at ? "From Pinterest Analytics (" + m.pinterest_impressions_at + ")." : "Pinterest has no API access for this account: send me the impressions and outbound clicks from Pinterest Analytics.") + "</div>";

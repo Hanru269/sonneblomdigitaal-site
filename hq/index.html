@@ -29,7 +29,7 @@
   </header>
   <nav class="tabs" id="tabs">
     <button data-t="overview" class="on">Overview</button><button data-t="products">Products</button>
-    <button data-t="sales">Sales</button><button data-t="channels">Channels</button>
+    <button data-t="sales">Sales</button><button data-t="facebook">Facebook</button><button data-t="channels">Channels</button>
   </nav>
   <section data-p="overview">
     <div class="kpis" id="kpis"></div>
@@ -46,6 +46,12 @@
     <div class="kpis" id="skpis"></div>
     <div class="card"><h2>All sales</h2><div id="slist"></div></div>
     <div class="card muted"><h2>Ads &amp; reconciliation</h2><p>Coming next: ad spend per channel, fees, Printify production costs and net profit per sale, so every rand and dollar reconciles.</p></div>
+  </section>
+  <section data-p="facebook" hidden>
+    <div class="kpis" id="fkpis"></div>
+    <div class="card"><h2>Ad campaign</h2><div id="fads"></div></div>
+    <div class="card"><h2>Page views per day</h2><div id="ftrend"></div></div>
+    <div class="card"><h2>Posts <small style="font-weight:400;color:var(--muted)">(views, reach, clicks, reactions)</small></h2><div class="chips" id="fsort"></div><div id="fposts"></div></div>
   </section>
   <section data-p="channels" hidden><div id="chans"></div></section>
 </main>
