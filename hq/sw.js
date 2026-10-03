@@ -1,5 +1,5 @@
 // Network-first so the dashboard always shows the newest encrypted data; cached copy only when offline.
-const C = "hq-v1";
+const C = "hq-v2";
 self.addEventListener("install", e => self.skipWaiting());
 self.addEventListener("activate", e => e.waitUntil(self.clients.claim()));
 self.addEventListener("fetch", e => {
