@@ -125,8 +125,8 @@
     if (H.length < 2) { $("#trend").innerHTML = "<p class='m' style='color:var(--muted)'>The chart fills in as daily snapshots build up.</p>"; return; }
     const W = 640, Ht = 160, p = 28, xs = H.map((_, i) => p + i * (W - 2 * p) / (H.length - 1)), max = Math.max(1, ...H.map(h => h.etsy_views));
     const ys = H.map(h => Ht - p - (h.etsy_views / max) * (Ht - 2 * p));
-    $("#trend").innerHTML = `<svg viewBox="0 0 ${W} ${Ht}" width="100%"><polyline fill="none" stroke="#14917f" stroke-width="3" points="${xs.map((x, i) => x + "," + ys[i]).join(" ")}"/>
-      ${xs.map((x, i) => `<circle cx="${x}" cy="${ys[i]}" r="3.5" fill="#14917f"/>`).join("")}
+    $("#trend").innerHTML = `<svg viewBox="0 0 ${W} ${Ht}" width="100%"><polyline fill="none" stroke="#a3452b" stroke-width="3" points="${xs.map((x, i) => x + "," + ys[i]).join(" ")}"/>
+      ${xs.map((x, i) => `<circle cx="${x}" cy="${ys[i]}" r="3.5" fill="#a3452b"/>`).join("")}
       <text x="${p}" y="${Ht - 6}">${H[0].ts.slice(5, 10)}</text><text x="${W - p}" y="${Ht - 6}" text-anchor="end">${H[H.length - 1].ts.slice(5, 10)}</text>
       <text x="${p}" y="14">${max} views</text></svg>`;
   }
