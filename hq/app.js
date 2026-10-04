@@ -2,7 +2,7 @@
 (function () {
   const $ = s => document.querySelector(s);
   const KEY = "hq-pass";
-  const COL = { Etsy: "#e0711b", Gumroad: "#ef5d3a", Printify: "#2f74c0", Apify: "#7a4fb5", "x402 API": "#0f766e", KDP: "#b7791f", Pinterest: "#c8372d", Facebook: "#1877f2" };
+  const COL = { Rose: "#c2185b", Etsy: "#e0711b", Gumroad: "#ef5d3a", Printify: "#2f74c0", Apify: "#7a4fb5", "x402 API": "#0f766e", KDP: "#b7791f", Pinterest: "#c8372d", Facebook: "#1877f2" };
   let fbSort = "reactions";
   const ICON = { sale: "💰", fav: "❤️", views: "👀", new: "🆕", usage: "⚙️", warn: "⚠️", info: "ℹ️" };
   let D = null, evFilter = "";
@@ -79,6 +79,9 @@
       kpi(m.pinterest_impressions ?? "–", "Pinterest impressions", COL.Pinterest, mAt("pinterest_impressions")) +
       kpi(favs, "Etsy favourites", "#c8372d") + kpi(S.length, "Sales (all time)", "#2f8a57") + kpi(money(rev), "Revenue (gross)", "#2f8a57") +
       kpi(apify30, "Apify users (30d)", COL.Apify) +
+      (ok(s.rose) ? kpi(s.rose.users, "Rose users", "#c2185b", "+" + s.rose.new_24h + " in 24h") + kpi(s.rose.messages_24h, "Rose messages (24h)", "#c2185b") +
+        kpi(s.rose.payments, "Rose payments", "#2f8a57", s.rose.stars + " Stars") : "") +
+      kpi(m.tiktok_views ?? "–", "TikTok views", "#111", mAt("tiktok_views")) + kpi(m.instagram_views ?? "–", "Instagram views", "#c13584", mAt("instagram_views")) +
       (ok(s.facebook) ? kpi(s.facebook.followers, "Facebook followers", COL.Facebook) +
         kpi(((s.facebook.daily.page_media_view || []).slice(-1)[0] || {}).value ?? 0, "Facebook views (day)", COL.Facebook, (((s.facebook.daily.page_media_view || []).slice(-1)[0] || {}).day || "").slice(5)) +
         kpi((s.facebook.daily.page_media_view || []).slice(-7).reduce((x, d) => x + d.value, 0), "Facebook views (7 days)", COL.Facebook) +
@@ -97,14 +100,14 @@
   }
   function facebook() {
     const f = D.snapshot.facebook;
-    if (!ok(f)) { $("#fkpis").innerHTML = "<p class='m'>" + esc(f ? f.error : "No Facebook data yet (next update).") + "</p>"; return; }
+    if (!ok(f)) { $("#fkpis").innerHTML = "<p class='m'>Facebook data can't be fetched right now (the access key needs renewing). It comes back at the next update after that.</p>"; return; }
     const P = f.posts || [], a = f.ads || {}, tot = k => P.reduce((x, p) => x + (p[k] || 0), 0);
     const D7 = m => (f.daily[m] || []).slice(-7).reduce((x, d) => x + d.value, 0);
     const D1 = m => ((f.daily[m] || []).slice(-1)[0] || {}).value ?? 0;
     const D1day = m => (((f.daily[m] || []).slice(-1)[0] || {}).day || "latest day").slice(5);
     // Page was the old web-design business (and its ads) until the shop relaunch on 1 Oct 2026
     const day = (f.daily.page_media_view || []).filter(d => d.day >= "2026-10-01");
-    $("#fkpis").innerHTML = kpi(f.followers, "Followers", COL.Facebook) + kpi(P.length, "Posts published", COL.Facebook) +
+    $("#fkpis").innerHTML = (f.stale ? `<p class='m'>⚠️ Showing Facebook figures from ${esc((f.stale_since || "").slice(0, 16).replace("T", " "))} UTC: the access key expired and needs renewing.</p>` : "") + kpi(f.followers, "Followers", COL.Facebook) + kpi(P.length, "Posts published", COL.Facebook) +
       kpi(tot("views"), "Post views", COL.Facebook) + kpi(tot("reactions"), "Reactions", "#c8372d") + kpi(tot("clicks"), "Post clicks", "#2f8a57") +
       kpi(D1("page_media_view"), "Content views (" + D1day("page_media_view") + ")", COL.Facebook) + kpi(D1("page_views_total"), "Page visits (" + D1day("page_views_total") + ")", COL.Facebook) +
       kpi(D7("page_total_media_view_unique"), "People reached (7d)", COL.Facebook) + kpi(D7("page_media_view"), "Content views (7d)", COL.Facebook) +
