@@ -80,6 +80,8 @@
       kpi(favs, "Etsy favourites", "#c8372d") + kpi(S.length, "Sales (all time)", "#2f8a57") + kpi(money(rev), "Revenue (gross)", "#2f8a57") +
       kpi(apify30, "Apify users (30d)", COL.Apify) +
       (ok(s.facebook) ? kpi(s.facebook.followers, "Facebook followers", COL.Facebook) +
+        kpi(((s.facebook.daily.page_media_view || []).slice(-1)[0] || {}).value ?? 0, "Facebook views (day)", COL.Facebook, (((s.facebook.daily.page_media_view || []).slice(-1)[0] || {}).day || "").slice(5)) +
+        kpi((s.facebook.daily.page_media_view || []).slice(-7).reduce((x, d) => x + d.value, 0), "Facebook views (7 days)", COL.Facebook) +
         (s.facebook.ads && !s.facebook.ads.error ? kpi(s.facebook.ads.clicks, "Facebook ad clicks", COL.Facebook, "R" + s.facebook.ads.spend.toFixed(2) + " spent") : "") : "");
     trend(H);
     feed();
@@ -98,10 +100,13 @@
     if (!ok(f)) { $("#fkpis").innerHTML = "<p class='m'>" + esc(f ? f.error : "No Facebook data yet (next update).") + "</p>"; return; }
     const P = f.posts || [], a = f.ads || {}, tot = k => P.reduce((x, p) => x + (p[k] || 0), 0);
     const D7 = m => (f.daily[m] || []).slice(-7).reduce((x, d) => x + d.value, 0);
+    const D1 = m => ((f.daily[m] || []).slice(-1)[0] || {}).value ?? 0;
+    const D1day = m => (((f.daily[m] || []).slice(-1)[0] || {}).day || "latest day").slice(5);
     // Page was the old web-design business (and its ads) until the shop relaunch on 1 Oct 2026
     const day = (f.daily.page_media_view || []).filter(d => d.day >= "2026-10-01");
     $("#fkpis").innerHTML = kpi(f.followers, "Followers", COL.Facebook) + kpi(P.length, "Posts published", COL.Facebook) +
       kpi(tot("views"), "Post views", COL.Facebook) + kpi(tot("reactions"), "Reactions", "#c8372d") + kpi(tot("clicks"), "Post clicks", "#2f8a57") +
+      kpi(D1("page_media_view"), "Content views (" + D1day("page_media_view") + ")", COL.Facebook) + kpi(D1("page_views_total"), "Page visits (" + D1day("page_views_total") + ")", COL.Facebook) +
       kpi(D7("page_total_media_view_unique"), "People reached (7d)", COL.Facebook) + kpi(D7("page_media_view"), "Content views (7d)", COL.Facebook) +
       kpi(D7("page_views_total"), "Page visits (7d)", COL.Facebook) + kpi(D7("page_post_engagements"), "Engagements (7d)", "#2f8a57");
     $("#fads").innerHTML = a.error ? "<p class='m'>" + esc(a.error) + "</p>" : a.status ? `
