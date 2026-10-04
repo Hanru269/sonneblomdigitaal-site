@@ -98,7 +98,8 @@
     if (!ok(f)) { $("#fkpis").innerHTML = "<p class='m'>" + esc(f ? f.error : "No Facebook data yet (next update).") + "</p>"; return; }
     const P = f.posts || [], a = f.ads || {}, tot = k => P.reduce((x, p) => x + (p[k] || 0), 0);
     const D7 = m => (f.daily[m] || []).slice(-7).reduce((x, d) => x + d.value, 0);
-    const day = (f.daily.page_media_view || []).filter((d, i, A) => A.slice(0, i + 1).some(e => e.value > 0));
+    // Page was the old web-design business (and its ads) until the shop relaunch on 1 Oct 2026
+    const day = (f.daily.page_media_view || []).filter(d => d.day >= "2026-10-01");
     $("#fkpis").innerHTML = kpi(f.followers, "Followers", COL.Facebook) + kpi(P.length, "Posts published", COL.Facebook) +
       kpi(tot("views"), "Post views", COL.Facebook) + kpi(tot("reactions"), "Reactions", "#c8372d") + kpi(tot("clicks"), "Post clicks", "#2f8a57") +
       kpi(D7("page_total_media_view_unique"), "People reached (7d)", COL.Facebook) + kpi(D7("page_media_view"), "Content views (7d)", COL.Facebook) +
