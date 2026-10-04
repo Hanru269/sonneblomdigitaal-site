@@ -97,10 +97,12 @@
     const f = D.snapshot.facebook;
     if (!ok(f)) { $("#fkpis").innerHTML = "<p class='m'>" + esc(f ? f.error : "No Facebook data yet (next update).") + "</p>"; return; }
     const P = f.posts || [], a = f.ads || {}, tot = k => P.reduce((x, p) => x + (p[k] || 0), 0);
-    const day = (f.daily.page_media_view || []);
+    const D7 = m => (f.daily[m] || []).slice(-7).reduce((x, d) => x + d.value, 0);
+    const day = (f.daily.page_media_view || []).filter((d, i, A) => A.slice(0, i + 1).some(e => e.value > 0));
     $("#fkpis").innerHTML = kpi(f.followers, "Followers", COL.Facebook) + kpi(P.length, "Posts published", COL.Facebook) +
       kpi(tot("views"), "Post views", COL.Facebook) + kpi(tot("reactions"), "Reactions", "#c8372d") + kpi(tot("clicks"), "Post clicks", "#2f8a57") +
-      kpi(day.length ? day[day.length - 1].value : "–", "Page views (last day)", COL.Facebook);
+      kpi(D7("page_total_media_view_unique"), "People reached (7d)", COL.Facebook) + kpi(D7("page_media_view"), "Content views (7d)", COL.Facebook) +
+      kpi(D7("page_views_total"), "Page visits (7d)", COL.Facebook) + kpi(D7("page_post_engagements"), "Engagements (7d)", "#2f8a57");
     $("#fads").innerHTML = a.error ? "<p class='m'>" + esc(a.error) + "</p>" : a.status ? `
       <div class="stats" style="display:flex;gap:16px;flex-wrap:wrap"><div><b>${esc(a.status)}</b>status</div><div><b>R${a.spend.toFixed(2)}</b>of R${a.budget_cap} spent</div>
       <div><b>${a.impressions}</b>impressions</div><div><b>${a.reach}</b>people reached</div><div><b>${a.clicks}</b>link clicks</div>
@@ -111,7 +113,7 @@
       const W = 640, Ht = 140, p = 28, mx = Math.max(1, ...day.map(d => d.value)), xs = day.map((_, i) => p + i * (W - 2 * p) / (day.length - 1)), ys = day.map(d => Ht - p - d.value / mx * (Ht - 2 * p));
       $("#ftrend").innerHTML = `<svg viewBox="0 0 ${W} ${Ht}" width="100%"><polyline fill="none" stroke="${COL.Facebook}" stroke-width="3" points="${xs.map((x, i) => x + "," + ys[i]).join(" ")}"/>
         ${xs.map((x, i) => `<circle cx="${x}" cy="${ys[i]}" r="3.5" fill="${COL.Facebook}"/>`).join("")}<text x="${p}" y="${Ht - 6}">${day[0].day.slice(5)}</text>
-        <text x="${W - p}" y="${Ht - 6}" text-anchor="end">${day[day.length - 1].day.slice(5)}</text><text x="${p}" y="14">${mx} views</text></svg>`;
+        <text x="${W - p}" y="${Ht - 6}" text-anchor="end">${day[day.length - 1].day.slice(5)}</text><text x="${p}" y="14">${mx} content views</text></svg>`;
     } else $("#ftrend").innerHTML = "<p class='m' style='color:var(--muted)'>Fills in day by day.</p>";
     const opts = [["reactions", "Reactions"], ["clicks", "Clicks"], ["views", "Views"], ["ts", "Newest"]];
     $("#fsort").innerHTML = opts.map(([k, l]) => `<button data-k="${k}" class="${k === fbSort ? "on" : ""}">${l}</button>`).join("");
