@@ -29,6 +29,23 @@
   $("#unlock").addEventListener("submit", e => { e.preventDefault(); unlock($("#pw").value, $("#remember").checked); });
   $("#lockbtn").onclick = () => { set(KEY, null); location.reload(); };
   $("#reload").onclick = async () => { const pw = get(KEY) || $("#pw").value; if (pw) { D = await decrypt(pw); render(); } };
+  $("#bananas").onclick = async () => {
+    const b = $("#bananas"), pw = get(KEY) || $("#pw").value; if (!pw || !D) return;
+    const before = D.snapshot.ts; b.disabled = true; b.textContent = "🍌 Pulling data…";
+    try {
+      const r = await (await fetch("https://chat.sonneblomdigitaal.co.za/api/hq-refresh", { method: "POST",
+        headers: { "Content-Type": "application/json" }, body: JSON.stringify({ pw }) })).json();
+      if (r.error) throw new Error(r.error);
+      if (r.started === false) b.textContent = `🍌 Just ran, try in ${Math.ceil(r.wait / 60)} min`;
+      for (let i = 0; i < 30 && r.started; i++) {  // collect + publish takes ~2-4 minutes
+        await new Promise(z => setTimeout(z, 15000));
+        const nd = await decrypt(pw).catch(() => null);
+        if (nd && nd.snapshot.ts !== before) { D = nd; render(); b.textContent = "🍌 Fresh!"; break; }
+        b.textContent = `🍌 Pulling data… ${Math.round((i + 1) / 4 * 10) / 10} min`;
+      }
+    } catch (e) { b.textContent = "🍌 Failed, try again"; }
+    setTimeout(() => { b.disabled = false; b.textContent = "🍌 Go Bananas"; }, 8000);
+  };
   document.querySelectorAll("#tabs button").forEach(b => b.onclick = () => {
     document.querySelectorAll("#tabs button").forEach(x => x.classList.toggle("on", x === b));
     document.querySelectorAll("main section").forEach(s => s.hidden = s.dataset.p !== b.dataset.t);
