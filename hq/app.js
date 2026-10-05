@@ -2,7 +2,7 @@
 (function () {
   const $ = s => document.querySelector(s);
   const KEY = "hq-pass";
-  const COL = { Rose: "#c2185b", Etsy: "#e0711b", Gumroad: "#ef5d3a", Printify: "#2f74c0", Apify: "#7a4fb5", "x402 API": "#0f766e", KDP: "#b7791f", Pinterest: "#c8372d", Facebook: "#1877f2" };
+  const COL = { Rose: "#c2185b", Etsy: "#e0711b", Gumroad: "#ef5d3a", Printify: "#2f74c0", Apify: "#7a4fb5", "x402 API": "#0f766e", KDP: "#b7791f", Pinterest: "#c8372d", Facebook: "#1877f2", "Rose ads": "#1877f2", Instagram: "#c13584", TikTok: "#111111" };
   let fbSort = "reactions";
   const ICON = { sale: "💰", fav: "❤️", views: "👀", new: "🆕", usage: "⚙️", warn: "⚠️", info: "ℹ️" };
   let D = null, evFilter = "";
@@ -196,7 +196,18 @@
       card("x402 API", "https://164.160.90.241.sslip.io", ok(x) ? [[x.balance_usdc, "USDC balance"], [x.external_tx_since_oct2, "payments since 2 Oct"]] : [["!", x.error]], "AgentEdge pay-per-call API; owner test payments are excluded.") +
       (ok(s.facebook) ? card("Facebook", "https://business.facebook.com/latest/home", [[s.facebook.followers, "followers"], [(s.facebook.posts || []).length, "posts"],
         [(s.facebook.posts || []).reduce((a, z) => a + z.reactions, 0), "reactions"], [s.facebook.ads && s.facebook.ads.clicks != null ? s.facebook.ads.clicks : "–", "ad clicks"],
-        [s.facebook.ads && s.facebook.ads.spend != null ? "R" + s.facebook.ads.spend.toFixed(0) : "–", "ad spend"]], "Pulled automatically from the Facebook Graph API every 3 hours. Comments and shares need one more permission (pages_read_user_content).") : "") +
+        [s.facebook.ads && s.facebook.ads.spend != null ? "R" + s.facebook.ads.spend.toFixed(0) : "–", "ad spend"]], "Sonneblom Digitaal page, pulled automatically every 30 minutes. Rose\u2019s page and ads have their own cards.") : "") +
+      (ok(s.rose) ? card("Rose", "https://rosecompanion.github.io/chat.html", [[s.rose.web_visits_24h ?? "–", "site visits (24h)"], [s.rose.chatters_24h ?? "–", "chatters (24h)"],
+        [s.rose.messages_24h, "messages (24h)"], [s.rose.checkouts ?? 0, "checkouts opened"], [(s.rose.card_paid || 0) + (s.rose.payments || 0), "payments"],
+        ["R" + (s.rose.card_revenue_zar || 0).toFixed(0), "card revenue"]], "Website chat funnel from the Rose server (visits → chats → checkouts → payments). Includes a few test chats by the team.") : "") +
+      (ok(s.rose_social) ? card("Rose ads", "https://adsmanager.facebook.com/adsmanager/manage/campaigns?act=770255640007326", [[s.rose_social.ads_active, "ads running"],
+        [s.rose_social.ad_clicks_today, "clicks today"], ["R" + s.rose_social.ad_spend_today.toFixed(2), "spent today"], [s.rose_social.ad_clicks, "clicks all time"],
+        ["R" + s.rose_social.ad_spend.toFixed(0), "spent all time"], [s.rose_social.fb_followers, "Rose FB followers"]],
+        (s.rose_social.ads || []).filter(a => a.status === "ACTIVE").map(a => esc(a.name) + ": R" + a.spend.toFixed(2) + ", " + a.clicks + " clicks" + (a.clicks ? " (R" + (a.spend / a.clicks).toFixed(2) + "/click)" : "")).join(" · ") || "No Rose ads running.") : "") +
+      (ok(s.instagram) ? card("Instagram", "https://www.instagram.com/rose.companion/", [[s.instagram.followers, "followers"], [s.instagram.posts, "posts"], [s.instagram.views, "views"],
+        [s.instagram.reach, "reach"], [s.instagram.likes, "likes"], [s.instagram.comments, "comments"]],
+        "@rose.companion, pulled automatically every 30 minutes. Top post: " + (((s.instagram.media || []).slice().sort((a, b) => b.views - a.views)[0] || {}).text ? esc(((s.instagram.media || []).slice().sort((a, b) => b.views - a.views)[0]).text) + " (" + ((s.instagram.media || []).slice().sort((a, b) => b.views - a.views)[0]).views + " views)" : "–")) : "") +
+      card("TikTok", "https://www.tiktok.com/tiktokstudio/content", [[m.tiktok_posts ?? "–", "posts"], [m.tiktok_views ?? "–", "views"]], "TikTok has no API access here: views are copied from TikTok Studio" + (m.tiktok_views_at ? " (" + m.tiktok_views_at + ")" : "") + ".") +
       card("KDP", "https://kdpreports.amazon.com", [[m.kdp_books ?? "–", "books live"], [m.kdp_sales ?? "–", "sales"]], "Amazon KDP has no API: send me the numbers from the KDP report and I'll add them.") +
       card("Pinterest", "https://www.pinterest.com/business/hub/", [[m.pinterest_pins ?? "121", "pins uploaded"], [m.pinterest_impressions ?? "–", "impressions"], [m.pinterest_clicks ?? "–", "outbound clicks"]],
         m.pinterest_impressions_at ? "From Pinterest Analytics (" + m.pinterest_impressions_at + ")." : "Pinterest has no API access for this account: send me the impressions and outbound clicks from Pinterest Analytics.") + "</div>";
