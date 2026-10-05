@@ -96,9 +96,16 @@
       kpi(m.pinterest_impressions ?? "–", "Pinterest impressions", COL.Pinterest, mAt("pinterest_impressions")) +
       kpi(favs, "Etsy favourites", "#c8372d") + kpi(S.length, "Sales (all time)", "#2f8a57") + kpi(money(rev), "Revenue (gross)", "#2f8a57") +
       kpi(apify30, "Apify users (30d)", COL.Apify) +
-      (ok(s.rose) ? kpi(s.rose.users, "Rose users", "#c2185b", "+" + s.rose.new_24h + " in 24h") + kpi(s.rose.messages_24h, "Rose messages (24h)", "#c2185b") +
-        kpi(s.rose.payments, "Rose payments", "#2f8a57", s.rose.stars + " Stars") : "") +
-      kpi(m.tiktok_views ?? "–", "TikTok views", "#111", mAt("tiktok_views")) + kpi(m.instagram_views ?? "–", "Instagram views", "#c13584", mAt("instagram_views")) +
+      (ok(s.rose) ? kpi(s.rose.web_visits_24h ?? "–", "Rose site visits (24h)", "#c2185b", (s.rose.web_visits ?? 0) + " all time") +
+        kpi(s.rose.chatters_24h ?? s.rose.users, "Rose chatters (24h)", "#c2185b", (s.rose.chatters ?? 0) + " all time") +
+        kpi(s.rose.messages_24h, "Rose messages (24h)", "#c2185b") +
+        kpi(s.rose.checkouts ?? 0, "Rose checkouts opened", "#c2185b", (s.rose.checkouts_24h ?? 0) + " in 24h") +
+        kpi((s.rose.payments || 0) + (s.rose.card_paid || 0), "Rose payments", "#2f8a57", "R" + (s.rose.card_revenue_zar || 0).toFixed(0) + " card · " + s.rose.stars + " Stars") : "") +
+      (ok(s.rose_social) ? kpi(s.rose_social.ad_clicks_today, "Rose ad clicks (today)", COL.Facebook, "R" + s.rose_social.ad_spend_today.toFixed(2) + " spent today · " + s.rose_social.ads_active + " active") +
+        kpi(s.rose_social.fb_post_views, "Rose Facebook post views", COL.Facebook, s.rose_social.fb_followers + " followers") : "") +
+      kpi(m.tiktok_views ?? "–", "TikTok views", "#111", mAt("tiktok_views")) +
+      (ok(s.instagram) ? kpi(s.instagram.views, "Instagram views", "#c13584", s.instagram.followers + " followers · " + s.instagram.likes + " likes · " + s.instagram.comments + " comments")
+        : kpi(m.instagram_views ?? "–", "Instagram views", "#c13584", mAt("instagram_views"))) +
       (ok(s.facebook) ? kpi(s.facebook.followers, "Facebook followers", COL.Facebook) +
         kpi(((s.facebook.daily.page_media_view || []).slice(-1)[0] || {}).value ?? 0, "Facebook views (day)", COL.Facebook, (((s.facebook.daily.page_media_view || []).slice(-1)[0] || {}).day || "").slice(5)) +
         kpi((s.facebook.daily.page_media_view || []).slice(-7).reduce((x, d) => x + d.value, 0), "Facebook views (7 days)", COL.Facebook) +
