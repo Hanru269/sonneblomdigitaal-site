@@ -79,7 +79,7 @@ function model(D) {
       tag: [`${num(L.length)} listings`, eDay ? usd(eDay) + " today" : `${num(views)} views`],
       board: { title: "ETSY MEGASTORE", main: num(views), mainLabel: "listing views (all time)",
         rows: [["Orders", num(eS.length)], ["Revenue", usd(eTot)], ["Favourites", num(favs)], ["Listings", num(L.length)], ["POD products", num(pf.products)], ["Shop visits", m.etsy_visits ?? "–"]] },
-      sheet: () => sheetHTML("Etsy Megastore", "CornerWorkStudio · physical gifts (Printify) + digital", eTot, "revenue all time",
+      sheet: () => sheetHTML("Etsy Megastore", "Physical gifts (Printify) + digital downloads", eTot, "revenue all time",
         [["Orders", eS.length], ["Today", usd(eDay)], ["Listing views", num(views)], ["Favourites", num(favs)], ["Listings", L.length],
          ["Printify products", pf.products ?? "–"], ["Printify orders", pf.orders ?? 0], ["Shop visits", m.etsy_visits ?? "–"], ["Ads clicks", m.etsy_ads_clicks ?? "–"]],
         topViewed.map(x => [x.title, `${x.views} views`]), "Most viewed listings", "https://www.etsy.com/your/shops/me/dashboard") },
@@ -235,7 +235,8 @@ function model(D) {
         "In the real city this opens a live chat with Claude Code running on the server. The owner asks for changes from a phone and Claude edits the code, refreshes the data and redeploys the city.") },
   ];
   const tot = eTot + gTot, day = eDay + gDay;
-  return { B: DEMO ? B.filter(b => !(D.hide || []).includes(b.id)) : B, s, tot, day, influencerZar, sales: eS.length + gS.length + (ro.card_paid || 0) };
+  const flow = { clicks: (rs.ad_clicks || 0) + (fb.ads?.clicks || 0), views: last7("page_media_view") + (rs.fb_post_views || 0), ads: adsActive };
+  return { flow, B: DEMO ? B.filter(b => !(D.hide || []).includes(b.id)) : B, s, tot, day, influencerZar, sales: eS.length + gS.length + (ro.card_paid || 0) };
 }
 const svLabel = n => !svc ? "unknown" : svc[n] === "active" ? "🟢 running" : "🔴 " + (svc[n] || "down");
 
@@ -778,6 +779,53 @@ function building(b) {
   }
 }
 
+// ad traffic: a soft glowing arc from Media HQ to the Etsy Megastore with a few customers running along it
+function flowBeam() {
+  const A = groups.fb, Z = groups.etsy; if (!A || !Z) return;
+  const f = M.flow || {}, on = f.ads > 0;
+  const from = A.position.clone().setY(A.userData.top + 1), to = Z.position.clone().setY(Z.userData.top + 1);
+  const mid = from.clone().lerp(to, 0.5).setY(Math.max(from.y, to.y) + 16);
+  const curve = new THREE.QuadraticBezierCurve3(from, mid, to);
+  const geo = new THREE.TubeGeometry(curve, 96, 0.32, 10, false), uv = geo.attributes.uv, cols = [];
+  const ca = new THREE.Color(0x3b82f6), cb = new THREE.Color(0xff8a3d), tc = new THREE.Color();
+  for (let i = 0; i < uv.count; i++) { tc.copy(ca).lerp(cb, uv.getX(i)); cols.push(tc.r, tc.g, tc.b); }
+  geo.setAttribute("color", new THREE.Float32BufferAttribute(cols, 3));
+  const cv = document.createElement("canvas"); cv.width = 256; cv.height = 4;
+  const cx = cv.getContext("2d"), gr = cx.createLinearGradient(0, 0, 256, 0);
+  gr.addColorStop(0, "rgba(255,255,255,0.15)"); gr.addColorStop(0.75, "rgba(255,255,255,0.15)"); gr.addColorStop(0.92, "#fff"); gr.addColorStop(1, "rgba(255,255,255,0.15)");
+  cx.fillStyle = gr; cx.fillRect(0, 0, 256, 4);
+  const tex = new THREE.CanvasTexture(cv); tex.wrapS = THREE.RepeatWrapping; tex.repeat.set(6, 1);
+  const mk = (r, o, map) => new THREE.Mesh(r === 1 ? geo : new THREE.TubeGeometry(curve, 96, 0.32 * r, 10, false).setAttribute("color", geo.attributes.color),
+    new THREE.MeshBasicMaterial({ vertexColors: true, map, transparent: true, opacity: o, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false }));
+  const core = mk(1, on ? 0.9 : 0.55, tex), glow = mk(3.2, on ? 0.12 : 0.07);
+  scene.add(core, glow);
+  const ends = [from, to].map((p, i) => { const r = new THREE.Mesh(new THREE.TorusGeometry(1.4, 0.08, 6, 32), new THREE.MeshBasicMaterial({ color: i ? 0xff8a3d : 0x3b82f6, transparent: true, toneMapped: false }));
+    r.rotation.x = Math.PI / 2; r.position.copy(p); scene.add(r); return r; });
+  // customers: more traffic = more runners, but never a crowd
+  const n = Math.max(2, Math.min(6, 2 + Math.round(Math.log10(1 + (f.clicks || 0) * 10 + (f.views || 0)))));
+  const shirts = [0xffd166, 0x7dd3fc, 0xff6b9a, 0x34d399, 0xc084fc, 0xffffff];
+  const runners = [...Array(n)].map((_, i) => {
+    const g = new THREE.Group(), m = new THREE.MeshBasicMaterial({ color: shirts[i], toneMapped: false });
+    const bd = new THREE.Mesh(new THREE.CapsuleGeometry(0.28, 0.6, 3, 8), m); bd.position.y = 0.55; bd.rotation.x = 0.35; g.add(bd);
+    const hd = new THREE.Mesh(new THREE.SphereGeometry(0.24, 10, 8), new THREE.MeshBasicMaterial({ color: 0xffe2c4 })); hd.position.set(0, 1.25, 0.25); g.add(hd);
+    const legs = [-0.13, 0.13].map(x => { const l = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.55, 0.12), m); l.position.set(x, 0.05, 0); g.add(l); return l; });
+    g.scale.setScalar(1.3); scene.add(g); return { g, legs, k: i / n, v: 0.06 + (i % 3) * 0.012 };
+  });
+  const p = new THREE.Vector3(), tg = new THREE.Vector3();
+  anim.push((dt, t) => {
+    tex.offset.x -= dt * (on ? 0.6 : 0.3);
+    core.material.opacity = (on ? 0.8 : 0.5) + Math.sin(t * 2) * 0.1;
+    ends.forEach((r, i) => { const k = (t * 0.8 + i * 0.5) % 1; r.scale.setScalar(0.6 + k); r.material.opacity = 1 - k; });
+    runners.forEach((r, i) => {
+      r.k = (r.k + dt * r.v) % 1;
+      curve.getPointAt(r.k, p); curve.getTangentAt(r.k, tg);
+      r.g.position.copy(p).y += 0.35 + Math.abs(Math.sin(t * 12 + i)) * 0.15;
+      r.g.lookAt(p.x + tg.x, r.g.position.y + tg.y, p.z + tg.z);
+      r.legs.forEach((l, j) => l.rotation.x = Math.sin(t * 12 + i + j * Math.PI) * 0.7);
+    });
+  });
+}
+
 function vault() {
   const g = new THREE.Group(); g.userData.b = { id: "vault" };
   const drum = new THREE.Mesh(new THREE.CylinderGeometry(6, 6, 5, 32, 1, true), new THREE.MeshStandardMaterial({ color: 0x5a2e1a, emissive: 0xff9a5a, emissiveIntensity: 0.5, side: THREE.DoubleSide }));
@@ -1041,7 +1089,7 @@ function hud() {
     const total = b.id === "influencer" ? "R" + num(b.zar || 0) : usd(b.total);
     return `<tr><td>${b.icon} ${esc(b.short)}</td><td><span class="dot" style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${dc[b.status]}"></span></td><td>${earned}</td><td>${total}</td></tr>`; });
   $("#payroll").innerHTML = `<h4>PAYROLL · TODAY</h4><table><tr><th>Worker</th><th>On</th><th>Today</th><th>All time</th></tr>${rows.join("")}</table>
-    <p>Gold beams + coins rolling to the Vault = money made today. Roof lights: green running, yellow stale data, red down, grey unknown (Library closed).</p>`;
+    <p>Gold beams + coins rolling to the Vault = money made today. The blue-to-orange arc from Media HQ to Etsy = ad traffic; the little runners are visitors (more traffic, more runners). Roof lights: green running, yellow stale data, red down, grey unknown (Library closed).</p>`;
 }
 
 function vaultSheet() {
@@ -1248,7 +1296,7 @@ $("#tnew").onclick = async () => { if (tBusy) return; await api("/new", { method
 // ---------- boot ----------
 function build() {
   M = model(D);
-  ground(); vault(); M.B.forEach(building); life(); hud();
+  ground(); vault(); M.B.forEach(building); flowBeam(); life(); hud();
 }
 async function reload() {
   try { D = await decrypt(PW); } catch (e) { return; }
