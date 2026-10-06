@@ -125,3 +125,4 @@ header{position:absolute;top:0;left:0;right:0;display:flex;justify-content:space
 .acts2 .ask{padding:8px 12px;border-radius:9px;border:1px solid var(--y,#ffd166);background:rgba(255,209,102,.12);color:#ffd166;font:600 13px Inter,sans-serif;cursor:pointer}
 .acts2 .ask:active{background:rgba(255,209,102,.3)}
 @media (max-width:640px){#tlog{font-size:16.5px;padding:14px 12px}.tacts button{font-size:15px;padding:8px 12px}}
+.tag.work{--c:#7df9ff;pointer-events:none;box-shadow:0 0 14px #7df9ff66}

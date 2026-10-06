@@ -236,7 +236,8 @@ function model(D) {
   ];
   const tot = eTot + gTot, day = eDay + gDay;
   const flow = { clicks: (rs.ad_clicks || 0) + (fb.ads?.clicks || 0), views: last7("page_media_view") + (rs.fb_post_views || 0), ads: adsActive };
-  return { flow, B: DEMO ? B.filter(b => !(D.hide || []).includes(b.id)) : B, s, tot, day, influencerZar, sales: eS.length + gS.length + (ro.card_paid || 0) };
+  const working = (D.working || []).filter(id => B.some(b => b.id === id));
+  return { flow, working, B: DEMO ? B.filter(b => !(D.hide || []).includes(b.id)) : B, s, tot, day, influencerZar, sales: eS.length + gS.length + (ro.card_paid || 0) };
 }
 const svLabel = n => !svc ? "unknown" : svc[n] === "active" ? "🟢 running" : "🔴 " + (svc[n] || "down");
 
@@ -826,6 +827,54 @@ function flowBeam() {
   });
 }
 
+// money arcs: a thin flowing beam from every money maker to the Vault (bright + sparks when it earned today)
+const MONEY = ["etsy", "gumroad", "kdp", "influencer", "contra", "zoho", "lab", "krypto", "kalshi", "poly", "longshot"];
+function moneyBeams() {
+  const V = groups.vault; if (!V) return;
+  const to = V.position.clone().setY(9.5);
+  const cv = document.createElement("canvas"); cv.width = 128; cv.height = 4;
+  const cx = cv.getContext("2d"), gr = cx.createLinearGradient(0, 0, 128, 0);
+  gr.addColorStop(0, "rgba(255,255,255,0.1)"); gr.addColorStop(0.8, "rgba(255,255,255,0.1)"); gr.addColorStop(0.95, "#fff"); gr.addColorStop(1, "rgba(255,255,255,0.1)");
+  cx.fillStyle = gr; cx.fillRect(0, 0, 128, 4);
+  M.B.filter(b => MONEY.includes(b.id) && groups[b.id]).forEach((b, bi) => {
+    const A = groups[b.id], hot = b.today > 0, from = A.position.clone().setY(A.userData.top + 0.5);
+    const mid = from.clone().lerp(to, 0.5).setY(Math.max(from.y, to.y) + 6 + from.distanceTo(to) * 0.12);
+    const curve = new THREE.QuadraticBezierCurve3(from, mid, to);
+    const tex = new THREE.CanvasTexture(cv); tex.wrapS = THREE.RepeatWrapping; tex.repeat.set(Math.max(2, Math.round(curve.getLength() / 14)), 1);
+    const col = new THREE.Color(b.color).lerp(new THREE.Color(0xffd166), 0.55);
+    const tube = (r, o, map) => new THREE.Mesh(new THREE.TubeGeometry(curve, 64, r, 6, false),
+      new THREE.MeshBasicMaterial({ color: col, map, transparent: true, opacity: o, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false }));
+    const core = tube(hot ? 0.3 : 0.18, hot ? 0.95 : 0.55, tex), glow = tube(hot ? 0.9 : 0.5, hot ? 0.14 : 0.07);
+    scene.add(core, glow);
+    const sparks = hot ? [...Array(3)].map((_, i) => { const m = new THREE.Mesh(new THREE.SphereGeometry(0.22, 8, 6), new THREE.MeshBasicMaterial({ color: 0xffe9a8, toneMapped: false }));
+      scene.add(m); return { m, k: i / 3 }; }) : [];
+    const sp = new THREE.Vector3();
+    anim.push((dt, t) => {
+      tex.offset.x -= dt * (hot ? 0.5 : 0.22);
+      core.material.opacity = (hot ? 0.85 : 0.45) + Math.sin(t * 1.6 + bi) * 0.08;
+      sparks.forEach(s => { s.k = (s.k + dt * 0.12) % 1; curve.getPointAt(s.k, sp); s.m.position.copy(sp); s.m.scale.setScalar(0.8 + Math.sin(t * 6 + s.k * 9) * 0.25); });
+    });
+  });
+}
+
+// "Claude is working here": a narrow beam straight up into the sky with rising rings
+function workBeams() {
+  (M.working || []).forEach((id, wi) => {
+    const g = groups[id]; if (!g) return;
+    const top = g.userData.top, mat = o => new THREE.MeshBasicMaterial({ color: 0x7df9ff, transparent: true, opacity: o, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false, side: THREE.DoubleSide });
+    const core = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.35, 300, 12, 1, true), mat(0.6)); core.position.y = top + 150;
+    const glow = new THREE.Mesh(new THREE.CylinderGeometry(1.0, 1.4, 300, 16, 1, true), mat(0.05)); glow.position.y = top + 150;
+    g.add(core, glow);
+    const rings = [...Array(4)].map((_, i) => { const r = new THREE.Mesh(new THREE.TorusGeometry(1.6, 0.07, 6, 36), mat(0.9)); r.rotation.x = Math.PI / 2; g.add(r); return { r, k: i / 4 }; });
+    const el = document.createElement("div"); el.className = "tag work"; el.innerHTML = "<b>🛠️ Claude working</b>";
+    const lab = new CSS2DObject(el); lab.position.y = top + 16; g.add(lab);
+    anim.push((dt, t) => {
+      core.material.opacity = 0.45 + Math.sin(t * 4 + wi) * 0.15;
+      rings.forEach(o => { o.k = (o.k + dt * 0.25) % 1; o.r.position.y = top + 1 + o.k * 40; o.r.scale.setScalar(1 + o.k * 1.5); o.r.material.opacity = 0.9 * (1 - o.k); });
+    });
+  });
+}
+
 function vault() {
   const g = new THREE.Group(); g.userData.b = { id: "vault" };
   const drum = new THREE.Mesh(new THREE.CylinderGeometry(6, 6, 5, 32, 1, true), new THREE.MeshStandardMaterial({ color: 0x5a2e1a, emissive: 0xff9a5a, emissiveIntensity: 0.5, side: THREE.DoubleSide }));
@@ -1089,7 +1138,7 @@ function hud() {
     const total = b.id === "influencer" ? "R" + num(b.zar || 0) : usd(b.total);
     return `<tr><td>${b.icon} ${esc(b.short)}</td><td><span class="dot" style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${dc[b.status]}"></span></td><td>${earned}</td><td>${total}</td></tr>`; });
   $("#payroll").innerHTML = `<h4>PAYROLL · TODAY</h4><table><tr><th>Worker</th><th>On</th><th>Today</th><th>All time</th></tr>${rows.join("")}</table>
-    <p>Gold beams + coins rolling to the Vault = money made today. The blue-to-orange arc from Media HQ to Etsy = ad traffic; the little runners are visitors (more traffic, more runners). Roof lights: green running, yellow stale data, red down, grey unknown (Library closed).</p>`;
+    <p>Gold beams + coins rolling to the Vault = money made today. The blue-to-orange arc from Media HQ to Etsy = ad traffic; the little runners are visitors (more traffic, more runners). Thin arcs into the Vault = money makers (bright with sparks when they earned today). A cyan beam into the sky = Claude is working on that hustle right now. Roof lights: green running, yellow stale data, red down, grey unknown (Library closed).</p>`;
 }
 
 function vaultSheet() {
@@ -1296,7 +1345,7 @@ $("#tnew").onclick = async () => { if (tBusy) return; await api("/new", { method
 // ---------- boot ----------
 function build() {
   M = model(D);
-  ground(); vault(); M.B.forEach(building); flowBeam(); life(); hud();
+  ground(); vault(); M.B.forEach(building); flowBeam(); moneyBeams(); workBeams(); life(); hud();
 }
 async function reload() {
   try { D = await decrypt(PW); } catch (e) { return; }
