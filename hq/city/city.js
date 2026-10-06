@@ -809,7 +809,7 @@ function building(b) {
   else board.position.set(toward.x * off, postH + bh / 2, toward.z * off);
   if (b.kind === "market") { board.position.y += b.h * 0.55; board.children.slice(-2).forEach(p => { p.scale.y = (postH + b.h * 0.55) / postH; p.position.y = -bh / 2 - (postH + b.h * 0.55) / 2; }); }
   board.lookAt(board.position.clone().add(g.position).add(toward));
-  g.add(board); g.userData.board = board;
+  g.add(board); g.userData.board = board; g.userData.top = top;
   // floating tag
   const el = document.createElement("div"); el.className = "tag"; el.style.setProperty("--c", hex(c));
   el.innerHTML = `<b>${b.icon} ${esc(b.short)}</b><span class="${b.today > 0 ? "v" : "z"}">${esc(b.tag[0])}</span> · <span class="z">${esc(b.tag[1])}</span>`;
@@ -1107,6 +1107,21 @@ function focus(id) {
   const portrait = innerWidth < innerHeight;
   if (id === "vault") {
     fly(new THREE.Vector3(VAULT[0], 6, VAULT[1]), mode === "walk" ? new THREE.Vector3(VAULT[0], EYE, VAULT[1] + 24) : new THREE.Vector3(VAULT[0], 16, VAULT[1] + (portrait ? 34 : 26)));
+  } else if (mode !== "walk") {  // three-quarter front view framing the whole building + billboard in the part of the screen the panel leaves free
+    const board = g.userData.board, bp = new THREE.Vector3(); board.getWorldPosition(bp);
+    const side = innerWidth >= 900, Hpx = innerHeight, Wpx = innerWidth;
+    // free screen band (px) between the header/chips and the panel; the building is centred and sized to fit inside it
+    const top = side ? 120 : 112, bottom = side ? Hpx - 110 : Hpx * 0.48, right = side ? Wpx - 430 : Wpx;
+    const visV = (bottom - top) / Hpx, visH = right / Wpx, cyF = (top + bottom) / 2 / Hpx, cxF = right / 2 / Wpx;
+    const H = Math.max(g.userData.top || b.h, bp.y + 3.5) + 1.5, wide = Math.max(b.w, b.d) * 2 + 8;
+    const tv = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)), th = tv * camera.aspect;
+    const dist = Math.min(340, Math.max(H / (2 * tv * visV), wide / (2 * th * visH)) * 1.08 + Math.max(b.w, b.d) / 2);
+    const dir = faceDir(b).applyAxisAngle(new THREE.Vector3(0, 1, 0), 0.5);   // ~30° off the front so the billboard doesn't hide the doors
+    const c = new THREE.Vector3(b.pos[0], H / 2, b.pos[1]);
+    const pos = c.clone().add(dir.clone().multiplyScalar(dist)); pos.y = H / 2 + dist * 0.36;  // a little above, to see over the neighbours
+    const look = c.clone(); look.y -= (0.5 - cyF) * 2 * dist * tv;
+    look.add(new THREE.Vector3().crossVectors(dir.clone().negate(), new THREE.Vector3(0, 1, 0)).normalize().multiplyScalar((0.5 - cxF) * 2 * dist * th));
+    fly(look, pos);
   } else {
     const bp = new THREE.Vector3(), board = g.userData.board; board.getWorldPosition(bp);
     const dir = new THREE.Vector3(); board.getWorldDirection(dir); dir.y = 0; dir.normalize();
