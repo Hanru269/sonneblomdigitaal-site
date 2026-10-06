@@ -9,7 +9,7 @@ import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js"
 import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
 
 const $ = s => document.querySelector(s);
-const KEY = "hq-pass";  // shared with the classic HQ dashboard (same origin)
+const KEY = "hq-pass";
 const API = "https://chat.sonneblomdigitaal.co.za/claude/api";
 const MOBILE = matchMedia("(max-width: 700px)").matches || "ontouchstart" in window;
 const get = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
@@ -628,7 +628,7 @@ function vaultSheet() {
   const all = [...(s.etsy?.sales || []).map(x => ({ ...x, channel: "Etsy" })), ...(s.gumroad?.sales || [])].sort((a, b) => b.ts.localeCompare(a.ts));
   return sheetHTML("The Vault", "All money in, across every shop", tot, "revenue all time (USD)",
     [["Today", usd(day)], ["Sales", sales], ["Rose (card)", "R" + num(roseZar)], ...B.filter(b => b.total && b.id !== "rose").map(b => [b.short, usd(b.total)])],
-    all.slice(0, 8).map(x => [`${x.channel} · ${x.product || x.title || ""}`, `${usd(x.amount)} · ${ago(x.ts)}`]), "Latest sales", "../", "Classic HQ dashboard (all tabs) is under Open.");
+    all.slice(0, 8).map(x => [`${x.channel} · ${x.product || x.title || ""}`, `${usd(x.amount)} · ${ago(x.ts)}`]), "Latest sales");
 }
 
 function focus(id) {
@@ -775,31 +775,9 @@ $("#tx").onclick = closeTerm;
 $("#tstop").onclick = () => api("/stop", { method: "POST", body: "{}" });
 $("#tnew").onclick = async () => { if (tBusy) return; await api("/new", { method: "POST", body: "{}" }); tlog().innerHTML = ""; tAdd("sys", "New conversation. Claude still has its memory notes."); };
 
-// ---------- demo mode (?demo): sample sales for showing the City off, always badged "Demo data" ----------
-const DEMO = new URLSearchParams(location.search).has("demo");
-function demoize(D0) {
-  const D1 = JSON.parse(JSON.stringify(D0)), s = D1.snapshot, L = s.etsy?.listings || [];
-  let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;  // stable per load
-  const target = 1000 + Math.round(rnd() * 650), now = Date.now(), sales = [];
-  for (let tot = 0; tot < target && L.length;) {
-    const l = L[Math.floor(rnd() * L.length)], amt = +(parseFloat(l.price) || 15).toFixed(2);
-    const ts = new Date(now - (sales.length < 4 ? rnd() * 6 : rnd() * 30 * 24) * 3600e3).toISOString();
-    sales.push({ ts, channel: "Etsy", product: l.title, amount: amt, currency: "USD" }); tot += amt; l.sales = (l.sales || 0) + 1;
-  }
-  sales.sort((a, b) => a.ts.localeCompare(b.ts));
-  s.etsy.sales = sales;
-  L.forEach(l => { l.views = (l.views || 0) * 9 + Math.round(rnd() * 40); });
-  return D1;
-}
-if (DEMO) addEventListener("DOMContentLoaded", () => {
-  const b = document.createElement("div"); b.textContent = "Demo data · sample numbers";
-  b.style.cssText = "position:fixed;top:8px;left:50%;transform:translateX(-50%);z-index:99;padding:4px 12px;border-radius:999px;background:rgba(255,190,60,.92);color:#2a1600;font:700 12px Inter,sans-serif;letter-spacing:.04em;pointer-events:none";
-  document.body.appendChild(b);
-});
-
 // ---------- boot ----------
 function build() {
-  M = model(DEMO ? demoize(D) : D);
+  M = model(D);
   ground(); vault(); M.B.forEach(building); life(); hud();
 }
 async function reload() {
