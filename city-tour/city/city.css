@@ -122,3 +122,5 @@ header{position:absolute;top:0;left:0;right:0;display:flex;justify-content:space
 .links a:hover{background:rgba(255,255,255,.08)}
 
 .llogin{display:flex;gap:8px;margin:10px 0}.llogin input{flex:1;min-width:0;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:#0d0820;color:#fff;font-size:16px}.llogin button{padding:10px 14px;border-radius:10px;border:0;background:linear-gradient(135deg,#7c3aed,#db2777);color:#fff;font-weight:700}
+.acts2 .ask{padding:8px 12px;border-radius:9px;border:1px solid var(--y,#ffd166);background:rgba(255,209,102,.12);color:#ffd166;font:600 13px Inter,sans-serif;cursor:pointer}
+.acts2 .ask:active{background:rgba(255,209,102,.3)}

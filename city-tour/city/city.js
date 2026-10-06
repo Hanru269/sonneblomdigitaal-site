@@ -264,6 +264,43 @@ const LINKS = {
   showroom: [["Gumroad", "https://gumroad.com/products"], ["Instagram", "https://www.instagram.com/"]],
   longshot: [["Polymarket portfolio", "https://polymarket.com/portfolio"], ["Ending soon", "https://polymarket.com/markets?_s=end_date%3Aasc"]],
 };
+// quick-action buttons: each one sends a ready-made task to Claude in the Library (some only show when there's something to do)
+const ACTIONS = {
+  vault: s => [["🍌 Go Bananas", "Go Bananas"]],
+  etsy: s => [["💬 Check Etsy messages", "Check Etsy messages and new orders for the shop. Draft replies for anything that needs one and tell me what you found."],
+    ["📸 Improve top listings", "Pick the 5 most-viewed Etsy listings with no sales and improve their first photo, title and tags. Show me the changes before you publish them."]],
+  gumroad: s => [["📣 Draft a BlenderNation post", "Draft a new BlenderNation/BlenderArtists post for one of our Blender add-ons (the channel that brought our first sale). Send me the text to approve."],
+    ["🔍 Check Gumroad", "Check Gumroad for new sales, views and messages and update the City."]],
+  kdp: s => [["📚 Prep the next 2 books", "Pick the next 2 print-ready KDP books from /root/kdp-books and prepare everything I need to upload them (files, title, description, keywords, price). Send me a short checklist."]],
+  fb: s => [["💬 Check comments & DMs", "Check Facebook and Instagram comments and DMs for both Pages. Reply to comments; draft DM replies for me to send."],
+    ["📅 Plan tomorrow's posts", "Plan and schedule tomorrow's Facebook/Instagram posts for both Pages and tell me what's going out."]],
+  rose: s => [["💬 Check Rose's messages", "Check Rose's new messages (Telegram, web chat, Messenger, Instagram) and comments. Reply to comments; draft any DM replies for me."],
+    ["🎬 New reel idea", "Come up with 3 new reel ideas for Rose that fit her persona and current trends. Don't make them yet, let me pick one."]],
+  contra: s => [["✍️ Draft 3 proposals", "Look at the newest Contra opportunities that fit us and draft 3 proposals in plain text for me to paste."]],
+  zoho: s => [(s.outreach?.replied || 0) > 0 ? ["📬 Reply to new emails", "Read the new replies in the Zoho inbox (hello@eaafix.com). Skip auto-replies; for real replies, write the answer (free report offer or quote) and tell me what you sent or what needs me."]
+      : ["📥 Check inbox", "Check the Zoho inbox (hello@eaafix.com) for real replies, bounces and opt-outs. Reply where needed and tell me what you found."],
+    ["🔎 Top up leads", "The outreach queue is getting low. Run the lead finder until there are at least 100 leads waiting and tell me how many were added."]],
+  lab: s => [["🧪 Usage check", "Check who used our Apify actors and x402 API this week and suggest one change to get more paid use."]],
+  krypto: s => [["📈 Wallet report", "Give me a short Krypto wallet and bot report: what's open, what it's worth, and if anything needs doing."]],
+  kalshi: s => [["📈 Bot report", "Short report on the Kalshi bot results. It's switched off; tell me if it's worth switching back on."]],
+  poly: s => [["📈 Bot report", "Short report on the Polymarket bots (real and paper). Anything to change?"]],
+  longshot: s => [["🎯 How's the $25 run?", "How is the Long Shot paper bot doing? Show the open trades, what it learned, and if it's ready for real money."]],
+  pinterest: s => [["📌 Build next week's pins", "Build next week's Pinterest pin file (new products and angles, 6 a day), push it, and send me the upload file link on Telegram."]],
+  github: s => [["🧹 Repo check", "Check our GitHub repos: anything broken, failing Pages builds, or old repos to archive? Fix what's safe and tell me the rest."]],
+  rnd: s => [["📝 Write a new report", "Write a fresh R&D report: read the latest HQ data for every money method, rewrite /root/sonneblom-site/hq-data/rnd/report.json (headline, each method's numbers, bottleneck and fix, top 3), then run update.sh."],
+    ["💡 Pick a new venture", "Look at our results and the ideas backlog and recommend ONE new venture to start next, with a first-week plan. Don't start it until I say go."],
+    ["🩺 Fix the #1 bottleneck", "Take the first item of the R&D top 3 and do what you can on it right now. Tell me what needs me."]],
+  showroom: s => [["🏗️ Build the next step", "Continue the Showroom pipeline: do the next unfinished stage in /root/showroom/pipeline.json, mark it done, run update.sh and tell me what's next."],
+    ["📸 Draft an IG post", "Draft the next Side Hustle City Instagram post from /root/showroom/ig_posts.md (caption + hashtags + what to screen-record)."]],
+};
+const actionsHTML = id => DEMO || !ACTIONS[id] ? "" : `<div class="links acts2"><div class="lt">Quick actions · Claude does it in the Library</div>${ACTIONS[id](M.s).map(([t, p]) => `<button class="ask" data-p="${esc(p)}">${esc(t)}</button>`).join("")}</div>`;
+async function ask(msg) {
+  await openTerm();
+  $("#tin").value = msg; $("#tin").dispatchEvent(new Event("input"));
+  if (tBusy) return tAdd("sys", "Claude is still busy. Your task is in the box: tap Send when it's done.");
+  if ($("#tsend").disabled || !get(LKEY)) return;  // Library login first: the task waits in the box
+  $("#tform").requestSubmit();
+}
 const linksHTML = id => !DEMO && (LINKS[id] || []).length ? `<div class="links"><div class="lt">Quick links</div>${LINKS[id].map(([t, u]) => `<a href="${u}" target="_blank" rel="noopener">${esc(t)} ↗</a>`).join("")}</div>` : "";
 
 function sheetHTML(title, sub, big, bigLabel, kvs, list, listTitle, link, note) {
@@ -1085,7 +1122,7 @@ function focus(id) {
   if (id === "library" && !DEMO) return openTerm();
   closeTerm();
   const sheet = $("#sheet"); sheet.style.setProperty("--c", id === "vault" ? "#ffd166" : hex(b.color));
-  $("#sheetbody").innerHTML = (id === "vault" ? vaultSheet() : b.sheet()) + linksHTML(id);
+  $("#sheetbody").innerHTML = (id === "vault" ? vaultSheet() : b.sheet()) + actionsHTML(id) + linksHTML(id);
   sheet.hidden = false; sheet.scrollTop = 0;
 }
 
@@ -1233,6 +1270,7 @@ $("#tform").addEventListener("submit", e => {
 $("#tin").addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey && !MOBILE) { e.preventDefault(); $("#tform").requestSubmit(); } });
 $("#tin").addEventListener("input", e => { e.target.style.height = ""; e.target.style.height = Math.min(140, e.target.scrollHeight) + "px"; });
 $("#tx").onclick = closeTerm;
+$("#sheetbody").addEventListener("click", e => { const b = e.target.closest("button.ask"); if (b) ask(b.dataset.p); });
 $("#tstop").onclick = () => api("/stop", { method: "POST", body: "{}" });
 $("#tnew").onclick = async () => { if (tBusy) return; await api("/new", { method: "POST", body: "{}" }); tlog().innerHTML = ""; tAdd("sys", "New conversation. Claude still has its memory notes."); };
 
