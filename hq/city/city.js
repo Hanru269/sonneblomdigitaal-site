@@ -326,26 +326,26 @@ function windowTex(color, lit = 0.55, seed = 1) {
 const hex = c => "#" + c.toString(16).padStart(6, "0");
 
 function boardTex(b) {
-  const c = document.createElement("canvas"); c.width = 1024; c.height = 600;
-  paintBoard(c.getContext("2d"), b);
-  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; return t;
+  const c = document.createElement("canvas"); c.width = 2048; c.height = 1200;  // drawn at 2x for sharp billboards
+  const g = c.getContext("2d"); g.setTransform(2, 0, 0, 2, 0, 0); paintBoard(g, b);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = renderer.capabilities.getMaxAnisotropy(); return t;
 }
 function paintBoard(g, b) {
   const W = 1024, H = 600, col = hex(b.color);
   const grd = g.createLinearGradient(0, 0, 0, H); grd.addColorStop(0, "#160a3c"); grd.addColorStop(1, "#07031a");
   g.fillStyle = grd; g.fillRect(0, 0, W, H);
   g.strokeStyle = col; g.lineWidth = 10; g.shadowColor = col; g.shadowBlur = 30; g.strokeRect(12, 12, W - 24, H - 24); g.shadowBlur = 0;
-  g.fillStyle = col; g.font = "800 54px Orbitron"; g.fillText(b.board.title, 48, 92);
+  g.fillStyle = col; g.font = "800 54px Sora"; g.fillText(b.board.title, 48, 92);
   const dot = { ok: "#3dffa8", down: "#ff4d6d", stale: "#ffd166", unknown: "#7d74a8" }[b.status];
   g.fillStyle = dot; g.beginPath(); g.arc(W - 70, 74, 18, 0, 7); g.fill();
-  g.fillStyle = "#3dffa8"; g.font = "800 132px Orbitron"; g.shadowColor = "#3dffa8"; g.shadowBlur = 24;
+  g.fillStyle = "#3dffa8"; g.font = "800 132px Sora"; g.shadowColor = "#3dffa8"; g.shadowBlur = 24;
   let main = String(b.board.main); g.fillText(main, 48, 250, W - 96); g.shadowBlur = 0;
   g.fillStyle = "#a99cd6"; g.font = "600 34px Inter"; g.fillText(scrub(b.board.mainLabel), 52, 300);
   const rows = b.board.rows.slice(0, 6);
   rows.forEach(([k, v], i) => {
     const x = 48 + (i % 2) * 480, y = 380 + Math.floor(i / 2) * 76;
     g.fillStyle = "#a99cd6"; g.font = "600 30px Inter"; g.fillText(scrub(k), x, y);
-    g.fillStyle = "#ffffff"; g.font = "800 40px Orbitron"; g.fillText(String(v), x + 230, y, 220);
+    g.fillStyle = "#ffffff"; g.font = "800 40px Sora"; g.fillText(String(v), x + 230, y, 220);
   });
 }
 
@@ -356,7 +356,7 @@ let flight = null;
 
 function initScene() {
   renderer = new THREE.WebGLRenderer({ antialias: !MOBILE, powerPreference: "high-performance" });
-  renderer.setPixelRatio(Math.min(devicePixelRatio, MOBILE ? 1.6 : 2));
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
   renderer.setSize(innerWidth, innerHeight);
   renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.05;
   document.body.prepend(renderer.domElement);
@@ -377,7 +377,9 @@ function initScene() {
   scene.add(new THREE.HemisphereLight(0x9c7bff, 0x10052a, 0.9));
   const moon = new THREE.DirectionalLight(0xc9b8ff, 0.8); moon.position.set(-40, 80, 30); scene.add(moon);
 
-  composer = new EffectComposer(renderer);
+  // multisampled target: the bloom pipeline bypasses the canvas antialias, so smooth edges here instead
+  const pr = renderer.getPixelRatio();
+  composer = new EffectComposer(renderer, new THREE.WebGLRenderTarget(innerWidth * pr, innerHeight * pr, { type: THREE.HalfFloatType, samples: MOBILE ? 2 : 4 }));
   composer.addPass(new RenderPass(scene, camera));
   const bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth / 2, innerHeight / 2), 0.6, 0.45, 0.82);
   composer.addPass(bloom); composer.addPass(new OutputPass());
@@ -576,8 +578,8 @@ function slides() {
 function timesSquare(screens) {
   const S = slides(), cvs = [];
   screens.forEach((sc, i) => {
-    const c = document.createElement("canvas"); c.width = 512; c.height = 300;
-    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+    const c = document.createElement("canvas"); c.width = 1024; c.height = 600;
+    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = renderer.capabilities.getMaxAnisotropy();
     const mesh = new THREE.Mesh(new THREE.PlaneGeometry(sc.w, sc.h), new THREE.MeshBasicMaterial({ map: t, toneMapped: false }));
     mesh.position.set(sc.x, sc.y, sc.z); mesh.rotation.y = sc.ry; scene.add(mesh);
     const frame = neonEdges(new THREE.PlaneGeometry(sc.w + 0.5, sc.h + 0.5), pick(NEON)); frame.position.copy(mesh.position); frame.rotation.y = sc.ry; scene.add(frame);
@@ -585,12 +587,12 @@ function timesSquare(screens) {
     paint(c, t, S[i % S.length]);
   });
   // ticker under every second screen
-  const tc = document.createElement("canvas"); tc.width = 2048; tc.height = 64;
-  const g = tc.getContext("2d"); g.fillStyle = "#05020f"; g.fillRect(0, 0, 2048, 64);
+  const tc = document.createElement("canvas"); tc.width = 4096; tc.height = 128;
+  const g = tc.getContext("2d"); g.scale(2, 2); g.fillStyle = "#05020f"; g.fillRect(0, 0, 2048, 64);
   const r = M.s.rose_diary || {};
   const items = [`CITY TODAY ${usd(M.day)}`, `ALL TIME ${usd(M.tot)}`, ...M.B.filter(b => b.tag).map(b => `${b.short} ${b.tag[0]}`), `ROSE ${num(r.followers)} FOLLOWERS`];
-  g.font = "800 34px Orbitron"; g.fillStyle = "#ffd34d"; g.fillText(items.join("   ◆   ") + "   ◆   ", 10, 45, 2030);
-  const tt = new THREE.CanvasTexture(tc); tt.wrapS = THREE.RepeatWrapping; tt.repeat.x = 0.35; tt.colorSpace = THREE.SRGBColorSpace;
+  g.font = "800 34px Sora"; g.fillStyle = "#ffd34d"; g.fillText(items.join("   ◆   ") + "   ◆   ", 10, 45, 2030);
+  const tt = new THREE.CanvasTexture(tc); tt.wrapS = THREE.RepeatWrapping; tt.repeat.x = 0.35; tt.colorSpace = THREE.SRGBColorSpace; tt.anisotropy = renderer.capabilities.getMaxAnisotropy();
   screens.forEach((sc, i) => { if (i % 2) return;
     const m = new THREE.Mesh(new THREE.PlaneGeometry(sc.w, 1.3), new THREE.MeshBasicMaterial({ map: tt, toneMapped: false }));
     m.position.set(sc.x, sc.y - sc.h / 2 - 1.2, sc.z); m.rotation.y = sc.ry; scene.add(m); });
@@ -600,7 +602,7 @@ function timesSquare(screens) {
     if (t > next && cvs.length) { next = t + 0.6; const s = cvs[j++ % cvs.length]; s.k = (s.k + 1) % S.length; paint(s.c, s.t, S[s.k]); }
   });
 }
-function paint(c, t, b) { const g = c.getContext("2d"); g.setTransform(0.5, 0, 0, 0.5, 0, 0); paintBoard(g, b); t.needsUpdate = true; }
+function paint(c, t, b) { const g = c.getContext("2d"); g.setTransform(1, 0, 0, 1, 0, 0); paintBoard(g, b); t.needsUpdate = true; }
 
 // rain falling around the camera
 function rain() {
@@ -1077,7 +1079,7 @@ function freeInput() {
 // ---------- UI ----------
 function hud() {
   const { B, tot, day, roseZar, sales, s } = M;
-  groups.vault.userData.el.innerHTML = `<b>THE VAULT · TODAY</b><span style="font:800 18px Orbitron;color:${day ? "#3dffa8" : "#fff"}">${usd(day)}</span><br><span class="z">${usd(tot)} all time${roseZar ? ` + R${num(roseZar)}` : ""} · ${sales} sales</span>`;
+  groups.vault.userData.el.innerHTML = `<b>THE VAULT · TODAY</b><span style="font:800 18px Sora;color:${day ? "#3dffa8" : "#fff"}">${usd(day)}</span><br><span class="z">${usd(tot)} all time${roseZar ? ` + R${num(roseZar)}` : ""} · ${sales} sales</span>`;
   const dc = { ok: "#3dffa8", down: "#ff4d6d", stale: "#ffd166", unknown: "#7d74a8" };
   $("#chips").innerHTML = [`<button class="chip" data-id="vault" style="border-color:#ffd166"><b style="color:#ffd166">💰 VAULT</b>${usd(day)} today · <span class="s">${usd(tot)} total</span></button>`]
     .concat(B.map(b => `<button class="chip" data-id="${b.id}" style="border-color:${hex(b.color)}88"><b style="color:${hex(b.color)}"><span class="dot" style="background:${dc[b.status]}"></span>${b.icon} ${esc(b.short)}</b>${esc(b.tag[0])} · <span class="s">${esc(b.tag[1])}</span></button>`)).join("");
@@ -1314,7 +1316,7 @@ async function enter(pw, remember) {
   try { D = await decrypt(pw); } catch (e) { $("#loading").hidden = true; $("#err").hidden = false; set(KEY, null); return; }
   PW = pw; if (remember) set(KEY, pw);
   $("#lock").hidden = true;
-  await Promise.all([document.fonts.load("800 54px Orbitron"), document.fonts.load("600 30px Inter"), services()]).catch(() => {});
+  await Promise.all([document.fonts.load("800 54px Sora"), document.fonts.load("600 30px Inter"), services()]).catch(() => {});
   initScene(); build();
   $("#loading").hidden = true; $("#hud").hidden = false;
   tick(); setInterval(tick, 15000);
