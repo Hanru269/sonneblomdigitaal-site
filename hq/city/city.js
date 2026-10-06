@@ -775,9 +775,31 @@ $("#tx").onclick = closeTerm;
 $("#tstop").onclick = () => api("/stop", { method: "POST", body: "{}" });
 $("#tnew").onclick = async () => { if (tBusy) return; await api("/new", { method: "POST", body: "{}" }); tlog().innerHTML = ""; tAdd("sys", "New conversation. Claude still has its memory notes."); };
 
+// ---------- demo mode (?demo): sample sales for showing the City off, always badged "Demo data" ----------
+const DEMO = new URLSearchParams(location.search).has("demo");
+function demoize(D0) {
+  const D1 = JSON.parse(JSON.stringify(D0)), s = D1.snapshot, L = s.etsy?.listings || [];
+  let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;  // stable per load
+  const target = 1000 + Math.round(rnd() * 650), now = Date.now(), sales = [];
+  for (let tot = 0; tot < target && L.length;) {
+    const l = L[Math.floor(rnd() * L.length)], amt = +(parseFloat(l.price) || 15).toFixed(2);
+    const ts = new Date(now - (sales.length < 4 ? rnd() * 6 : rnd() * 30 * 24) * 3600e3).toISOString();
+    sales.push({ ts, channel: "Etsy", product: l.title, amount: amt, currency: "USD" }); tot += amt; l.sales = (l.sales || 0) + 1;
+  }
+  sales.sort((a, b) => a.ts.localeCompare(b.ts));
+  s.etsy.sales = sales;
+  L.forEach(l => { l.views = (l.views || 0) * 9 + Math.round(rnd() * 40); });
+  return D1;
+}
+if (DEMO) addEventListener("DOMContentLoaded", () => {
+  const b = document.createElement("div"); b.textContent = "Demo data · sample numbers";
+  b.style.cssText = "position:fixed;top:8px;left:50%;transform:translateX(-50%);z-index:99;padding:4px 12px;border-radius:999px;background:rgba(255,190,60,.92);color:#2a1600;font:700 12px Inter,sans-serif;letter-spacing:.04em;pointer-events:none";
+  document.body.appendChild(b);
+});
+
 // ---------- boot ----------
 function build() {
-  M = model(D);
+  M = model(DEMO ? demoize(D) : D);
   ground(); vault(); M.B.forEach(building); life(); hud();
 }
 async function reload() {
