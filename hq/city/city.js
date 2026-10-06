@@ -1181,6 +1181,7 @@ function addrEventListeners() {
 }
 
 window.__city = () => ({ camera, controls, flight, groups });
+if (DEMO) window.__demo = { focus, setMode, home, fly, keys, look: (y, p) => { yaw = y; pitch = p; applyLook(); }, get mode() { return mode; } };  // DEMO-only hook for scripted walkthrough videos
 function loop() {
   requestAnimationFrame(loop);
   const dt = Math.min(clock.getDelta(), 0.05), t = clock.elapsedTime;
@@ -1266,7 +1267,7 @@ async function attach(req) {
         const e = JSON.parse(line); if (e.n) tSeen = e.n; if (e.run) tRun = e.run;
         if (e.t === "text") { txt += e.d; aiEl.textContent = txt; tScroll(); }
         else if (e.t === "tool") { const d = document.createElement("div"); d.className = "tool"; d.textContent = e.d; aiEl.before(d); tScroll(); }
-        else if (e.t === "done") { if (e.paused) tAdd("sys", "⏸ Paused here to read your new message."); if (e.stopped) tAdd("sys", "Stopped."); if (e.cost) tAdd("sys", `done · $${e.cost.toFixed(3)}`); }
+        else if (e.t === "done") { if (e.paused) tAdd("sys", "⏸ Paused here to read your new message."); if (e.stopped) tAdd("sys", "Stopped."); else if (!e.paused) tAdd("sys", "✓ done"); }
       }
     }
     if (my === tGen) setBusy(false);
