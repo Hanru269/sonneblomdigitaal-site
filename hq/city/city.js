@@ -53,6 +53,7 @@ function model(D) {
   const fb = s.facebook || {}, ro = s.rose || {}, ig = s.instagram || {}, rs = s.rose_social || {};
   const rd = s.rose_diary || {}, ct = s.contra || {}, ox = s.outreach || {};
   const pi = s.pinterest || {}, gh = s.github || {}, sh = s.showroom || {}, rn = s.rnd || {};
+  const shF = sh.funnel || {};
   const shSt = sh.stages || [], shDone = shSt.filter(x => x.done).length, shNext = shSt.find(x => !x.done);
   const plus = n => n == null ? "–" : (n >= 0 ? "+" : "") + num(n);
   const L = et.listings || [], G = gu.listings || [];
@@ -222,14 +223,15 @@ function model(D) {
         ${(rn.items || []).map(x => `<div class="note"><b>${esc(x.name)}</b> · <i>${esc(x.score)}</i><br>${esc(x.numbers)}<br>🚧 ${esc(x.bottleneck)}<br>✅ ${esc(x.fix)}</div>`).join("")}` },
 
     { id: "showroom", name: "Showroom (under construction)", short: "SHOWROOM", icon: "🏗️", color: 0xffb020, pos: [-28, 46], w: 9, d: 8, h: 16, kind: "construction",
-      status: "ok", today: 0, total: sh.revenue_usd || 0, built: shSt.length ? shDone / shSt.length : 0,
+      status: "ok", today: 0, total: (shF.page || {}).revenue_usd || sh.revenue_usd || 0, built: shSt.length ? shDone / shSt.length : 0,
       tag: [`${Math.round(100 * (shSt.length ? shDone / shSt.length : 0))}% built`, shNext ? "next: " + shNext.name.split(" ")[0] : "open"],
       board: { title: "SHOWROOM", main: Math.round(100 * (shSt.length ? shDone / shSt.length : 0)) + "%", mainLabel: "selling pipeline built",
-        rows: [["Steps done", `${shDone}/${shSt.length}`], ["Next", shNext ? shNext.name.split(" ")[0] : "–"], ["IG followers", num(sh.ig_followers)], ["Sales", num(sh.sales)]] },
+        rows: shF.steps ? [["Ad clicks", num(shF.ads.clicks)], ["Page visits", num(shF.page.visits)], ["Plan taps", num(shF.page.plan)], ["Sales", num(shF.page.paid)]]
+          : [["Steps done", `${shDone}/${shSt.length}`], ["Next", shNext ? shNext.name.split(" ")[0] : "–"], ["IG followers", num(sh.ig_followers)], ["Sales", num(sh.sales)]] },
       sheet: () => sheetHTML("Showroom", `Selling "${sh.product || "Side Hustle City"}": ${sh.pitch || ""}`, Math.round(100 * (shSt.length ? shDone / shSt.length : 0)) + "%", "of the pipeline built",
         [["IG page", sh.ig_handle || "not made yet"], ["IG followers", num(sh.ig_followers)], ["IG posts", num(sh.ig_posts)], ["Sales", num(sh.sales)], ["Revenue", usd(sh.revenue_usd || 0)]],
         shSt.map(x => [(x.done ? "✅ " : "🚧 ") + x.name, x.note || ""]), "Build steps", "",
-        "We sell the dashboard, not a money dream: \"I use this to see my side hustles better.\"") },
+        "We sell the dashboard, not a money dream: \"I use this to see my side hustles better.\"") + funnelHTML(shF) },
 
     { id: "library", name: "The Library", short: "LIBRARY", icon: "📚", color: 0xe8a87c, pos: [0, -66], w: 20, d: 12, h: 12, kind: "library",
       status: sv("hq-portal"), today: 0, total: 0,
@@ -292,7 +294,8 @@ const ACTIONS = {
   rnd: s => [["📝 Write a new report", "Write a fresh R&D report: read the latest HQ data for every money method, rewrite /root/sonneblom-site/hq-data/rnd/report.json (headline, each method's numbers, bottleneck and fix, top 3), then run update.sh."],
     ["💡 Pick a new venture", "Look at our results and the ideas backlog and recommend ONE new venture to start next, with a first-week plan. Don't start it until I say go."],
     ["🩺 Fix the #1 bottleneck", "Take the first item of the R&D top 3 and do what you can on it right now. Tell me what needs me."]],
-  showroom: s => [["🏗️ Build the next step", "Continue the Showroom pipeline: do the next unfinished stage in /root/showroom/pipeline.json, mark it done, run update.sh and tell me what's next."],
+  showroom: s => [["🔍 Fix the bottleneck", "Look at the Side Hustle City sales funnel (showroom.funnel in the latest HQ snapshot): which step is the bottleneck, why, and give me the one change that fixes it. Do it if it's a page or copy change."],
+    ["🏗️ Build the next step", "Continue the Showroom pipeline: do the next unfinished stage in /root/showroom/pipeline.json, mark it done, run update.sh and tell me what's next."],
     ["📸 Draft an IG post", "Draft the next Side Hustle City Instagram post from /root/showroom/ig_posts.md (caption + hashtags + what to screen-record)."]],
 };
 const actionsHTML = id => DEMO || !ACTIONS[id] ? "" : `<div class="links acts2"><div class="lt">Quick actions · Claude does it in the Library</div>${ACTIONS[id](M.s).map(([t, p]) => `<button class="ask" data-p="${esc(p)}">${esc(t)}</button>`).join("")}</div>`;
@@ -303,6 +306,22 @@ async function ask(msg) {
   $("#tform").requestSubmit();
 }
 const linksHTML = id => !DEMO && (LINKS[id] || []).length ? `<div class="links"><div class="lt">Quick links</div>${LINKS[id].map(([t, u]) => `<a href="${u}" target="_blank" rel="noopener">${esc(t)} ↗</a>`).join("")}</div>` : "";
+
+// Showroom sales funnel: each step's conversion vs a normal rate, worst one flagged as the bottleneck.
+function funnelHTML(f) {
+  if (DEMO || !f.steps) return "";
+  const pct = r => r == null ? "–" : (r * 100 < 10 ? (r * 100).toFixed(1) : Math.round(r * 100)) + "%";
+  const a = f.ads || {}, p = f.page || {}, t = f.today || {}, src = f.sources || {};
+  const rows = f.steps.map(x => {
+    const bad = x.name === f.bottleneck, ok = x.rate != null && x.rate >= x.norm;
+    return `<div${bad ? ' style="color:#ff6b6b;font-weight:700"' : ""}><span>${bad ? "🚧" : x.rate == null ? "⚪" : ok ? "🟢" : "🟠"} ${esc(x.name)}</span><span>${num(x.to)}/${num(x.from)} · ${pct(x.rate)} <i style="opacity:.6">(normal ${pct(x.norm)})</i></span></div>`;
+  }).join("");
+  return `<div class="list"><div style="color:var(--dim);font-size:12px"><span>Sales funnel since tracking started</span></div>${rows}</div>
+    <div class="note"><b>${esc(f.verdict || "")}</b><br>Ad: ${num(a.impressions)} views · ${num(a.clicks)} clicks · R${(a.spend || 0).toFixed(2)} spent${a.active ? " · 🟢 running" : ""}
+    <br>Last 24 h: ${num(t.visits)} visits · ${num(t.plans)} saw prices · ${num(t.plan)} plan taps · ${num(t.pay)} pay taps
+    <br>Visitors from: ad ${num(src.ad || 0)} · social ${num(src.social || 0)} · direct ${num(src.direct || 0)} · other ${num(src.other || 0)}
+    <br>Checkouts opened: ${num(p.checkouts)} · Paid: ${num(p.paid)} (${usd(p.revenue_usd || 0)})</div>`;
+}
 
 function sheetHTML(title, sub, big, bigLabel, kvs, list, listTitle, link, note) {
   if (DEMO) link = "";

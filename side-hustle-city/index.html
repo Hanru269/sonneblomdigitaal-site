@@ -218,12 +218,19 @@ const MAIL = p => "mailto:hello@eaafix.com?subject=" + encodeURIComponent("Side 
 const PLAN_INFO = { hosted: ["Hosted plan", "$49.99 a month. We host and run your city, with new tools every week."],
                     full: ["Full system", "$499.99 once. The full kit by email: code, setup guide and the Claude prompts."],
                     dfy: ["Done for you", "$399 setup, then $19.99 a month maintenance after 30 days. We build it for you."] };
+// Activity beacon -> shc_pay.py /hit (no cookies, random visitor id): view, saw prices, tapped a plan, tapped pay.
+const VID = localStorage.shcv || (localStorage.shcv = Math.random().toString(36).slice(2, 12));
+const QS = new URLSearchParams(location.search), REF = document.referrer;
+const SRC = QS.get("fbclid") || QS.get("utm_source") ? "ad" : /instagram|facebook|fb\.|t\.co|tiktok/i.test(REF) ? "social" : REF && !REF.includes(location.host) ? "other" : "direct";
+const hit = (ev, plan = "") => { try { navigator.sendBeacon(SHC.replace("/checkout", "/hit"), JSON.stringify({ ev, vid: VID, src: SRC, plan, ref: REF.slice(0, 120) })); } catch (e) {} };
+if (!QS.get("paid")) hit("view");
+new IntersectionObserver((es, o) => { if (es.some(x => x.isIntersecting)) { hit("plans"); o.disconnect(); } }).observe(document.getElementById("pricing"));
 let buyPlan = null;
 document.querySelectorAll("[data-plan]").forEach(a => {
   const p = a.dataset.plan;
   if (!PLAN_INFO[p]) { a.href = MAIL("Question"); return; }
   a.href = MAIL(PLAN_INFO[p][0]);
-  a.addEventListener("click", e => { e.preventDefault(); buyPlan = p; buyt.textContent = PLAN_INFO[p][0]; buyp.textContent = PLAN_INFO[p][1];
+  a.addEventListener("click", e => { e.preventDefault(); buyPlan = p; hit("plan", p); buyt.textContent = PLAN_INFO[p][0]; buyp.textContent = PLAN_INFO[p][1];
     buyerr.hidden = true; buy.hidden = false; buye.focus(); });
 });
 buyx.onclick = () => (buy.hidden = true);
@@ -232,7 +239,7 @@ let buyMethod = "card";
 buypp.onclick = () => { buyMethod = "paypal"; buyf.requestSubmit(); };
 buyg.onclick = () => (buyMethod = "card");
 buyf.onsubmit = async e => {
-  e.preventDefault(); buyg.disabled = buypp.disabled = true; buyg.textContent = "Opening secure checkout…"; buyerr.hidden = true;
+  e.preventDefault(); hit("pay_" + buyMethod, buyPlan); buyg.disabled = buypp.disabled = true; buyg.textContent = "Opening secure checkout…"; buyerr.hidden = true;
   try {
     const r = await fetch(SHC, { method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ plan: buyPlan, email: buye.value, handle: buyh.value, method: buyMethod }) });
