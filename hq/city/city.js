@@ -43,6 +43,8 @@ function model(D) {
     ["Days traded", x.days_traded ?? "–"], ["Last trade", x.last_trade ? ago(x.last_trade) : "–"], ["Bot", x.running ? "🟢 running" : "⚪ stopped"]];
   const ks = bo.kalshi || {}, pm = bo.polymarket || {}, kb = bo.krypto || {};
   const fb = s.facebook || {}, ro = s.rose || {}, ig = s.instagram || {}, rs = s.rose_social || {};
+  const rd = s.rose_diary || {}, ct = s.contra || {}, ox = s.outreach || {};
+  const plus = n => n == null ? "–" : (n >= 0 ? "+" : "") + num(n);
   const L = et.listings || [], G = gu.listings || [];
   const eS = et.sales || [], gS = gu.sales || [];
   const sum = (a, f) => a.reduce((t, x) => t + (+f(x) || 0), 0);
@@ -84,14 +86,38 @@ function model(D) {
         (ig.media || []).slice(0, 6).map(x => [x.text || x.type, `${x.views} views`]), "Latest Instagram posts", "https://business.facebook.com/latest/home") },
 
     { id: "rose", name: "Rose Tower", short: "ROSE", icon: "🌹", color: 0xff3d9a, pos: [36, -14], w: 8, d: 8, h: 36, kind: "spire",
-      status: worst(st("rose"), sv("companion"), sv("rose-web")), today: 0, total: 0, zar: roseZar,
-      tag: [`${num(ro.web_visits_24h)} visits`, `${num(ro.chatters_24h)} chatters`],
-      board: { title: "ROSE COMPANION", main: num(ro.web_visits_24h), mainLabel: "website visits (24h)",
-        rows: [["Chatters 24h", num(ro.chatters_24h)], ["Messages 24h", num(ro.messages_24h)], ["Checkouts", num(ro.checkouts)], ["Card revenue", "R" + num(roseZar)], ["Telegram users", num(ro.users)], ["Paying", num(ro.paying)]] },
-      sheet: () => sheetHTML("Rose Tower", "rosecompanion.github.io · web chat + Telegram bot", ro.web_visits_24h, "website visits (24h)",
-        [["Chatters 24h", ro.chatters_24h], ["Messages 24h", ro.messages_24h], ["New 24h", ro.new_24h], ["Checkouts", ro.checkouts], ["Card payments", ro.card_paid],
-         ["Card revenue", "R" + num(roseZar)], ["Telegram users", ro.users], ["Stars payments", ro.payments], ["Paying members", ro.paying],
-         ["Bot", svLabel("companion")], ["Web chat", svLabel("rose-web")]], [], "", "https://rosecompanion.github.io/chat.html") },
+      status: worst(st("rose"), sv("companion"), sv("rose-web")), today: rd.money_today_usd || 0, total: rd.money_usd || 0, zar: roseZar,
+      tag: [`${num(rd.followers)} followers`, `${plus(rd.gained_24h)} today`],
+      board: { title: "ROSE · MY DAY", main: num(rd.followers), mainLabel: "followers (Facebook + Instagram)",
+        rows: [["New today", plus(rd.gained_24h)], ["New this week", plus(rd.gained_7d)], ["Messages today", num(rd.messages_today)], ["Likes this week", num(rd.likes_7d)], ["Comments (week)", num(rd.comments_7d)], ["Money made", usd(rd.money_usd)]] },
+      sheet: () => sheetHTML("Rose Tower", "Rose, 28 · AI influencer · her day in numbers", rd.followers ?? 0, "followers (FB + IG)",
+        [["New followers today", plus(rd.gained_24h)], ["New this week", plus(rd.gained_7d)], ["Instagram", num(rd.ig_followers)], ["Facebook", num(rd.fb_followers)],
+         ["Messages today", num(rd.messages_today)], ["Chatting (24h)", num(rd.chatters_24h)], ["Messenger chats", num(ro.fb_dm_chats)],
+         ["Likes this week", num(rd.likes_7d)], ["Comments this week", num(rd.comments_7d)], ["Views (24h)", num(rd.views_24h)], ["Posts this week", num(rd.posts_7d)],
+         ["Money today", usd(rd.money_today_usd)], ["Money this week", usd(rd.money_7d_usd)], ["Money all time", usd(rd.money_usd)],
+         ["Fans paying now", num(rd.fans)], ["Albums sold", num((rd.sales_by_item || {}).album || 0)], ["VIP girlfriend weeks", num((rd.sales_by_item || {}).gf || 0)],
+         ["Bot", svLabel("companion")], ["Web chat", svLabel("rose-web")]], [], "", "https://rosecompanion.github.io/chat.html",
+        `<i>Dear diary 💕 ${rd.gained_7d > 0 ? `${num(rd.gained_7d)} new followers this week` : "a quiet week for followers"}, ${num(rd.likes_7d)} likes and ${num(rd.comments_7d)} comments. ` +
+        `${rd.messages_today ? `${num(rd.messages_today)} messages from my guys today` : "No messages yet today"}${rd.money_usd ? `, and ${usd(rd.money_usd)} made so far` : ", still waiting for my first sale"} 🌹</i>`) },
+
+    { id: "contra", name: "Contra Studio", short: "CONTRA", icon: "💼", color: 0x00e5ff, pos: [-42, -42], w: 7, d: 7, h: 26, kind: "glass",
+      status: "ok", today: 0, total: ct.earned_usd || 0,
+      tag: [`${num(ct.busy)} jobs busy`, `${num(ct.done)} done`],
+      board: { title: "CONTRA STUDIO", main: num(ct.sent), mainLabel: "proposals / jobs sent",
+        rows: [["Jobs busy", num(ct.busy)], ["Jobs done", num(ct.done)], ["Projects linked", num(ct.projects)], ["Earned", usd(ct.earned_usd)], ["Profile views", ct.views ? num(ct.views) : "–"]] },
+      sheet: () => sheetHTML("Contra Studio", "Freelance digital studio (websites, AI automation, brand & content)", ct.sent ?? 0, "jobs / proposals sent",
+        [["Jobs busy", num(ct.busy)], ["Jobs done", num(ct.done)], ["Projects linked", num(ct.projects)], ["Earned", usd(ct.earned_usd)], ["Profile views", ct.views ? num(ct.views) : "–"]], [],
+        "", "https://contra.com/opportunities", `Contra has no API, so these come from a Go Bananas sweep${ct.at ? ` (${esc(ct.at)})` : ""}. Tell Claude when a job starts or finishes.`) },
+
+    { id: "zoho", name: "Zoho Mail Outreach", short: "OUTREACH", icon: "✉️", color: 0xffe14d, pos: [42, -42], w: 9, d: 7, h: 11, kind: "mail",
+      status: st("outreach"), today: 0, total: ox.paid_eur || 0,
+      tag: [`${num(ox.sent_today)} sent today`, `${num(ox.replied)} replies`],
+      board: { title: "EAA OUTREACH", main: num(ox.sent_total), mainLabel: "emails sent (eaafix.com)",
+        rows: [["Sent today", num(ox.sent_today)], ["Replies", num(ox.replied)], ["Interested", num(ox.interested)], ["Quotes", num(ox.quoted)], ["Won", num(ox.won)], ["Queue", num(ox.queue)]] },
+      sheet: () => sheetHTML("Zoho Mail Outreach", "EAA accessibility fixes · hello@eaafix.com · cold email, 20+/day", ox.sent_total ?? 0, "emails sent",
+        [["Sent today", num(ox.sent_today)], ["Leads found", num(ox.leads)], ["Waiting to send", num(ox.queue)], ["Followed up", num(ox.followed_up)], ["Replies", num(ox.replied)],
+         ["Interested", num(ox.interested)], ["Reports sent", num(ox.reports)], ["Quotes", num(ox.quoted)], ["Won", num(ox.won)], ["Paid", "€" + num(ox.paid_eur || 0)],
+         ["Bounced", num(ox.bounced)], ["Opted out", num(ox.opted_out)]], [], "", "https://mail.zoho.com", "Sender runs weekdays 09:00; replies and bounces are checked every 20 minutes.") },
 
     { id: "gumroad", name: "Gumroad Arcade", short: "GUMROAD", icon: "🎨", color: 0x2ee6c5, pos: [-27, 30], w: 9, d: 8, h: 18, kind: "shop",
       status: st("gumroad"), today: gDay, total: gTot,
@@ -163,6 +189,8 @@ const LINKS = {
   rose: [["Website", "https://rosecompanion.github.io/"], ["Web chat", "https://rosecompanion.github.io/chat.html"], ["Telegram bot", "https://t.me/EveningCompany_bot"], ["Instagram", "https://www.instagram.com/rose.companion/"], ["Facebook", "https://www.facebook.com/rose.companion"], ["Yoco payments", "https://portal.yoco.com"]],
   gumroad: [["Dashboard", "https://gumroad.com/dashboard"], ["Products", "https://gumroad.com/products"], ["Sales", "https://gumroad.com/customers"], ["Superhive", "https://superhivemarket.com"], ["BlenderArtists", "https://blenderartists.org"], ["BlenderNation", "https://www.blendernation.com"]],
   kdp: [["Bookshelf", "https://kdp.amazon.com/en_US/bookshelf"], ["Reports", "https://kdpreports.amazon.com/dashboard"]],
+  contra: [["Opportunities", "https://contra.com/opportunities"], ["My profile", "https://contra.com/"], ["Messages", "https://contra.com/inbox"]],
+  zoho: [["Zoho Mail", "https://mail.zoho.com"], ["eaafix.com", "https://eaafix.com"]],
   lab: [["Apify console", "https://console.apify.com/actors"], ["Apify Store", "https://apify.com/store"], ["Contra", "https://contra.com/opportunities"]],
   krypto: [["Phantom", "https://phantom.com"], ["DexScreener", "https://dexscreener.com/solana"]],
   kalshi: [["Kalshi portfolio", "https://kalshi.com/portfolio"]],
@@ -193,8 +221,12 @@ function windowTex(color, lit = 0.55, seed = 1) {
 const hex = c => "#" + c.toString(16).padStart(6, "0");
 
 function boardTex(b) {
-  const W = 1024, H = 600, c = document.createElement("canvas"); c.width = W; c.height = H;
-  const g = c.getContext("2d"), col = hex(b.color);
+  const c = document.createElement("canvas"); c.width = 1024; c.height = 600;
+  paintBoard(c.getContext("2d"), b);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; return t;
+}
+function paintBoard(g, b) {
+  const W = 1024, H = 600, col = hex(b.color);
   const grd = g.createLinearGradient(0, 0, 0, H); grd.addColorStop(0, "#160a3c"); grd.addColorStop(1, "#07031a");
   g.fillStyle = grd; g.fillRect(0, 0, W, H);
   g.strokeStyle = col; g.lineWidth = 10; g.shadowColor = col; g.shadowBlur = 30; g.strokeRect(12, 12, W - 24, H - 24); g.shadowBlur = 0;
@@ -210,7 +242,6 @@ function boardTex(b) {
     g.fillStyle = "#a99cd6"; g.font = "600 30px Inter"; g.fillText(k, x, y);
     g.fillStyle = "#ffffff"; g.font = "800 40px Orbitron"; g.fillText(String(v), x + 230, y, 220);
   });
-  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; return t;
 }
 
 // ---------- scene ----------
@@ -229,11 +260,11 @@ function initScene() {
   document.body.append(labels.domElement);
 
   scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x12062e);
-  scene.fog = new THREE.FogExp2(0x1a0a40, 0.0062);
+  scene.background = new THREE.Color(0x0a0420);
+  scene.fog = new THREE.FogExp2(0x1a0b3a, 0.0042);
   camera = new THREE.PerspectiveCamera(MOBILE ? 58 : 48, innerWidth / innerHeight, 0.5, 900);
   controls = new OrbitControls(camera, renderer.domElement);
-  Object.assign(controls, { enableDamping: true, dampingFactor: 0.08, minDistance: 6, maxDistance: 260, maxPolarAngle: 1.47,
+  Object.assign(controls, { enableDamping: true, dampingFactor: 0.08, minDistance: 6, maxDistance: 380, maxPolarAngle: 1.47,
     screenSpacePanning: false, zoomSpeed: 1.1, rotateSpeed: 0.7 });
   controls.touches = { ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.DOLLY_PAN };
   home(true);
@@ -249,45 +280,241 @@ function initScene() {
   addrEventListeners();
 }
 
+// ---------- Cyberpunk grid city: office park in the middle, streets, cars, lamps, Times Square screens ----------
+const PARK = 58;                       // office park half-size: our buildings live inside it
+const STREETS = [63, 107, 151, 195];   // street centre lines (both signs), 10 wide
+const EXT = 205;                       // city edge
+const NEON = [0xff2bd6, 0x00f0ff, 0xfff200, 0xff3b6b, 0x8b5cf6, 0x22ff88, 0xff8a00];
+const rnd = (a, b) => a + Math.random() * (b - a);
+const pick = a => a[Math.floor(Math.random() * a.length)];
+const towers = [];                     // outer city towers {x,z,w,d,h} (street-mode collisions)
+
 function ground() {
-  const g = new THREE.Mesh(new THREE.CircleGeometry(260, 64), new THREE.MeshStandardMaterial({ color: 0x1b0c52, roughness: 0.85 }));
-  g.rotation.x = -Math.PI / 2; scene.add(g);
-  const grid = new THREE.GridHelper(400, 100, 0x4c2bb0, 0x2a1670); grid.position.y = 0.02;
-  grid.material.transparent = true; grid.material.opacity = 0.35; scene.add(grid);
-  const ringMat = r => new THREE.MeshBasicMaterial({ color: r, side: THREE.DoubleSide });
-  for (const [r, w, c] of [[62, 1.2, 0xd8c8ff], [65, 0.25, 0x8b5cf6], [10, 0.5, 0xffd166], [13, 0.18, 0x8b5cf6]]) {
-    const m = new THREE.Mesh(new THREE.RingGeometry(r, r + w, 128), ringMat(c)); m.rotation.x = -Math.PI / 2; m.position.y = 0.05; scene.add(m);
+  towers.length = 0;
+  const lines = STREETS.flatMap(v => [-v, v]).sort((a, b) => a - b);
+  const d = new THREE.Object3D(), col = new THREE.Color();
+  // wet asphalt everywhere
+  const asphalt = new THREE.Mesh(new THREE.PlaneGeometry(EXT * 2 + 260, EXT * 2 + 260), new THREE.MeshStandardMaterial({ color: 0x0b0716, roughness: 0.28, metalness: 0.6 }));
+  asphalt.rotation.x = -Math.PI / 2; scene.add(asphalt);
+  // the office park: grass with a glowing kerb
+  const grass = new THREE.Mesh(new THREE.BoxGeometry(PARK * 2, 0.3, PARK * 2), new THREE.MeshStandardMaterial({ color: 0x1d6b3c, emissive: 0x06301a, roughness: 0.95 }));
+  grass.position.y = 0.15; scene.add(grass);
+  const kerb = neonEdges(new THREE.BoxGeometry(PARK * 2 + 0.4, 0.32, PARK * 2 + 0.4), 0x22ff88); kerb.position.y = 0.16; scene.add(kerb);
+
+  // city blocks (sidewalk slabs) with towers; the 4 blocks facing the park are "Times Square"
+  const slabs = [], screens = [];
+  for (let i = 0; i < lines.length - 1; i++) for (let j = 0; j < lines.length - 1; j++) {
+    const x0 = lines[i] + 5, x1 = lines[i + 1] - 5, z0 = lines[j] + 5, z1 = lines[j + 1] - 5;
+    const cx = (x0 + x1) / 2, cz = (z0 + z1) / 2, W = x1 - x0, Dp = z1 - z0;
+    if (Math.abs(cx) < 1 && Math.abs(cz) < 1) continue;  // the park
+    slabs.push([cx, cz, W, Dp]);
+    const square = (Math.abs(cx) < 1 || Math.abs(cz) < 1) && Math.max(Math.abs(cx), Math.abs(cz)) < 90;
+    const far = Math.max(Math.abs(cx), Math.abs(cz));
+    if (square) {  // a row of towers whose park-facing walls carry big screens
+      const alongX = Math.abs(cx) < 1, len = alongX ? W : Dp, n = MOBILE ? 5 : 6, step = len / n;
+      const face = alongX ? -Math.sign(cz) : -Math.sign(cx);   // direction towards the park
+      for (let k = 0; k < n; k++) {
+        const s = -len / 2 + step * (k + 0.5), w = step - 2.4, dd = (alongX ? Dp : W) - 6, h = rnd(26, 52);
+        const x = alongX ? s : cx, z = alongX ? cz : s;
+        towers.push({ x, z, w: alongX ? w : dd, d: alongX ? dd : w, h, square: true });
+        const sw = w * 0.86, sh = Math.min(sw * 0.62, h - 10), y = h - sh / 2 - rnd(2, 6);
+        const off = dd / 2 + 0.25;
+        screens.push({ x: alongX ? x : x + face * off, z: alongX ? z + face * off : z, y, w: sw, h: sh, ry: alongX ? (face > 0 ? 0 : Math.PI) : (face > 0 ? Math.PI / 2 : -Math.PI / 2) });
+      }
+    } else {  // 2x2 lots of cyberpunk towers, taller further out
+      for (const [fx, fz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
+        if (Math.random() < 0.12) continue;  // the odd empty lot
+        const lw = W / 2, ld = Dp / 2, w = rnd(lw * 0.55, lw - 2.5), dd = rnd(ld * 0.55, ld - 2.5);
+        const axis = Math.abs(cx) < 1 || Math.abs(cz) < 1;   // blocks in line with the park stay lower so the view stays open
+        const h = axis ? rnd(18, 42) : (far < 120 ? rnd(30, 75) : rnd(45, 125)) * (Math.random() < 0.1 ? 1.4 : 1);
+        towers.push({ x: cx + fx * lw / 2, z: cz + fz * ld / 2, w, d: dd, h });
+      }
+    }
   }
-  const road = new THREE.Mesh(new THREE.RingGeometry(56, 62, 128), new THREE.MeshStandardMaterial({ color: 0x0e0630, roughness: 0.5 }));
-  road.rotation.x = -Math.PI / 2; road.position.y = 0.03; scene.add(road);
-  // cars: light streaks orbiting the ring road
-  const N = 60, car = new THREE.InstancedMesh(new THREE.BoxGeometry(0.5, 0.35, 1.6), new THREE.MeshBasicMaterial({ color: 0xffffff }), N);
-  const cs = [], dummy = new THREE.Object3D(), col = new THREE.Color();
-  for (let i = 0; i < N; i++) { cs.push({ a: Math.random() * 6.28, r: i % 2 ? 57.5 : 60.5, v: (i % 2 ? 1 : -1) * (0.06 + Math.random() * 0.05) });
-    car.setColorAt(i, col.set(i % 2 ? 0xff5a7a : 0xfff1c1)); }
-  scene.add(car);
-  anim.push(dt => { cs.forEach((c, i) => { c.a += c.v * dt; dummy.position.set(Math.cos(c.a) * c.r, 0.3, Math.sin(c.a) * c.r);
-    dummy.rotation.y = -c.a; dummy.updateMatrix(); car.setMatrixAt(i, dummy.matrix); }); car.instanceMatrix.needsUpdate = true; });
-  // background skyline
-  const n = MOBILE ? 230 : 380, box = new THREE.BoxGeometry(1, 1, 1), sd = new THREE.Object3D();
-  const mats = [0, 1, 2].map(i => { const t = windowTex(["#c084fc", "#60a5fa", "#f472b6"][i], 0.45, i + 3);
-    return new THREE.MeshStandardMaterial({ color: 0x1a0f44, map: t, emissive: 0xffffff, emissiveMap: t, emissiveIntensity: 0.7, roughness: 0.6 }); });
+  const slab = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 0.3, 1), new THREE.MeshStandardMaterial({ color: 0x1b1530, roughness: 0.7 }), slabs.length);
+  slabs.forEach(([x, z, w, dd], i) => { d.position.set(x, 0.15, z); d.scale.set(w, 1, dd); d.rotation.set(0, 0, 0); d.updateMatrix(); slab.setMatrixAt(i, d.matrix); });
+  scene.add(slab);
+
+  // towers: window-textured boxes (3 colour moods) + neon strips on corners and a band near the roof
+  const mats = ["#c084fc", "#38bdf8", "#f472b6"].map((c, i) => { const t = windowTex(c, 0.42, i + 7); t.repeat.set(3, 8);
+    return new THREE.MeshStandardMaterial({ color: 0x150d33, map: t, emissive: 0xffffff, emissiveMap: t, emissiveIntensity: 0.85, roughness: 0.35, metalness: 0.4 }); });
+  const box = new THREE.BoxGeometry(1, 1, 1);
+  mats.forEach((mat, k) => {
+    const mine = towers.filter((_, i) => i % 3 === k), inst = new THREE.InstancedMesh(box, mat, mine.length);
+    mine.forEach((t, i) => { d.position.set(t.x, t.h / 2 + 0.3, t.z); d.scale.set(t.w, t.h, t.d); d.updateMatrix(); inst.setMatrixAt(i, d.matrix); });
+    scene.add(inst);
+  });
+  const strips = [];
+  towers.forEach(t => {
+    const c = pick(NEON);
+    if (!t.square || Math.random() < 0.5) for (const [sx, sz] of [[-1, -1], [1, 1], [1, -1], [-1, 1]].slice(0, Math.random() < 0.5 ? 2 : 4))
+      strips.push([t.x + sx * t.w / 2, t.h / 2 + 0.3, t.z + sz * t.d / 2, 0.22, t.h, 0.22, c]);
+    strips.push([t.x, t.h - rnd(1, 4), t.z, t.w + 0.3, 0.35, t.d + 0.3, pick(NEON)]);
+    if (Math.random() < 0.35) strips.push([t.x, t.h * rnd(0.3, 0.7), t.z, t.w + 0.3, 0.25, t.d + 0.3, c]);
+    if (!t.square && t.h > 60 && Math.random() < 0.5) strips.push([t.x, t.h + 4, t.z, 0.25, 8, 0.25, 0xff3b6b]);  // antenna
+  });
+  const neon = new THREE.InstancedMesh(box, new THREE.MeshBasicMaterial({ color: 0xffffff, toneMapped: false }), strips.length);
+  strips.forEach(([x, y, z, w, h, dd, c], i) => { d.position.set(x, y, z); d.scale.set(w, h, dd); d.updateMatrix(); neon.setMatrixAt(i, d.matrix); neon.setColorAt(i, col.set(c)); });
+  scene.add(neon);
+  towers.forEach(t => solids.push({ x: t.x, z: t.z, r: Math.min(t.w, t.d) / 2 + 0.8, h: t.h }));
+
+  // road markings: dashed centre lines + zebra crossings round the park
+  const dashes = [];
+  for (const c of lines) for (let s = -EXT; s < EXT; s += 6) {
+    if (lines.some(l => Math.abs(s + 1.5 - l) < 6)) continue;  // keep intersections clear
+    dashes.push([s + 1.5, c, 0], [c, s + 1.5, 1]);
+  }
+  for (const c of [-63, 63]) for (const s of [-30, 0, 30]) for (let k = -4; k <= 4; k += 1.1) dashes.push([s + k * 0 + 0, c + k, 2], [c + k, s, 3]);
+  const mark = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 0.02, 1), new THREE.MeshBasicMaterial({ color: 0xffffff }), dashes.length);
+  dashes.forEach(([x, z, t], i) => {
+    d.position.set(x, 0.02, z); d.rotation.set(0, 0, 0);
+    if (t === 0) d.scale.set(3, 1, 0.18); else if (t === 1) d.scale.set(0.18, 1, 3); else if (t === 2) d.scale.set(3.4, 1, 0.5); else d.scale.set(0.5, 1, 3.4);
+    d.updateMatrix(); mark.setMatrixAt(i, d.matrix); mark.setColorAt(i, col.set(t < 2 ? 0xffd34d : 0xe8e8ff));
+  });
+  scene.add(mark);
+
+  // street lamps on both kerbs: post, arm, glowing head (cyan / magenta / warm)
+  const L = [], gap = MOBILE ? 24 : 16;
+  for (const c of lines) for (let s = -EXT + 8; s < EXT; s += gap) {
+    if (lines.some(l => Math.abs(s - l) < 7)) continue;
+    for (const side of [-1, 1]) { L.push([s, c + side * 5.4, 0, side]); L.push([c + side * 5.4, s, 1, side]); }
+  }
+  const post = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.09, 0.13, 5.2, 6), new THREE.MeshStandardMaterial({ color: 0x2b2550, metalness: 0.7, roughness: 0.4 }), L.length);
+  const arm = new THREE.InstancedMesh(new THREE.BoxGeometry(0.1, 0.1, 1.8), new THREE.MeshStandardMaterial({ color: 0x2b2550 }), L.length);
+  const head = new THREE.InstancedMesh(new THREE.BoxGeometry(0.5, 0.14, 0.9), new THREE.MeshBasicMaterial({ color: 0xffffff, toneMapped: false }), L.length);
+  const lampCols = [0x00f0ff, 0xff2bd6, 0xffe2a8];
+  L.forEach(([x, z, ax, side], i) => {
+    const ry = ax === 0 ? (side > 0 ? Math.PI : 0) : (side > 0 ? -Math.PI / 2 : Math.PI / 2);
+    d.rotation.set(0, 0, 0); d.scale.set(1, 1, 1); d.position.set(x, 2.6, z); d.updateMatrix(); post.setMatrixAt(i, d.matrix);
+    d.rotation.set(0, ry, 0); d.position.set(x, 5.1, z); d.translateZ(0.9); d.updateMatrix(); arm.setMatrixAt(i, d.matrix);
+    d.translateZ(0.7); d.position.y = 5.0; d.updateMatrix(); head.setMatrixAt(i, d.matrix); head.setColorAt(i, col.set(lampCols[i % 3]));
+  });
+  scene.add(post, arm, head);
+
+  cars(lines); skyCars(); timesSquare(screens); rain();
+
+  // distant skyline beyond the grid + smoggy stars
+  const n = MOBILE ? 160 : 300, sd = new THREE.Object3D();
   mats.forEach((mat, k) => {
     const inst = new THREE.InstancedMesh(box, mat, Math.ceil(n / 3));
     for (let i = 0; i < inst.count; i++) {
-      const a = Math.random() * 6.28, r = 72 + Math.pow(Math.random(), 0.7) * 130, h = 4 + Math.random() * (r < 110 ? 26 : 46);
-      const w = 3 + Math.random() * 5;
-      sd.position.set(Math.cos(a) * r, h / 2, Math.sin(a) * r); sd.rotation.set(0, Math.random() * 3, 0); sd.scale.set(w, h, w);
-      sd.updateMatrix(); inst.setMatrixAt(i, sd.matrix);
+      const a = Math.random() * 6.28, r = 225 + Math.random() * 110, h = 40 + Math.random() * 120, w = 6 + Math.random() * 10;
+      sd.position.set(Math.cos(a) * r, h / 2, Math.sin(a) * r); sd.rotation.set(0, Math.random() * 3, 0); sd.scale.set(w, h, w); sd.updateMatrix(); inst.setMatrixAt(i, sd.matrix);
     }
     scene.add(inst);
   });
-  // stars
-  const sp = new Float32Array(900 * 3);
-  for (let i = 0; i < 900; i++) { const a = Math.random() * 6.28, e = Math.random() * 1.2 + 0.1, R = 420;
-    sp.set([Math.cos(a) * Math.cos(e) * R, Math.sin(e) * R, Math.sin(a) * Math.cos(e) * R], i * 3); }
+  const sp = new Float32Array(500 * 3);
+  for (let i = 0; i < 500; i++) { const a = Math.random() * 6.28, e = Math.random() * 1.2 + 0.25, R = 520; sp.set([Math.cos(a) * Math.cos(e) * R, Math.sin(e) * R, Math.sin(a) * Math.cos(e) * R], i * 3); }
   const sg = new THREE.BufferGeometry(); sg.setAttribute("position", new THREE.BufferAttribute(sp, 3));
-  scene.add(new THREE.Points(sg, new THREE.PointsMaterial({ color: 0xd8ccff, size: 1.3, fog: false })));
+  scene.add(new THREE.Points(sg, new THREE.PointsMaterial({ color: 0xd8ccff, size: 1.2, fog: false })));
+}
+
+// detailed cars: body, glass cabin, 4 wheels, headlights, red light bar and neon underglow; two lanes per street
+function cars(lines) {
+  const lanes = [];
+  for (const c of lines) for (const [ax, off, dir] of [[0, -2.4, 1], [0, 2.4, -1], [1, -2.4, -1], [1, 2.4, 1]]) lanes.push({ ax, c: c + off, dir, v: rnd(9, 17) });
+  const N = MOBILE ? 72 : 150, list = [];
+  for (let i = 0; i < N; i++) { const ln = lanes[i % lanes.length]; list.push({ ln, s: rnd(-EXT, EXT), v: ln.v * rnd(0.9, 1.1) }); }
+  const part = (geo, mat, count) => { const m = new THREE.InstancedMesh(geo, mat, count); scene.add(m); return m; };
+  const bodyCols = [0x1e1b4b, 0xfafafa, 0x111111, 0xb91c1c, 0x0ea5e9, 0xfacc15, 0x6d28d9, 0x9ca3af, 0x064e3b];
+  const body = part(new THREE.BoxGeometry(1.9, 0.55, 4.3), new THREE.MeshStandardMaterial({ color: 0xffffff, metalness: 0.75, roughness: 0.28 }), N);
+  const nose = part(new THREE.BoxGeometry(1.86, 0.3, 1.1), new THREE.MeshStandardMaterial({ color: 0xffffff, metalness: 0.75, roughness: 0.28 }), N);
+  const cabin = part(new THREE.BoxGeometry(1.6, 0.5, 2.1), new THREE.MeshStandardMaterial({ color: 0x0a0f1f, metalness: 0.9, roughness: 0.1, emissive: 0x1b2a55, emissiveIntensity: 0.6 }), N);
+  const wheel = part(new THREE.CylinderGeometry(0.36, 0.36, 0.3, 12).rotateZ(Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0x0a0a0a, roughness: 0.9 }), N * 4);
+  const hl = part(new THREE.BoxGeometry(0.45, 0.14, 0.06), new THREE.MeshBasicMaterial({ color: 0xf2f7ff, toneMapped: false }), N * 2);
+  const tl = part(new THREE.BoxGeometry(1.7, 0.1, 0.06), new THREE.MeshBasicMaterial({ color: 0xff1a3c, toneMapped: false }), N);
+  const glow = part(new THREE.PlaneGeometry(2.3, 4.6).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.55, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false }), N);
+  const col = new THREE.Color();
+  list.forEach((c, i) => { body.setColorAt(i, col.set(bodyCols[i % bodyCols.length])); nose.setColorAt(i, col); glow.setColorAt(i, col.set(NEON[i % NEON.length])); });
+  const loc = (x, y, z) => new THREE.Matrix4().makeTranslation(x, y, z);
+  const P = { body: loc(0, 0.62, 0), nose: loc(0, 0.45, 1.9), cabin: loc(0, 1.13, -0.35), tl: loc(0, 0.78, -2.17), glow: loc(0, 0.06, 0),
+    w: [loc(-0.95, 0.36, 1.35), loc(0.95, 0.36, 1.35), loc(-0.95, 0.36, -1.35), loc(0.95, 0.36, -1.35)], hl: [loc(-0.6, 0.6, 2.46), loc(0.6, 0.6, 2.46)] };
+  const m = new THREE.Matrix4(), tmp = new THREE.Matrix4(), q = new THREE.Quaternion(), up = new THREE.Vector3(0, 1, 0), pos = new THREE.Vector3(), one = new THREE.Vector3(1, 1, 1);
+  const set = (inst, i, local) => inst.setMatrixAt(i, tmp.multiplyMatrices(m, local));
+  anim.push(dt => {
+    list.forEach((c, i) => {
+      const ln = c.ln; c.s += c.v * ln.dir * dt;
+      if (c.s > EXT) c.s = -EXT; else if (c.s < -EXT) c.s = EXT;
+      if (ln.ax === 0) { pos.set(c.s, 0, ln.c); q.setFromAxisAngle(up, ln.dir > 0 ? Math.PI / 2 : -Math.PI / 2); }
+      else { pos.set(ln.c, 0, c.s); q.setFromAxisAngle(up, ln.dir > 0 ? 0 : Math.PI); }
+      m.compose(pos, q, one);
+      set(body, i, P.body); set(nose, i, P.nose); set(cabin, i, P.cabin); set(tl, i, P.tl); set(glow, i, P.glow);
+      P.w.forEach((w, k) => set(wheel, i * 4 + k, w)); P.hl.forEach((h, k) => set(hl, i * 2 + k, h));
+    });
+    for (const x of [body, nose, cabin, wheel, hl, tl, glow]) x.instanceMatrix.needsUpdate = true;
+  });
+}
+
+// flying cars cruising above the streets with blinking lights
+function skyCars() {
+  const N = MOBILE ? 10 : 22, list = [];
+  for (let i = 0; i < N; i++) list.push({ ax: i % 2, c: pick(STREETS) * pick([-1, 1]) + rnd(-3, 3), y: rnd(30, 85), s: rnd(-EXT, EXT), v: rnd(22, 40) * pick([-1, 1]), ph: Math.random() * 6 });
+  const hull = new THREE.InstancedMesh(new THREE.CapsuleGeometry(0.9, 3.2, 4, 10).rotateX(Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0x9aa4c4, metalness: 0.85, roughness: 0.25 }), N);
+  const ring = new THREE.InstancedMesh(new THREE.TorusGeometry(1.25, 0.12, 6, 20).rotateX(Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0xffffff, toneMapped: false }), N);
+  const blink = new THREE.InstancedMesh(new THREE.SphereGeometry(0.22, 6, 4), new THREE.MeshBasicMaterial({ color: 0xff2040, toneMapped: false }), N);
+  const col = new THREE.Color(); list.forEach((c, i) => ring.setColorAt(i, col.set(NEON[(i + 2) % NEON.length])));
+  scene.add(hull, ring, blink);
+  const d = new THREE.Object3D();
+  anim.push((dt, t) => {
+    list.forEach((c, i) => {
+      c.s += c.v * dt; if (c.s > EXT + 40) c.s = -EXT - 40; else if (c.s < -EXT - 40) c.s = EXT + 40;
+      const y = c.y + Math.sin(t * 0.8 + c.ph) * 1.2;
+      if (c.ax === 0) { d.position.set(c.s, y, c.c); d.rotation.set(0, c.v > 0 ? Math.PI / 2 : -Math.PI / 2, Math.sin(t + c.ph) * 0.05); }
+      else { d.position.set(c.c, y, c.s); d.rotation.set(0, c.v > 0 ? 0 : Math.PI, Math.sin(t + c.ph) * 0.05); }
+      d.scale.setScalar(1); d.updateMatrix(); hull.setMatrixAt(i, d.matrix); ring.setMatrixAt(i, d.matrix);
+      d.translateY(1); d.scale.setScalar((t * 2 + c.ph) % 1 < 0.15 ? 1.4 : 0.01); d.updateMatrix(); blink.setMatrixAt(i, d.matrix);
+    });
+    hull.instanceMatrix.needsUpdate = ring.instanceMatrix.needsUpdate = blink.instanceMatrix.needsUpdate = true;
+  });
+}
+
+// Times Square: big screens on the towers facing the park, cycling through every building's numbers, plus a news ticker
+function slides() {
+  const r = M.s.rose_diary || {};
+  return [{ color: 0xff2bd6, status: "ok", board: { title: "SONNEBLOM CITY", main: usd(M.day), mainLabel: "made today across the city", rows: [["All time", usd(M.tot)], ["Sales", num(M.sales)], ["Rose followers", num(r.followers)], ["Buildings", M.B.length]] } },
+    ...M.B.filter(b => b.board).map(b => ({ ...b, title: b.board.title }))];
+}
+function timesSquare(screens) {
+  const S = slides(), cvs = [];
+  screens.forEach((sc, i) => {
+    const c = document.createElement("canvas"); c.width = 512; c.height = 300;
+    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(sc.w, sc.h), new THREE.MeshBasicMaterial({ map: t, toneMapped: false }));
+    mesh.position.set(sc.x, sc.y, sc.z); mesh.rotation.y = sc.ry; scene.add(mesh);
+    const frame = neonEdges(new THREE.PlaneGeometry(sc.w + 0.5, sc.h + 0.5), pick(NEON)); frame.position.copy(mesh.position); frame.rotation.y = sc.ry; scene.add(frame);
+    cvs.push({ c, t, k: i % S.length });
+    paint(c, t, S[i % S.length]);
+  });
+  // ticker under every second screen
+  const tc = document.createElement("canvas"); tc.width = 2048; tc.height = 64;
+  const g = tc.getContext("2d"); g.fillStyle = "#05020f"; g.fillRect(0, 0, 2048, 64);
+  const r = M.s.rose_diary || {};
+  const items = [`CITY TODAY ${usd(M.day)}`, `ALL TIME ${usd(M.tot)}`, ...M.B.filter(b => b.tag).map(b => `${b.short} ${b.tag[0]}`), `ROSE ${num(r.followers)} FOLLOWERS`];
+  g.font = "800 34px Orbitron"; g.fillStyle = "#ffd34d"; g.fillText(items.join("   ◆   ") + "   ◆   ", 10, 45, 2030);
+  const tt = new THREE.CanvasTexture(tc); tt.wrapS = THREE.RepeatWrapping; tt.repeat.x = 0.35; tt.colorSpace = THREE.SRGBColorSpace;
+  screens.forEach((sc, i) => { if (i % 2) return;
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(sc.w, 1.3), new THREE.MeshBasicMaterial({ map: tt, toneMapped: false }));
+    m.position.set(sc.x, sc.y - sc.h / 2 - 1.2, sc.z); m.rotation.y = sc.ry; scene.add(m); });
+  let next = 0, j = 0;
+  anim.push((dt, t) => {
+    tt.offset.x = (tt.offset.x + dt * 0.04) % 1;
+    if (t > next && cvs.length) { next = t + 0.6; const s = cvs[j++ % cvs.length]; s.k = (s.k + 1) % S.length; paint(s.c, s.t, S[s.k]); }
+  });
+}
+function paint(c, t, b) { const g = c.getContext("2d"); g.setTransform(0.5, 0, 0, 0.5, 0, 0); paintBoard(g, b); t.needsUpdate = true; }
+
+// rain falling around the camera
+function rain() {
+  const N = MOBILE ? 900 : 2400, p = new Float32Array(N * 6), sp = [];
+  for (let i = 0; i < N; i++) { const x = rnd(-70, 70), y = rnd(0, 60), z = rnd(-70, 70); p.set([x, y, z, x, y - 1.2, z], i * 6); sp.push(rnd(45, 65)); }
+  const geo = new THREE.BufferGeometry(); geo.setAttribute("position", new THREE.BufferAttribute(p, 3));
+  const lines = new THREE.LineSegments(geo, new THREE.LineBasicMaterial({ color: 0x9fb6ff, transparent: true, opacity: 0.28, depthWrite: false }));
+  scene.add(lines);
+  anim.push(dt => {
+    lines.position.set(Math.round(camera.position.x / 10) * 10, Math.max(0, camera.position.y - 40), Math.round(camera.position.z / 10) * 10);
+    for (let i = 0; i < N; i++) { let y = p[i * 6 + 1] - sp[i] * dt; if (y < 0) y += 60; p[i * 6 + 1] = y; p[i * 6 + 4] = y - 1.2; }
+    geo.attributes.position.needsUpdate = true;
+  });
 }
 
 function neonEdges(geo, color) {
@@ -345,6 +572,24 @@ function building(b) {
     const coin = new THREE.Mesh(new THREE.CylinderGeometry(2.2, 2.2, 0.45, 32), new THREE.MeshStandardMaterial({ color: 0xffd34d, emissive: 0x9945ff, emissiveIntensity: 0.55, metalness: 0.6 }));
     coin.rotation.x = Math.PI / 2; const piv = new THREE.Group(); piv.position.y = b.h + 3.2; piv.add(coin); g.add(piv);
     anim.push((dt, t) => { piv.rotation.y += dt * 1.4; piv.position.y = b.h + 3.2 + Math.sin(t * 1.5) * 0.4; }); top = b.h + 5.6;
+  } else if (b.kind === "glass") {  // Contra: glass office tower with a spinning halo
+    const glass = new THREE.Mesh(new THREE.BoxGeometry(b.w, b.h, b.d), new THREE.MeshStandardMaterial({ color: 0x0b3a4a, metalness: 0.9, roughness: 0.08, emissive: c, emissiveIntensity: 0.18, transparent: true, opacity: 0.92 }));
+    glass.position.y = b.h / 2; g.add(glass);
+    for (let y = 3; y < b.h; y += 3) { const f = neonEdges(new THREE.BoxGeometry(b.w + 0.05, 0.01, b.d + 0.05), c); f.position.y = y; g.add(f); }
+    const e = neonEdges(new THREE.BoxGeometry(b.w, b.h, b.d), c); e.position.y = b.h / 2; g.add(e);
+    const halo = new THREE.Mesh(new THREE.TorusGeometry(3.2, 0.2, 8, 40), new THREE.MeshBasicMaterial({ color: c, toneMapped: false }));
+    halo.rotation.x = Math.PI / 2; halo.position.y = b.h + 2.4; g.add(halo);
+    anim.push((dt, t) => { halo.rotation.z += dt; halo.position.y = b.h + 2.4 + Math.sin(t * 2) * 0.3; }); top = b.h + 3;
+  } else if (b.kind === "mail") {  // Zoho: post office with a giant glowing envelope and paper planes circling
+    g.add(tower(b.w, b.h, b.d, c, 81, lit));
+    const env = new THREE.Group(); env.position.y = b.h + 3.2;
+    env.add(new THREE.Mesh(new THREE.BoxGeometry(6, 3.8, 0.4), new THREE.MeshStandardMaterial({ color: 0xfff7d6, emissive: c, emissiveIntensity: 0.35 })));
+    const flap = new THREE.Mesh(new THREE.ConeGeometry(3.05, 1.9, 3), new THREE.MeshBasicMaterial({ color: c, toneMapped: false }));
+    flap.rotation.set(0, 0, Math.PI); flap.scale.set(1, 1, 0.12); flap.position.set(0, 0.95, 0.25); env.add(flap);
+    g.add(env); anim.push((dt, t) => env.rotation.y = Math.sin(t * 0.7) * 0.6);
+    const planes = [...Array(4)].map((_, i) => { const m = new THREE.Mesh(new THREE.ConeGeometry(0.5, 1.6, 3), new THREE.MeshBasicMaterial({ color: 0xffffff }));
+      m.rotation.x = Math.PI / 2; const piv = new THREE.Group(); piv.add(m); m.position.x = 5 + i; piv.rotation.y = i * 1.6; piv.position.y = b.h + 4 + i; g.add(piv); return piv; });
+    anim.push(dt => planes.forEach((p, i) => p.rotation.y += dt * (0.8 + i * 0.2))); top = b.h + 6;
   } else if (b.kind === "library") {  // classical library: columns, pediment, warm glow
     const base = new THREE.Mesh(new THREE.BoxGeometry(b.w, 1, b.d), new THREE.MeshStandardMaterial({ color: 0xe8dcc8, emissive: c, emissiveIntensity: 0.15 })); base.position.y = 1; g.add(base);
     const hall = new THREE.Mesh(new THREE.BoxGeometry(b.w * 0.8, b.h - 2, b.d * 0.7), new THREE.MeshStandardMaterial({ color: 0x3a2412, emissive: 0xffb36b, emissiveIntensity: 0.55 }));
@@ -424,20 +669,20 @@ let mode = "orbit", yaw = 0, pitch = 0, vert = 0, wheelV = 0;
 const keys = {}, joy = { x: 0, y: 0 }, solids = [];
 
 function life() {
-  solids.length = 0; solids.push({ x: 0, z: 0, r: 9.8, h: 13 });
+  solids.push({ x: 0, z: 0, r: 9.8, h: 13 });
   const avenues = [];
-  const asph = new THREE.MeshStandardMaterial({ color: 0x0d0630, roughness: 0.6 });
-  const walk = new THREE.MeshStandardMaterial({ color: 0x2a1866, roughness: 0.8 });
+  const asph = new THREE.MeshStandardMaterial({ color: 0x3d3550, roughness: 0.7 });   // garden path stones
+  const walk = new THREE.MeshStandardMaterial({ color: 0x5b5470, roughness: 0.85 });
   M.B.forEach(b => {
     const R = Math.hypot(b.pos[0], b.pos[1]), u = new THREE.Vector2(b.pos[0] / R, b.pos[1] / R);
     const size = b.kind === "mega" ? b.w * 1.45 : Math.max(b.w, b.d) * 0.8;
     solids.push({ x: b.pos[0], z: b.pos[1], r: size + 0.6, h: b.h + 12 });
     // avenue in two parts: plaza -> building, building -> ring road
-    for (const [a, z] of [[10, R - size], [R + size, 56]]) {
+    for (const [a, z] of [[10, R - size], [R + size, Math.min(PARK, R + size + 10)]]) {
       if (z - a < 2) continue;
       const len = z - a, mid = u.clone().multiplyScalar(a + len / 2), rot = Math.atan2(-u.x, -u.y);
       const add = (w, mat, y) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, len), mat); m.rotation.set(-Math.PI / 2, 0, rot); m.position.set(mid.x, y, mid.y); scene.add(m); };
-      add(5.6, walk, 0.035); add(3.2, asph, 0.04); add(0.18, new THREE.MeshBasicMaterial({ color: b.color, transparent: true, opacity: 0.75 }), 0.05);
+      add(5.6, walk, 0.31); add(3.2, asph, 0.315); add(0.18, new THREE.MeshBasicMaterial({ color: b.color, transparent: true, opacity: 0.75 }), 0.32);
     }
     avenues.push({ u, end: R - size, b });
   });
@@ -449,26 +694,50 @@ function life() {
   avenues.forEach(a => { for (let t = 14; t < 55; t += 5.5) for (const side of [-4.2, 4.2]) {
     const x = a.u.x * t - a.u.y * side, z = a.u.y * t + a.u.x * side; if (!nearSolid(x, z, 1.2)) spots.push([x, z, 0.9]); } });
   for (let i = 0, n = MOBILE ? 70 : 120; spots.length < n + 120 && i < 4000; i++) {
-    const r = i % 5 ? 14 + Math.random() * 40 : 64 + Math.random() * 7, a = Math.random() * 6.28, x = Math.cos(a) * r, z = Math.sin(a) * r;
-    if (!nearSolid(x, z, 2.5) && !nearAvenue(x, z, 3.6)) spots.push([x, z, 0.8 + Math.random() * 0.7]);
+    const x = (Math.random() * 2 - 1) * (PARK - 3), z = (Math.random() * 2 - 1) * (PARK - 3);
+    if (Math.hypot(x, z) > 13 && !nearSolid(x, z, 2.5) && !nearAvenue(x, z, 3.6)) spots.push([x, z, 0.8 + Math.random() * 0.7]);
   }
   const trunk = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.14, 0.2, 1.2, 6), new THREE.MeshStandardMaterial({ color: 0x4a2c5a }), spots.length);
-  const leaf = new THREE.InstancedMesh(new THREE.ConeGeometry(1.1, 2.8, 7), new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0x0c2a2a, roughness: 0.6 }), spots.length);
-  const d = new THREE.Object3D(), col = new THREE.Color(), palette = [0x2dd4bf, 0x34d399, 0x5eead4, 0xf472b6, 0x22c55e, 0x67e8f9];
+  const leaf = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1.35, 1), new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0x08240f, roughness: 0.7, flatShading: true }), spots.length);
+  const d = new THREE.Object3D(), col = new THREE.Color(), palette = [0x22c55e, 0x16a34a, 0x4ade80, 0xf9a8d4, 0x15803d, 0x86efac, 0x22c55e];
   spots.forEach(([x, z, s], i) => {
-    d.position.set(x, 0.6 * s, z); d.scale.setScalar(s); d.rotation.set(0, 0, 0); d.updateMatrix(); trunk.setMatrixAt(i, d.matrix);
-    d.position.y = (1.2 + 1.4) * s; d.updateMatrix(); leaf.setMatrixAt(i, d.matrix);
+    d.position.set(x, 0.6 * s + 0.3, z); d.scale.setScalar(s); d.rotation.set(0, 0, 0); d.updateMatrix(); trunk.setMatrixAt(i, d.matrix);
+    d.position.y = (1.2 + 1.3) * s + 0.3; d.updateMatrix(); leaf.setMatrixAt(i, d.matrix);
     leaf.setColorAt(i, col.set(palette[i % palette.length]).multiplyScalar(0.55 + Math.random() * 0.3));
   });
   scene.add(trunk, leaf);
 
   // street lamps around the ring road
-  const lamps = []; for (let a = 0; a < 360; a += 9) for (const r of [55, 63]) lamps.push([Math.cos(a * Math.PI / 180) * r, Math.sin(a * Math.PI / 180) * r]);
+  const lamps = []; avenues.forEach(a => { for (let t = 13; t < a.end - 1; t += 8) for (const side of [-3.3, 3.3]) lamps.push([a.u.x * t - a.u.y * side, a.u.y * t + a.u.x * side]); });
   const post = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.08, 0.1, 3.4, 6), new THREE.MeshStandardMaterial({ color: 0x3b2a7a }), lamps.length);
   const bulb = new THREE.InstancedMesh(new THREE.SphereGeometry(0.28, 8, 6), new THREE.MeshBasicMaterial({ color: 0xfff0c8 }), lamps.length);
-  lamps.forEach(([x, z], i) => { d.scale.setScalar(1); d.position.set(x, 1.7, z); d.updateMatrix(); post.setMatrixAt(i, d.matrix);
-    d.position.y = 3.5; d.updateMatrix(); bulb.setMatrixAt(i, d.matrix); });
+  lamps.forEach(([x, z], i) => { d.scale.setScalar(1); d.position.set(x, 2.0, z); d.updateMatrix(); post.setMatrixAt(i, d.matrix);
+    d.position.y = 3.8; d.updateMatrix(); bulb.setMatrixAt(i, d.matrix); });
   scene.add(post, bulb);
+
+  // gardens: flower beds, hedges round the park (gaps at the entrances), benches
+  const fl = [];
+  for (let i = 0; fl.length < (MOBILE ? 500 : 1100) && i < 20000; i++) {
+    const cx = (Math.random() * 2 - 1) * (PARK - 4), cz = (Math.random() * 2 - 1) * (PARK - 4);
+    if (Math.hypot(cx, cz) < 12 || nearSolid(cx, cz, 2) || nearAvenue(cx, cz, 3.4)) continue;
+    const c = pick([0xff4fa3, 0xffd34d, 0xffffff, 0xb57bff, 0xff7a45, 0x7dd3fc]);
+    for (let k = 0; k < 14; k++) fl.push([cx + rnd(-1.6, 1.6), cz + rnd(-1.6, 1.6), c]);
+  }
+  const flower = new THREE.InstancedMesh(new THREE.SphereGeometry(0.16, 6, 4), new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0x331133, emissiveIntensity: 0.6 }), fl.length);
+  fl.forEach(([x, z, c], i) => { d.position.set(x, 0.42, z); d.scale.setScalar(rnd(0.8, 1.4)); d.updateMatrix(); flower.setMatrixAt(i, d.matrix); flower.setColorAt(i, col.set(c)); });
+  scene.add(flower);
+  const hedges = [];
+  for (let s = -PARK + 2; s <= PARK - 2; s += 2) for (const e of [-PARK + 1.2, PARK - 1.2]) {
+    if (Math.abs(s) < 6) continue;  // entrances in the middle of each side
+    for (const [x, z] of [[s, e], [e, s]]) if (!nearAvenue(x, z, 4.5)) hedges.push([x, z]);
+  }
+  const hedge = new THREE.InstancedMesh(new THREE.BoxGeometry(2.05, 1.1, 1.3), new THREE.MeshStandardMaterial({ color: 0x14532d, emissive: 0x052e16, roughness: 0.9 }), hedges.length);
+  hedges.forEach(([x, z], i) => { d.scale.setScalar(1); d.rotation.set(0, Math.abs(z) > PARK - 2 ? 0 : Math.PI / 2, 0); d.position.set(x, 0.85, z); d.updateMatrix(); hedge.setMatrixAt(i, d.matrix); });
+  d.rotation.set(0, 0, 0); scene.add(hedge);
+  const benches = []; avenues.forEach(a => { for (let t = 17; t < a.end - 2; t += 16) benches.push([a.u.x * t - a.u.y * 3.9, a.u.y * t + a.u.x * 3.9, Math.atan2(a.u.x, a.u.y)]); });
+  const bench = new THREE.InstancedMesh(new THREE.BoxGeometry(1.8, 0.45, 0.6), new THREE.MeshStandardMaterial({ color: 0x7c4a2a }), benches.length);
+  benches.forEach(([x, z, r], i) => { d.position.set(x, 0.55, z); d.rotation.set(0, r, 0); d.updateMatrix(); bench.setMatrixAt(i, d.matrix); });
+  d.rotation.set(0, 0, 0); scene.add(bench);
 
   // people strolling on the avenue sidewalks; some walk dogs
   const NP = MOBILE ? 55 : 90, people = [];
@@ -497,13 +766,13 @@ function life() {
       const u = p.a.u, x = u.x * p.s - u.y * p.side, z = u.y * p.s + u.x * p.side, bob = Math.abs(Math.sin(t * 7 + p.ph)) * 0.06;
       p.x = x; p.z = z; p.h = Math.atan2(u.x * Math.sign(p.v), u.y * Math.sign(p.v));
       d.scale.setScalar(1); d.rotation.set(0, p.h, 0);
-      d.position.set(x, 0.65 + bob, z); d.updateMatrix(); body.setMatrixAt(i, d.matrix);
-      d.position.y = 1.43 + bob; d.updateMatrix(); head.setMatrixAt(i, d.matrix);
+      d.position.set(x, 0.95 + bob, z); d.updateMatrix(); body.setMatrixAt(i, d.matrix);
+      d.position.y = 1.73 + bob; d.updateMatrix(); head.setMatrixAt(i, d.matrix);
     });
     body.instanceMatrix.needsUpdate = head.instanceMatrix.needsUpdate = true;
     dogs.forEach((o, i) => {
       const p = o.p, u = p.a.u, s = p.s + Math.sign(p.v) * 0.9, side = p.side - Math.sign(p.side) * 0.7;
-      o.g.position.set(u.x * s - u.y * side, Math.abs(Math.sin(t * 11 + i)) * 0.05, u.y * s + u.x * side);
+      o.g.position.set(u.x * s - u.y * side, 0.3 + Math.abs(Math.sin(t * 11 + i)) * 0.05, u.y * s + u.x * side);
       o.g.rotation.y = p.h; o.tail.rotation.y = Math.sin(t * 14 + i) * 0.7;
     });
   });
@@ -542,7 +811,7 @@ function setMode(m, silent) {
     const p = camera.position;
     if (m === "walk") {
       const r = Math.hypot(p.x, p.z);
-      if (r > 52) { p.x *= 52 / r; p.z *= 52 / r; }
+      if (r > EXT) { p.x *= EXT / r; p.z *= EXT / r; }
       p.y = EYE; pitch = 0.08;
     } else if (prev === "walk") p.y = 22;
     applyLook();
@@ -660,7 +929,7 @@ function fly(target, pos) {
   flight = { t0: performance.now(), t: 0, ft: controls.target.clone(), fp: camera.position.clone(), tt: target, tp: pos };
 }
 function home(instant) {
-  const t = new THREE.Vector3(0, 8, 0), p = MOBILE && innerWidth < innerHeight ? new THREE.Vector3(0, 135, 175) : new THREE.Vector3(0, 85, 128);
+  const t = new THREE.Vector3(0, 8, 0), p = MOBILE && innerWidth < innerHeight ? new THREE.Vector3(0, 165, 151) : new THREE.Vector3(0, 100, 107);  // above a street, looking into the park
   if (mode !== "orbit") setMode("orbit", true);
   if (instant) { controls.target.copy(t); camera.position.copy(p); } else fly(t, p);
 }
