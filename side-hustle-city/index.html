@@ -96,7 +96,7 @@ footer{color:var(--dim);font-size:13px;text-align:center;margin-top:34px}
     <p class="lead">Every side hustle is a building. Its billboard shows the latest numbers, a light on the roof shows if it's running, and a gold beam shoots up when it made money today. I use it every morning to see all my projects in one place instead of opening ten tabs.</p>
     <div class="btns">
       <a class="btn gold" href="../city-tour/city/">🏙️ Walk the live demo<small>Works on your phone · sample numbers</small></a>
-      <a class="btn ghost" href="#pricing">See the 3 plans<small>From $29.99/month</small></a>
+      <a class="btn ghost" href="#pricing">See the 3 plans<small>From $49.99/month</small></a>
     </div>
     <p class="honest">Honest note: this is a dashboard, not a money machine. It won't make you money. It shows you clearly what's working and what's stuck, so you know where to spend your time.</p>
   </div>
@@ -123,7 +123,7 @@ footer{color:var(--dim);font-size:13px;text-align:center;margin-top:34px}
   <div class="plan hot">
     <span class="badge">EASIEST</span>
     <h3>HOSTED</h3>
-    <div class="price">$29.99<small> / month</small></div>
+    <div class="price">$49.99<small> / month</small></div>
     <p class="for">We host and run your city for you.</p>
     <ul>
       <li>Your own private city, password protected</li>
@@ -147,7 +147,7 @@ footer{color:var(--dim);font-size:13px;text-align:center;margin-top:34px}
   </div>
   <div class="plan">
     <h3>DONE FOR YOU</h3>
-    <div class="price">$299<small> + $9.99/month</small></div>
+    <div class="price">$399<small> + $19.99/month</small></div>
     <p class="for">We set it up for you, on your own accounts.</p>
     <ul>
       <li>We connect your shops and pages and build your buildings</li>
@@ -214,9 +214,9 @@ footer{color:var(--dim);font-size:13px;text-align:center;margin-top:34px}
 <script>
 const SHC = "https://chat.sonneblomdigitaal.co.za/shc/checkout";
 const MAIL = p => "mailto:hello@eaafix.com?subject=" + encodeURIComponent("Side Hustle City - " + p);
-const PLAN_INFO = { hosted: ["Hosted plan", "$29.99 a month. We host and run your city, with new tools every week."],
+const PLAN_INFO = { hosted: ["Hosted plan", "$49.99 a month. We host and run your city, with new tools every week."],
                     full: ["Full system", "$499.99 once. The full kit by email: code, setup guide and the Claude prompts."],
-                    dfy: ["Done for you", "$299 setup, then $9.99 a month after 30 days. We build it for you."] };
+                    dfy: ["Done for you", "$399 setup, then $19.99 a month maintenance after 30 days. We build it for you."] };
 let buyPlan = null;
 document.querySelectorAll("[data-plan]").forEach(a => {
   const p = a.dataset.plan;
