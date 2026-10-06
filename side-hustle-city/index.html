@@ -54,6 +54,11 @@ p{margin:0 0 12px}
 .card b{display:block;font-size:15px;margin-bottom:2px}
 .card span{color:var(--dim);font-size:14px}
 .card.new{border-color:var(--g)} .card.new b::after{content:"NEW";font:800 10px Inter;color:#0b0420;background:var(--g);border-radius:6px;padding:2px 6px;margin-left:8px;vertical-align:2px}
+.skins{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+.skin{display:flex;flex-direction:column;gap:4px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:8px 8px 10px}
+.skin .sw{aspect-ratio:9/12;border-radius:11px;overflow:hidden}.skin .sw img{width:100%;height:100%;object-fit:cover;display:block}
+.skin b{font-size:15px;margin-top:4px}.skin span{color:var(--dim);font-size:12.5px;flex:1}
+.skin .btn{padding:10px;font-size:14px;margin-top:6px}.skin .free{text-align:center;font:800 12px Inter;color:var(--g);padding:12px 0 2px}
 .plans{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));align-items:stretch}
 .plan{position:relative;display:flex;flex-direction:column;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px 18px 18px}
 .plan.hot{border:2px solid var(--p);box-shadow:0 0 34px #ff2bd633}
@@ -118,7 +123,7 @@ footer{color:var(--dim);font-size:13px;text-align:center;margin-top:34px}
 </div>
 
 <h2 id="pricing">Pick your plan</h2>
-<p class="sub">No checkout yet: tap a plan and send the email. We reply within a day with the next steps and a payment link.</p>
+<p class="sub">Pay by card or PayPal. The Full System kit arrives by email in a few minutes; for Hosted and Done For You we reply within a day.</p>
 <div class="plans">
   <div class="plan hot">
     <span class="badge">EASIEST</span>
@@ -159,6 +164,23 @@ footer{color:var(--dim);font-size:13px;text-align:center;margin-top:34px}
   </div>
 </div>
 
+<h2 id="skins">🎨 City skins</h2>
+<p class="sub">Change the whole look of your city with one tap. Neon Night comes free with every plan; each extra skin is $1, yours to keep. <a href="../city-tour/city/" style="color:var(--g)">Try them all free in the demo city</a> (tap 🎨).</p>
+<div class="skins">
+  <div class="skin"><div class="sw" style="background:linear-gradient(120deg,#0a0420,#ff2bd6,#00f0ff)"><img src="skins/neon.jpg" alt="Neon Night skin" loading="lazy" onerror="this.remove()"></div>
+    <b>Neon Night</b><span>Rainy cyberpunk night. The classic.</span><div class="free">FREE · included</div></div>
+  <div class="skin"><div class="sw" style="background:linear-gradient(120deg,#ff8a3d,#ffd166,#7a2e5a)"><img src="skins/golden.jpg" alt="Golden Hour skin" loading="lazy" onerror="this.remove()"></div>
+    <b>Golden Hour</b><span>Warm sunset light, no rain.</span><a class="btn ghost" data-plan="skin_golden" href="mailto:hello@eaafix.com">Buy · $1</a></div>
+  <div class="skin"><div class="sw" style="background:linear-gradient(120deg,#cfe6ff,#ffffff,#5fb8ff)"><img src="skins/arctic.jpg" alt="Arctic Snow skin" loading="lazy" onerror="this.remove()"></div>
+    <b>Arctic Snow</b><span>White city, falling snow.</span><a class="btn ghost" data-plan="skin_arctic" href="mailto:hello@eaafix.com">Buy · $1</a></div>
+  <div class="skin"><div class="sw" style="background:linear-gradient(120deg,#000000,#22ff66,#0a3d1a)"><img src="skins/matrix.jpg" alt="Matrix skin" loading="lazy" onerror="this.remove()"></div>
+    <b>Matrix</b><span>Green code rain on black.</span><a class="btn ghost" data-plan="skin_matrix" href="mailto:hello@eaafix.com">Buy · $1</a></div>
+  <div class="skin"><div class="sw" style="background:linear-gradient(120deg,#2b1055,#ff71ce,#01cdfe)"><img src="skins/vapor.jpg" alt="Vaporwave skin" loading="lazy" onerror="this.remove()"></div>
+    <b>Vaporwave</b><span>Pink and teal 80s dream.</span><a class="btn ghost" data-plan="skin_vapor" href="mailto:hello@eaafix.com">Buy · $1</a></div>
+  <div class="skin"><div class="sw" style="background:linear-gradient(120deg,#7cc8ff,#ffffff,#4caf50)"><img src="skins/day.jpg" alt="Sunny Day skin" loading="lazy" onerror="this.remove()"></div>
+    <b>Sunny Day</b><span>Blue sky, green park, easy on the eyes.</span><a class="btn ghost" data-plan="skin_day" href="mailto:hello@eaafix.com">Buy · $1</a></div>
+</div>
+
 <h2>How it works</h2>
 <div class="steps">
   <div class="card"><b>Pick a plan</b><span>Email us with the side hustles you run (shops, pages, bots, freelance…).</span></div>
@@ -174,7 +196,8 @@ footer{color:var(--dim);font-size:13px;text-align:center;margin-top:34px}
 <details><summary>Which platforms work?</summary><p>Anything with an API (Etsy, Gumroad, Printify, Facebook, Instagram, GitHub, Stripe, crypto wallets…) plus manual numbers for places without one, like Amazon KDP.</p></details>
 <details><summary>Are the numbers in the video real?</summary><p>No. The video and the live demo use sample numbers only.</p></details>
 <details><summary>Does it work on my phone?</summary><p>Yes, it was built phone-first. Tap buildings, pinch to zoom, use the joystick in Street mode.</p></details>
-<details><summary>How do I pay?</summary><p>Tap a plan and send the email. We reply with a payment link and the next steps.</p></details>
+<details><summary>How do I pay?</summary><p>Tap a plan, enter your email and pay by card (Apple Pay and Google Pay work too) or PayPal. Monthly plans are never charged automatically: we email a pay link each month.</p></details>
+<details><summary>How do skins work?</summary><p>Every city comes with Neon Night. Extra skins are $1 each, once. Full System owners add the skin id from the order email to one small file; on Hosted or Done For You we switch it on for you. Switch between your skins any time with the 🎨 button.</p></details>
 
 <div class="contact">
   <h2>Questions? Just ask.</h2>
@@ -217,7 +240,10 @@ const SHC = "https://chat.sonneblomdigitaal.co.za/shc/checkout";
 const MAIL = p => "mailto:hello@eaafix.com?subject=" + encodeURIComponent("Side Hustle City - " + p);
 const PLAN_INFO = { hosted: ["Hosted plan", "$49.99 a month. We host and run your city, with new tools every week."],
                     full: ["Full system", "$499.99 once. The full kit by email: code, setup guide and the Claude prompts."],
-                    dfy: ["Done for you", "$399 setup, then $19.99 a month maintenance after 30 days. We build it for you."] };
+                    dfy: ["Done for you", "$399 setup, then $19.99 a month maintenance after 30 days. We build it for you."],
+                    skin_golden: ["Golden Hour skin", "$1 once. Warm sunset look for your city."], skin_arctic: ["Arctic Snow skin", "$1 once. White city with falling snow."],
+                    skin_matrix: ["Matrix skin", "$1 once. Green code rain on black."], skin_vapor: ["Vaporwave skin", "$1 once. Pink and teal 80s look."],
+                    skin_day: ["Sunny Day skin", "$1 once. Blue sky and a green park."] };
 // Activity beacon -> shc_pay.py /hit (no cookies, random visitor id): view, saw prices, tapped a plan, tapped pay.
 const VID = localStorage.shcv || (localStorage.shcv = Math.random().toString(36).slice(2, 12));
 const QS = new URLSearchParams(location.search), REF = document.referrer;

@@ -1518,7 +1518,8 @@ function skinPicker() {
   el.innerHTML = `<h4>🎨 City skins</h4><p>${DEMO ? "Preview every skin free. Extra skins are $1 each." : OWNED ? "Locked skins are $1 each on the Side Hustle City page." : "Tap a skin to switch the whole city."}</p>
     <div class="g">${SKINS.map(k => `<button class="sk${k.id === SKIN.id ? " on" : ""}" data-sk="${k.id}"><div class="sw" style="background:linear-gradient(120deg,${k.swatch.join(",")})"></div>
       <span class="nm">${esc(k.name)}<i>${k.price ? (own(k.id) ? (DEMO ? "$1" : "") : "🔒 $1") : "free"}</i></span></button>`).join("")}</div>`;
-  el.querySelectorAll("[data-sk]").forEach(b => b.onclick = () => own(b.dataset.sk) ? applySkin(b.dataset.sk) : window.open("https://sonneblomdigitaal.co.za/side-hustle-city/#skins", "_blank"));
+  el.querySelectorAll("[data-sk]").forEach(b => b.onclick = () => own(b.dataset.sk) ? applySkin(b.dataset.sk)
+    : window.CITY_SKIN_SHOP ? window.open(window.CITY_SKIN_SHOP, "_blank") : alert("This skin is $1 on the Side Hustle City page (link in your order email). Then add its id to skins.js."));
 }
 $("#skinbtn").onclick = () => { const el = $("#skins"); el.hidden = !el.hidden; if (!el.hidden) skinPicker(); };
 async function reload() {
