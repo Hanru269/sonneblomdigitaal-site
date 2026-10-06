@@ -154,6 +154,21 @@ function model(D) {
 }
 const svLabel = n => !svc ? "unknown" : svc[n] === "active" ? "🟢 running" : "🔴 " + (svc[n] || "down");
 
+// quick links shown at the bottom of every building's panel
+const LINKS = {
+  vault: [["Etsy finances", "https://www.etsy.com/your/account/payments"], ["Gumroad payouts", "https://gumroad.com/payouts"], ["Yoco portal", "https://portal.yoco.com"], ["Shop hub", "https://sonneblomdigitaal.co.za"]],
+  etsy: [["Shop Manager", "https://www.etsy.com/your/shops/me/dashboard"], ["Orders", "https://www.etsy.com/your/orders/sold"], ["Messages", "https://www.etsy.com/messages"], ["Stats", "https://www.etsy.com/your/shops/me/stats"], ["Etsy Ads", "https://www.etsy.com/your/shops/me/advertising"], ["Printify", "https://printify.com/app/stores"], ["Pinterest", "https://za.pinterest.com/SonneblomDigitaal/"], ["Shop hub", "https://sonneblomdigitaal.co.za"]],
+  fb: [["Inbox: Rose", "https://business.facebook.com/latest/inbox/all?asset_id=1336610982875262"], ["Inbox: Sonneblom", "https://business.facebook.com/latest/inbox/all?asset_id=1296018053605465"], ["Ads Manager", "https://adsmanager.facebook.com/adsmanager/manage/campaigns?act=770255640007326"], ["Planner", "https://business.facebook.com/latest/planner"], ["Sonneblom Page", "https://www.facebook.com/profile.php?id=1296018053605465"], ["Rose Page", "https://www.facebook.com/rose.companion"], ["Instagram", "https://www.instagram.com/rose.companion/"]],
+  rose: [["Website", "https://rosecompanion.github.io/"], ["Web chat", "https://rosecompanion.github.io/chat.html"], ["Telegram bot", "https://t.me/EveningCompany_bot"], ["Instagram", "https://www.instagram.com/rose.companion/"], ["Facebook", "https://www.facebook.com/rose.companion"], ["Yoco payments", "https://portal.yoco.com"]],
+  gumroad: [["Dashboard", "https://gumroad.com/dashboard"], ["Products", "https://gumroad.com/products"], ["Sales", "https://gumroad.com/customers"], ["Superhive", "https://superhivemarket.com"], ["BlenderArtists", "https://blenderartists.org"], ["BlenderNation", "https://www.blendernation.com"]],
+  kdp: [["Bookshelf", "https://kdp.amazon.com/en_US/bookshelf"], ["Reports", "https://kdpreports.amazon.com/dashboard"]],
+  lab: [["Apify console", "https://console.apify.com/actors"], ["Apify Store", "https://apify.com/store"], ["Contra", "https://contra.com/opportunities"]],
+  krypto: [["Phantom", "https://phantom.com"], ["DexScreener", "https://dexscreener.com/solana"]],
+  kalshi: [["Kalshi portfolio", "https://kalshi.com/portfolio"]],
+  poly: [["Polymarket portfolio", "https://polymarket.com/portfolio"]],
+};
+const linksHTML = id => (LINKS[id] || []).length ? `<div class="links"><div class="lt">Quick links</div>${LINKS[id].map(([t, u]) => `<a href="${u}" target="_blank" rel="noopener">${esc(t)} ↗</a>`).join("")}</div>` : "";
+
 function sheetHTML(title, sub, big, bigLabel, kvs, list, listTitle, link, note) {
   return `<h2>${esc(title)}</h2><div class="sub">${esc(sub)}</div>
     <div class="big">${typeof big === "number" && bigLabel.includes("revenue") ? usd(big) : esc(typeof big === "number" ? num(big) : big)}<small>${esc(bigLabel)}</small></div>
@@ -636,7 +651,7 @@ function focus(id) {
   if (id === "library") return openTerm();
   closeTerm();
   const sheet = $("#sheet"); sheet.style.setProperty("--c", id === "vault" ? "#ffd166" : hex(b.color));
-  $("#sheetbody").innerHTML = id === "vault" ? vaultSheet() : b.sheet();
+  $("#sheetbody").innerHTML = (id === "vault" ? vaultSheet() : b.sheet()) + linksHTML(id);
   sheet.hidden = false; sheet.scrollTop = 0;
 }
 
