@@ -36,8 +36,8 @@ function model(D) {
   const et = s.etsy || {}, gu = s.gumroad || {}, pf = s.printify || {}, ap = s.apify || {}, x4 = s.x402 || {};
   const kr = s.krypto || {}, bo = s.bots || {};
   const pnl = n => (n < 0 ? "-$" : "+$") + Math.abs(n || 0).toFixed(2);
-  const botRows = x => [["Lifetime", pnl(x.lifetime)], ["Best trade", pnl(x.best_trade)], ["Best day", pnl(x.best_day)], ["Win rate", x.trades ? Math.round(100 * x.wins / x.trades) + "%" : "–"]];
-  const botSheet = x => [["Lifetime profit", pnl(x.lifetime)], ["Trades", num(x.trades)], ["Wins", `${num(x.wins)} (${x.trades ? Math.round(100 * x.wins / x.trades) : 0}%)`],
+  const botRows = x => [["Best day", `${pnl(x.best_day)} (${(x.best_day_date || "").slice(5)})`], ["Best trade", pnl(x.best_trade)], ["Lifetime", pnl(x.lifetime)], ["Bot", x.running ? "running" : "stopped"]];
+  const botSheet = x => [["Profit today", pnl(x.today)], ["Lifetime profit", pnl(x.lifetime)], ["Trades", num(x.trades)], ["Wins", `${num(x.wins)} (${x.trades ? Math.round(100 * x.wins / x.trades) : 0}%)`],
     ["Highest profit trade", `${pnl(x.best_trade)} · ${x.best_trade_day || ""}`], ["Worst trade", pnl(x.worst_trade)],
     ["Highest profit day", `${pnl(x.best_day)} · ${x.best_day_date || ""}`], ["Worst day", `${pnl(x.worst_day)} · ${x.worst_day_date || ""}`],
     ["Days traded", x.days_traded ?? "–"], ["Last trade", x.last_trade ? ago(x.last_trade) : "–"], ["Bot", x.running ? "🟢 running" : "⚪ stopped"]];
@@ -124,22 +124,22 @@ function model(D) {
       status: st("krypto"), today: 0, total: 0,
       tag: [usd(kr.usd || 0) + " wallet", kr.armed_scripts?.length ? "bot trading" : "bot off"],
       board: { title: "KRYPTO MINT", main: usd(kr.usd || 0), mainLabel: "Phantom wallet (SOL + tokens)",
-        rows: [["SOL", (kr.sol ?? 0).toFixed(4)], ["Rand", "R" + num(Math.round(kr.zar || 0))], ["Bot lifetime", pnl(kb.lifetime)], ["Trading", kr.armed_scripts?.length ? kr.armed_scripts.join(", ") : "off"]] },
+        rows: [["SOL", (kr.sol ?? 0).toFixed(4)], ["Rand", "R" + num(Math.round(kr.zar || 0))], ["Bot today", pnl(kb.today)], ["Best day", pnl(kb.best_day)]] },
       sheet: () => sheetHTML("Krypto Mint", "Phantom / Krypto Bot wallet on Solana (read-only)", usd(kr.usd || 0), "wallet value",
         [["SOL", (kr.sol ?? 0).toFixed(4)], ["Tokens (open)", usd(kr.tokens_usd || 0)], ["Rand", "R" + num(Math.round(kr.zar || 0))], ["Trading script", kr.armed_scripts?.length ? kr.armed_scripts.join(", ") : "off"], ["Bot app", kr.app_running ? "🟢 running" : "🔴 stopped"], ...botSheet(kb).slice(0, 9)],
         (kr.tokens || []).map(t => [t.symbol, usd(t.usd)]), "Open tokens", kr.address ? "https://solscan.io/account/" + kr.address : "", "Balance read from the public Solana chain on every HQ refresh.") },
 
     { id: "kalshi", name: "Kalshi Casino", short: "KALSHI", icon: "🎲", color: 0x00d395, pos: [20, 46], w: 5, d: 5, h: 13, kind: "coin",
       status: st("bots"), today: 0, total: 0,
-      tag: [pnl(ks.lifetime) + " lifetime", ks.running ? "bot running" : "bot stopped"],
-      board: { title: "KALSHI BOT", main: pnl(ks.lifetime), mainLabel: "lifetime profit", rows: botRows(ks) },
+      tag: [pnl(ks.today) + " today", "best day " + pnl(ks.best_day)],
+      board: { title: "KALSHI BOT", main: pnl(ks.today), mainLabel: "profit today", rows: botRows(ks) },
       sheet: () => sheetHTML("Kalshi Casino", "BTC/ETH 15-minute contracts · numbers from Kalshi's own settlements", pnl(ks.lifetime), "lifetime profit",
         botSheet(ks).concat([["Balance", usd(ks.balance || 0)]]), [], "", "https://kalshi.com/portfolio", "Read-only: the bot itself is switched off.") },
 
     { id: "poly", name: "Polymarket Exchange", short: "POLYMARKET", icon: "📈", color: 0x2e5cff, pos: [-20, 46], w: 5, d: 5, h: 15, kind: "coin",
       status: st("bots"), today: 0, total: 0,
-      tag: [pnl(pm.lifetime) + " lifetime", pm.running ? "bot running" : "bot stopped"],
-      board: { title: "POLYMARKET BOT", main: pnl(pm.lifetime), mainLabel: "lifetime profit", rows: botRows(pm) },
+      tag: [pnl(pm.today) + " today", "best day " + pnl(pm.best_day)],
+      board: { title: "POLYMARKET BOT", main: pnl(pm.today), mainLabel: "profit today", rows: botRows(pm) },
       sheet: () => sheetHTML("Polymarket Exchange", "Crypto Up/Down 5-minute markets · numbers from Polymarket's public data", pnl(pm.lifetime), "lifetime profit",
         botSheet(pm).concat([["Unredeemed positions", pnl(pm.open_pnl)],
           ["Paper bot", pm.paper ? `${pm.paper.running ? "🟢" : "⚪"} $${pm.paper.cash} cash (started $${pm.paper.start}), ${pm.paper.open} open` : "not started"]]), [], "", "https://polymarket.com/portfolio", "Read-only: the bot itself is switched off.") },
