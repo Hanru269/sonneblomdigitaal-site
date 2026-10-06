@@ -55,6 +55,7 @@ function model(D) {
   const pi = s.pinterest || {}, gh = s.github || {}, sh = s.showroom || {}, rn = s.rnd || {};
   const shF = sh.funnel || {};
   const shSt = sh.stages || [], shDone = shSt.filter(x => x.done).length, shNext = shSt.find(x => !x.done);
+  const shOpen = ["listing", "checkout"].every(id => (shSt.find(x => x.id === id) || {}).done);  // selling live = an open store, not a building site
   const plus = n => n == null ? "–" : (n >= 0 ? "+" : "") + num(n);
   const L = et.listings || [], G = gu.listings || [];
   const eS = et.sales || [], gS = gu.sales || [];
@@ -222,16 +223,24 @@ function model(D) {
         <div class="list"><div style="color:var(--dim);font-size:12px"><span>Top 3 this week</span></div>${(rn.top3 || []).map((t, i) => `<div><span>${i + 1}. ${esc(t)}</span></div>`).join("")}</div>
         ${(rn.items || []).map(x => `<div class="note"><b>${esc(x.name)}</b> · <i>${esc(x.score)}</i><br>${esc(x.numbers)}<br>🚧 ${esc(x.bottleneck)}<br>✅ ${esc(x.fix)}</div>`).join("")}` },
 
-    { id: "showroom", name: "Showroom (under construction)", short: "SHOWROOM", icon: "🏗️", color: 0xffb020, pos: [-28, 46], w: 9, d: 8, h: 16, kind: "construction",
+    { id: "showroom", name: shOpen ? "Side Hustle City" : "Showroom (under construction)", short: shOpen ? "SHC" : "SHOWROOM", icon: shOpen ? "🏙️" : "🏗️",
+      color: 0xffb020, pos: [-28, 46], w: 9, d: 8, h: 16, kind: shOpen ? "store" : "construction",
       status: "ok", today: 0, total: (shF.page || {}).revenue_usd || sh.revenue_usd || 0, built: shSt.length ? shDone / shSt.length : 0,
-      tag: [`${Math.round(100 * (shSt.length ? shDone / shSt.length : 0))}% built`, shNext ? "next: " + shNext.name.split(" ")[0] : "open"],
-      board: { title: "SHOWROOM", main: Math.round(100 * (shSt.length ? shDone / shSt.length : 0)) + "%", mainLabel: "selling pipeline built",
+      tag: shOpen ? ["OPEN · selling", `${num((shF.page || {}).paid || 0)} sales`] : [`${Math.round(100 * (shSt.length ? shDone / shSt.length : 0))}% built`, shNext ? "next: " + shNext.name.split(" ")[0] : "open"],
+      board: shOpen ? { title: "SIDE HUSTLE CITY", main: usd((shF.page || {}).revenue_usd || 0), mainLabel: "sold · store is open",
+          rows: [["Page visits", num((shF.page || {}).visits)], ["Plan taps", num((shF.page || {}).plan)], ["Sales", num((shF.page || {}).paid)], ["IG posts", num(sh.ig_posts)]] }
+        : { title: "SHOWROOM", main: Math.round(100 * (shSt.length ? shDone / shSt.length : 0)) + "%", mainLabel: "selling pipeline built",
         rows: shF.steps ? [["Ad clicks", num(shF.ads.clicks)], ["Page visits", num(shF.page.visits)], ["Plan taps", num(shF.page.plan)], ["Sales", num(shF.page.paid)]]
           : [["Steps done", `${shDone}/${shSt.length}`], ["Next", shNext ? shNext.name.split(" ")[0] : "–"], ["IG followers", num(sh.ig_followers)], ["Sales", num(sh.sales)]] },
-      sheet: () => sheetHTML("Showroom", `Selling "${sh.product || "Side Hustle City"}": ${sh.pitch || ""}`, Math.round(100 * (shSt.length ? shDone / shSt.length : 0)) + "%", "of the pipeline built",
+      sheet: () => (shOpen
+        ? sheetHTML("Side Hustle City", `OPEN · selling "${sh.product || "Side Hustle City"}": ${sh.pitch || ""}`, usd((shF.page || {}).revenue_usd || 0), "sold so far",
+            [["Page visits", num((shF.page || {}).visits)], ["Checkouts", num((shF.page || {}).checkouts)], ["Sales", num((shF.page || {}).paid)], ["IG page", sh.ig_handle || "–"], ["IG followers", num(sh.ig_followers)], ["IG posts", num(sh.ig_posts)]],
+            shSt.map(x => [(x.done ? "✅ " : "🚧 ") + x.name, x.note || ""]), "Launch checklist", "",
+            "We sell the dashboard, not a money dream: \"I use this to see my side hustles better.\"")
+        : sheetHTML("Showroom", `Selling "${sh.product || "Side Hustle City"}": ${sh.pitch || ""}`, Math.round(100 * (shSt.length ? shDone / shSt.length : 0)) + "%", "of the pipeline built",
         [["IG page", sh.ig_handle || "not made yet"], ["IG followers", num(sh.ig_followers)], ["IG posts", num(sh.ig_posts)], ["Sales", num(sh.sales)], ["Revenue", usd(sh.revenue_usd || 0)]],
         shSt.map(x => [(x.done ? "✅ " : "🚧 ") + x.name, x.note || ""]), "Build steps", "",
-        "We sell the dashboard, not a money dream: \"I use this to see my side hustles better.\"") + funnelHTML(shF) },
+        "We sell the dashboard, not a money dream: \"I use this to see my side hustles better.\"")) + funnelHTML(shF) },
 
     { id: "library", name: "The Library", short: "LIBRARY", icon: "📚", color: 0xe8a87c, pos: [0, -66], w: 20, d: 12, h: 12, kind: "library",
       status: sv("hq-portal"), today: 0, total: 0,
@@ -767,6 +776,18 @@ function building(b) {
     const rings = [0, 1.05, 2.1].map(a => { const r = new THREE.Mesh(new THREE.TorusGeometry(2.6, 0.09, 8, 48), new THREE.MeshBasicMaterial({ color: c, toneMapped: false }));
       r.rotation.set(Math.PI / 2, a, 0); const e = new THREE.Mesh(new THREE.SphereGeometry(0.3, 8, 6), new THREE.MeshBasicMaterial({ color: 0x00f0ff })); e.position.x = 2.6; r.add(e); atom.add(r); return r; });
     g.add(atom); anim.push(dt => { atom.rotation.y += dt * 0.6; rings.forEach((r, i) => r.rotation.z += dt * (1.5 + i * 0.4)); }); top = b.h + 8;
+  } else if (b.kind === "store") {  // Side Hustle City, open: lit tower, glowing OPEN ring, a tiny spinning city on the roof
+    g.add(tower(b.w, b.h, b.d, c, 7, lit));
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(Math.max(b.w, b.d) * 0.72, 0.18, 8, 64), new THREE.MeshBasicMaterial({ color: 0x3dffa8, toneMapped: false }));
+    ring.rotation.x = Math.PI / 2; ring.position.y = b.h * 0.55; g.add(ring);
+    const roof = new THREE.Group(); roof.position.y = b.h + 0.3;
+    const pad = new THREE.Mesh(new THREE.CylinderGeometry(3.6, 3.6, 0.3, 32), new THREE.MeshBasicMaterial({ color: 0xffb020, toneMapped: false })); roof.add(pad);
+    const cols = [0xff3d9a, 0x00e5ff, 0xffd166, 0x9945ff, 0x3dffa8, 0xff8a3d];
+    for (let i = 0; i < 9; i++) { const a = i / 9 * Math.PI * 2, r = i % 3 ? 2.3 : 1.1, h = 0.8 + ((i * 7) % 5) * 0.45;
+      const m = new THREE.Mesh(new THREE.BoxGeometry(0.7, h, 0.7), new THREE.MeshBasicMaterial({ color: cols[i % cols.length], toneMapped: false }));
+      m.position.set(Math.cos(a) * r, 0.15 + h / 2, Math.sin(a) * r); roof.add(m); }
+    g.add(roof); anim.push((dt, t) => { roof.rotation.y += dt * 0.5; ring.position.y = b.h * (0.5 + 0.08 * Math.sin(t * 1.2)); });
+    top = b.h + 3.5;
   } else if (b.kind === "construction") {  // Showroom: half-built floors in scaffolding, a turning crane, warning lights; grows with the pipeline
     const built = Math.max(0.2, b.built || 0), hb = b.h * built;
     g.add(tower(b.w, hb, b.d, c, 99, lit));
@@ -1240,7 +1261,7 @@ function hud() {
   const why = b => [...(att[b.id] || []), ...(b.status === "down" ? ["Something here is down"] : [])];
   const chip = (id, label, color, w) => `<button class="chip${w.length ? " need" : ""}" data-id="${id}" title="${esc(w.join(" · "))}" style="border-color:${color}88;color:${color}">${w.length ? `<i class="blip"></i>` : ""}${esc(label)}</button>`;
   const names = { vault: "Vault", etsy: "Etsy", fb: "Media HQ", rose: "Rose", contra: "Contra", zoho: "Outreach", gumroad: "Gumroad", kdp: "KDP", lab: "API Lab",
-    krypto: "Krypto", kalshi: "Kalshi", poly: "Polymarket", longshot: "Long Shot", pinterest: "Pinterest", github: "GitHub", rnd: "R&D", showroom: "Showroom", library: "Library" };
+    krypto: "Krypto", kalshi: "Kalshi", poly: "Polymarket", longshot: "Long Shot", pinterest: "Pinterest", github: "GitHub", rnd: "R&D", showroom: "SHC", library: "Library" };
   const list = [chip("vault", "Vault", "#ffd166", att.vault || [])].concat(B.map(b => chip(b.id, names[b.id] || b.short, hex(b.color), why(b))));
   $("#chips").innerHTML = list.join("");
   M.need = id => id === "vault" ? att.vault || [] : why(B.find(x => x.id === id) || {});
