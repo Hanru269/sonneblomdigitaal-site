@@ -34,7 +34,14 @@ async function decrypt(pw) {
 function model(D) {
   const s = D.snapshot, m = D.manual || {};
   const et = s.etsy || {}, gu = s.gumroad || {}, pf = s.printify || {}, ap = s.apify || {}, x4 = s.x402 || {};
-  const kr = s.krypto || {};
+  const kr = s.krypto || {}, bo = s.bots || {};
+  const pnl = n => (n < 0 ? "-$" : "+$") + Math.abs(n || 0).toFixed(2);
+  const botRows = x => [["Lifetime", pnl(x.lifetime)], ["Best trade", pnl(x.best_trade)], ["Best day", pnl(x.best_day)], ["Win rate", x.trades ? Math.round(100 * x.wins / x.trades) + "%" : "–"]];
+  const botSheet = x => [["Lifetime profit", pnl(x.lifetime)], ["Trades", num(x.trades)], ["Wins", `${num(x.wins)} (${x.trades ? Math.round(100 * x.wins / x.trades) : 0}%)`],
+    ["Highest profit trade", `${pnl(x.best_trade)} · ${x.best_trade_day || ""}`], ["Worst trade", pnl(x.worst_trade)],
+    ["Highest profit day", `${pnl(x.best_day)} · ${x.best_day_date || ""}`], ["Worst day", `${pnl(x.worst_day)} · ${x.worst_day_date || ""}`],
+    ["Days traded", x.days_traded ?? "–"], ["Last trade", x.last_trade ? ago(x.last_trade) : "–"], ["Bot", x.running ? "🟢 running" : "⚪ stopped"]];
+  const ks = bo.kalshi || {}, pm = bo.polymarket || {}, kb = bo.krypto || {};
   const fb = s.facebook || {}, ro = s.rose || {}, ig = s.instagram || {}, rs = s.rose_social || {};
   const L = et.listings || [], G = gu.listings || [];
   const eS = et.sales || [], gS = gu.sales || [];
@@ -116,11 +123,25 @@ function model(D) {
     { id: "krypto", name: "Krypto Mint", short: "KRYPTO", icon: "🪙", color: 0x9945ff, pos: [0, 44], w: 6, d: 6, h: 16, kind: "coin",
       status: worst(st("krypto"), sv("krypto")), today: 0, total: 0,
       tag: [`${(kr.sol ?? 0).toFixed(3)} SOL`, kr.armed_scripts?.length ? "bot trading" : "bot off"],
-      board: { title: "KRYPTO MINT", main: usd(kr.usd || 0), mainLabel: "bot wallet (Solana)",
-        rows: [["SOL", (kr.sol ?? 0).toFixed(4)], ["Rand", "R" + num(Math.round(kr.zar || 0))], ["Trading", kr.armed_scripts?.length ? kr.armed_scripts.join(", ") : "off"]] },
-      sheet: () => sheetHTML("Krypto Mint", "Krypto Bot wallet on Solana (read-only)", usd(kr.usd || 0), "wallet value",
-        [["SOL", (kr.sol ?? 0).toFixed(4)], ["Rand", "R" + num(Math.round(kr.zar || 0))], ["Trading script", kr.armed_scripts?.length ? kr.armed_scripts.join(", ") : "off"], ["Bot app", svLabel("krypto")]],
-        [], "", kr.address ? "https://solscan.io/account/" + kr.address : "", "Balance read from the public Solana chain on every HQ refresh.") },
+      board: { title: "KRYPTO MINT", main: usd(kr.usd || 0), mainLabel: "Phantom wallet (SOL + tokens)",
+        rows: [["SOL", (kr.sol ?? 0).toFixed(4)], ["Rand", "R" + num(Math.round(kr.zar || 0))], ["Bot lifetime", pnl(kb.lifetime)], ["Trading", kr.armed_scripts?.length ? kr.armed_scripts.join(", ") : "off"]] },
+      sheet: () => sheetHTML("Krypto Mint", "Phantom / Krypto Bot wallet on Solana (read-only)", usd(kr.usd || 0), "wallet value",
+        [["SOL", (kr.sol ?? 0).toFixed(4)], ["Tokens (open)", usd(kr.tokens_usd || 0)], ["Rand", "R" + num(Math.round(kr.zar || 0))], ["Trading script", kr.armed_scripts?.length ? kr.armed_scripts.join(", ") : "off"], ["Bot app", svLabel("krypto")], ...botSheet(kb).slice(0, 9)],
+        (kr.tokens || []).map(t => [t.symbol, usd(t.usd)]), "Open tokens", kr.address ? "https://solscan.io/account/" + kr.address : "", "Balance read from the public Solana chain on every HQ refresh.") },
+
+    { id: "kalshi", name: "Kalshi Casino", short: "KALSHI", icon: "🎲", color: 0x00d395, pos: [20, 46], w: 5, d: 5, h: 13, kind: "coin",
+      status: st("bots"), today: 0, total: 0,
+      tag: [pnl(ks.lifetime) + " lifetime", ks.running ? "bot running" : "bot stopped"],
+      board: { title: "KALSHI BOT", main: pnl(ks.lifetime), mainLabel: "lifetime profit", rows: botRows(ks) },
+      sheet: () => sheetHTML("Kalshi Casino", "BTC/ETH 15-minute contracts · numbers from Kalshi's own settlements", pnl(ks.lifetime), "lifetime profit",
+        botSheet(ks).concat([["Balance", usd(ks.balance || 0)]]), [], "", "https://kalshi.com/portfolio", "Read-only: the bot itself is switched off.") },
+
+    { id: "poly", name: "Polymarket Exchange", short: "POLYMARKET", icon: "📈", color: 0x2e5cff, pos: [-20, 46], w: 5, d: 5, h: 15, kind: "coin",
+      status: st("bots"), today: 0, total: 0,
+      tag: [pnl(pm.lifetime) + " lifetime", pm.running ? "bot running" : "bot stopped"],
+      board: { title: "POLYMARKET BOT", main: pnl(pm.lifetime), mainLabel: "lifetime profit", rows: botRows(pm) },
+      sheet: () => sheetHTML("Polymarket Exchange", "Crypto Up/Down 5-minute markets · numbers from Polymarket's public data", pnl(pm.lifetime), "lifetime profit",
+        botSheet(pm).concat([["Unredeemed positions", pnl(pm.open_pnl)]]), [], "", "https://polymarket.com/portfolio", "Read-only: the bot itself is switched off.") },
 
     { id: "library", name: "The Library", short: "LIBRARY", icon: "📚", color: 0xe8a87c, pos: [45, 10], w: 9, d: 7, h: 9, kind: "library",
       status: sv("hq-portal"), today: 0, total: 0,
