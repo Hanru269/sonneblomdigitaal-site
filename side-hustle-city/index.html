@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b0420">
+<title>Side Hustle City · your side hustles as a 3D city dashboard</title>
+<meta name="description" content="A 3D city dashboard where every side hustle is a building: live numbers on billboards, money beams, a report building and a Claude chat. Hosted, full system or done for you.">
+<meta property="og:title" content="Side Hustle City: my side hustles as a 3D city">
+<meta property="og:description" content="The dashboard I use to see all my side hustles in one place. Every hustle is a building. Walk the live demo.">
+<meta property="og:image" content="https://sonneblomdigitaal.co.za/side-hustle-city/cover.jpg">
+<meta property="og:url" content="https://sonneblomdigitaal.co.za/side-hustle-city/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="../city-tour/icon-192.png">
+<link rel="apple-touch-icon" href="../city-tour/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+<script>
+// Buy buttons: swap these for checkout links (Gumroad, Stripe, Yoco…) when they exist. Everything else stays the same.
+const PLANS = {
+  hosted: "mailto:hello@eaafix.com?subject=Side%20Hustle%20City%20-%20Hosted%20plan",
+  full:   "mailto:hello@eaafix.com?subject=Side%20Hustle%20City%20-%20Full%20system",
+  dfy:    "mailto:hello@eaafix.com?subject=Side%20Hustle%20City%20-%20Done%20for%20you",
+  ask:    "mailto:hello@eaafix.com?subject=Side%20Hustle%20City%20-%20Question",
+};
+</script>
+<style>
+:root{--bg:#0b0420;--card:#160a3c;--line:#2d1a6e;--dim:#a99cd6;--txt:#f3efff;--g:#3dffa8;--y:#ffd166;--p:#ff2bd6;--c:#00f0ff}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;background:var(--bg)}
+body{margin:0;min-height:100vh;background:radial-gradient(circle at 50% 0,#2a1170,transparent 900px) no-repeat,var(--bg);color:var(--txt);font:16px/1.6 Inter,system-ui,sans-serif;-webkit-text-size-adjust:100%}
+a{color:var(--c)}
+main{max-width:1060px;margin:0 auto;padding:22px 18px 60px}
+.top{display:flex;justify-content:space-between;align-items:center;font:800 14px Orbitron,sans-serif;letter-spacing:1.5px}
+.top b{color:var(--y)} .top a{font:600 13px Inter,sans-serif;color:var(--dim);text-decoration:none}
+.hero{display:grid;gap:26px;align-items:center;margin-top:18px}
+.kick{font:600 12px Inter;color:var(--y);letter-spacing:2px;text-transform:uppercase}
+h1{font:800 clamp(32px,8vw,52px)/1.08 Orbitron,sans-serif;margin:8px 0 12px;letter-spacing:.5px}
+h1 b{color:var(--y)} h1 i{font-style:normal;color:var(--p)}
+h2{font:800 clamp(20px,5vw,26px)/1.25 Orbitron,sans-serif;color:var(--c);margin:56px 0 8px;letter-spacing:.5px}
+h2+p.sub{color:var(--dim);margin:0 0 18px}
+p{margin:0 0 12px}
+.lead{color:var(--dim);font-size:17px}
+.phone{position:relative;justify-self:center;width:min(300px,78vw);aspect-ratio:9/16;border-radius:34px;padding:9px;background:linear-gradient(160deg,#ff2bd6,#00f0ff);box-shadow:0 0 60px #ff2bd655,0 0 120px #00f0ff22}
+.phone video{width:100%;height:100%;object-fit:cover;border-radius:26px;display:block;background:#0a0420}
+.btn{display:block;text-align:center;padding:15px 18px;border-radius:14px;font:800 16px Orbitron,sans-serif;text-decoration:none;letter-spacing:.3px}
+.btn small{display:block;font:600 12px Inter,sans-serif;opacity:.8;margin-top:2px;letter-spacing:0}
+.gold{background:linear-gradient(90deg,var(--y),#ff8a3d);color:#1a0b3a;box-shadow:0 0 30px #ffb02055}
+.ghost{border:2px solid var(--c);color:var(--c);background:#00f0ff10}
+.btns{display:grid;gap:10px;margin:20px 0 8px}
+.honest{font-size:13px;color:var(--dim);border-left:3px solid var(--y);padding-left:10px;margin-top:14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:10px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.card b{display:block;font-size:15px;margin-bottom:2px}
+.card span{color:var(--dim);font-size:14px}
+.card.new{border-color:var(--g)} .card.new b::after{content:"NEW";font:800 10px Inter;color:#0b0420;background:var(--g);border-radius:6px;padding:2px 6px;margin-left:8px;vertical-align:2px}
+.plans{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));align-items:stretch}
+.plan{position:relative;display:flex;flex-direction:column;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px 18px 18px}
+.plan.hot{border:2px solid var(--p);box-shadow:0 0 34px #ff2bd633}
+.badge{position:absolute;top:-12px;left:18px;background:var(--p);color:#fff;font:800 11px Inter;letter-spacing:1px;padding:4px 10px;border-radius:99px}
+.plan h3{margin:0;font:800 17px Orbitron,sans-serif;letter-spacing:.5px}
+.price{font:800 34px Orbitron,sans-serif;color:var(--g);margin:10px 0 0;line-height:1.1}
+.price small{font:600 14px Inter,sans-serif;color:var(--dim)}
+.plan .for{color:var(--dim);font-size:14px;margin:6px 0 12px}
+.plan ul{list-style:none;padding:0;margin:0 0 18px;flex:1}
+.plan li{padding:6px 0 6px 24px;position:relative;font-size:15px;border-top:1px solid #ffffff0d}
+.plan li::before{content:"✓";position:absolute;left:2px;color:var(--g);font-weight:800}
+.steps{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));counter-reset:s}
+.steps .card{border-left:4px solid var(--c)} .steps .card:nth-child(even){border-left-color:var(--p)}
+.steps b::before{counter-increment:s;content:counter(s) " · ";color:var(--y)}
+details{background:var(--card);border:1px solid var(--line);border-radius:14px;margin:8px 0;padding:0 16px}
+summary{cursor:pointer;padding:14px 0;font-weight:800;list-style:none;display:flex;justify-content:space-between;gap:12px}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"+";color:var(--y);font:800 20px Orbitron;line-height:1}
+details[open] summary::after{content:"–"}
+details p{color:var(--dim);font-size:15px}
+.contact{text-align:center;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:24px 18px;margin-top:56px}
+.contact h2{margin-top:0}
+footer{color:var(--dim);font-size:13px;text-align:center;margin-top:34px}
+@media (min-width:860px){
+  main{padding-top:30px}
+  .hero{grid-template-columns:1.15fr .85fr;gap:40px;margin-top:34px}
+  .phone{width:320px}
+  .btns{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+<main>
+<div class="top"><span>SIDE HUSTLE <b>CITY</b></span><a href="#pricing">Pricing ↓</a></div>
+
+<section class="hero">
+  <div>
+    <div class="kick">A 3D dashboard for people with too many side hustles</div>
+    <h1>My side hustles… <i>as a 3D</i> <b>city</b></h1>
+    <p class="lead">Every side hustle is a building. Its billboard shows the latest numbers, a light on the roof shows if it's running, and a gold beam shoots up when it made money today. I use it every morning to see all my projects in one place instead of opening ten tabs.</p>
+    <div class="btns">
+      <a class="btn gold" href="../city-tour/city/">🏙️ Walk the live demo<small>Works on your phone · sample numbers</small></a>
+      <a class="btn ghost" href="#pricing">See the 3 plans<small>From $29.99/month</small></a>
+    </div>
+    <p class="honest">Honest note: this is a dashboard, not a money machine. It won't make you money. It shows you clearly what's working and what's stuck, so you know where to spend your time.</p>
+  </div>
+  <div class="phone"><video src="city_reel_9x16.mp4" poster="cover.jpg" autoplay muted loop playsinline preload="metadata" aria-label="Walkthrough of the demo city"></video></div>
+</section>
+
+<h2>What's inside the city</h2>
+<p class="sub">Tap any building to open its panel. Your city gets the buildings for the hustles you actually run.</p>
+<div class="grid">
+  <div class="card"><b>💰 The Vault</b><span>The centre of town. Every sale from every shop adds up here. Gold beams and coins = money made today.</span></div>
+  <div class="card"><b>🛍️ Shop buildings</b><span>Etsy, Gumroad, Amazon KDP, Printify… listings, views, favourites and orders on a billboard.</span></div>
+  <div class="card"><b>📡 Media HQ</b><span>Facebook and Instagram: followers, views, posts and ad spend.</span></div>
+  <div class="card"><b>✨ AI Influencer Tower</b><span>Track an AI-made social account: followers gained, likes, comments, posts this week.</span></div>
+  <div class="card new"><b>🔬 R&amp;D Centre</b><span>Claude reads every building's numbers and writes a short report: what's stuck and what to try next.</span></div>
+  <div class="card"><b>📚 The Library</b><span>Chat with Claude from your phone, right inside the city. Ask it to check, fix or build things.</span></div>
+  <div class="card"><b>🏗️ Showroom</b><span>A building under construction that grows as each step of your next project gets done.</span></div>
+  <div class="card"><b>✉️ Outreach, 📌 Pinterest, 🐙 GitHub, 🪙 bots…</b><span>Email campaigns, scheduled pins, code pushed today, small trading bots (read-only).</span></div>
+  <div class="card"><b>🚶 Map, Bird &amp; Street mode</b><span>Orbit the map, fly over it, or walk the streets past the billboards. Joystick on phone, WASD on desktop.</span></div>
+</div>
+
+<h2 id="pricing">Pick your plan</h2>
+<p class="sub">No checkout yet: tap a plan and send the email. We reply within a day with the next steps and a payment link.</p>
+<div class="plans">
+  <div class="plan hot">
+    <span class="badge">EASIEST</span>
+    <h3>HOSTED</h3>
+    <div class="price">$29.99<small> / month</small></div>
+    <p class="for">We host and run your city for you.</p>
+    <ul>
+      <li>Your own private city, password protected</li>
+      <li>Numbers refresh automatically</li>
+      <li>Weekly updates with new buildings and tools (like the new R&amp;D Centre report)</li>
+      <li>Nothing to install, just open the link</li>
+    </ul>
+    <a class="btn gold" data-plan="hosted" href="mailto:hello@eaafix.com">Start Hosted</a>
+  </div>
+  <div class="plan">
+    <h3>FULL SYSTEM</h3>
+    <div class="price">$499.99<small> once</small></div>
+    <p class="for">Everything, to set it up yourself with Claude or any other AI.</p>
+    <ul>
+      <li>All the code: the 3D city, data collectors, encryption</li>
+      <li>Step-by-step setup guide</li>
+      <li>The Claude prompts we use to add buildings, write reports and run the Library chat</li>
+      <li>Yours to change and keep, no monthly fee</li>
+    </ul>
+    <a class="btn ghost" data-plan="full" href="mailto:hello@eaafix.com">Get the full system</a>
+  </div>
+  <div class="plan">
+    <h3>DONE FOR YOU</h3>
+    <div class="price">$299<small> + $9.99/month</small></div>
+    <p class="for">We set it up for you, on your own accounts.</p>
+    <ul>
+      <li>We connect your shops and pages and build your buildings</li>
+      <li>Monthly maintenance when something needs fixing</li>
+      <li>You own the setup</li>
+      <li>Email support: hello@eaafix.com</li>
+    </ul>
+    <a class="btn ghost" data-plan="dfy" href="mailto:hello@eaafix.com">Book a setup</a>
+  </div>
+</div>
+
+<h2>How it works</h2>
+<div class="steps">
+  <div class="card"><b>Pick a plan</b><span>Email us with the side hustles you run (shops, pages, bots, freelance…).</span></div>
+  <div class="card"><b>Connect your accounts</b><span>Read-only access or API keys where the platform allows it. Numbers without an API can be typed in.</span></div>
+  <div class="card"><b>Your city is built</b><span>One building per hustle. The numbers refresh on a schedule and are encrypted before they go online.</span></div>
+  <div class="card"><b>Open it every morning</b><span>On your phone or laptop. Add it to your home screen and it works like an app.</span></div>
+</div>
+
+<h2>Questions</h2>
+<details><summary>Will this make me money?</summary><p>No, and we won't pretend it will. It's a dashboard. It helped us notice which hustle was dead weight and which one deserved more time. That's the whole pitch.</p></details>
+<details><summary>What do I need?</summary><p>Accounts for the hustles you want in the city: Etsy, Gumroad, Amazon KDP, Shopify, Facebook/Instagram, and so on. For the Full System plan you also need a Claude subscription (or another AI coding assistant) and a computer or small cloud server to run it on. Hosted and Done For You need nothing extra.</p></details>
+<details><summary>Is my data private?</summary><p>Yes. Your numbers are encrypted (AES-256) before they're put online, and only your password unlocks them in your browser. The public website only ever holds a locked file. We ask for read-only access wherever a platform offers it.</p></details>
+<details><summary>Which platforms work?</summary><p>Anything with an API (Etsy, Gumroad, Printify, Facebook, Instagram, GitHub, Stripe, crypto wallets…) plus manual numbers for places without one, like Amazon KDP.</p></details>
+<details><summary>Are the numbers in the video real?</summary><p>No. The video and the live demo use sample numbers only.</p></details>
+<details><summary>Does it work on my phone?</summary><p>Yes, it was built phone-first. Tap buildings, pinch to zoom, use the joystick in Street mode.</p></details>
+<details><summary>How do I pay?</summary><p>Tap a plan and send the email. We reply with a payment link and the next steps.</p></details>
+
+<div class="contact">
+  <h2>Questions? Just ask.</h2>
+  <p class="lead">Tell us what side hustles you run and we'll tell you how your city would look.</p>
+  <a class="btn gold" data-plan="ask" href="mailto:hello@eaafix.com" style="max-width:420px;margin:16px auto 0">✉️ hello@eaafix.com</a>
+</div>
+
+<footer>Side Hustle City · by Sonneblom Digitaal · demo and video use sample numbers · <a href="../city-tour/">How it was built</a></footer>
+</main>
+<script>document.querySelectorAll("[data-plan]").forEach(a => { if (PLANS[a.dataset.plan]) a.href = PLANS[a.dataset.plan]; });</script>
+</body>
+</html>

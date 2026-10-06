@@ -1111,7 +1111,8 @@ function focus(id) {
     const board = g.userData.board, bp = new THREE.Vector3(); board.getWorldPosition(bp);
     const side = innerWidth >= 900, Hpx = innerHeight, Wpx = innerWidth;
     // free screen band (px) between the header/chips and the panel; the building is centred and sized to fit inside it
-    const top = side ? 120 : 112, bottom = side ? Hpx - 110 : Hpx * 0.48, right = side ? Wpx - 430 : Wpx;
+    let top = side ? 120 : 112, bottom = side ? Hpx - 110 : Hpx * 0.48, right = side ? Wpx - 430 : Wpx;
+    if (DEMO && window.__demoBand) [top, bottom, right] = window.__demoBand(Wpx, Hpx);  // video director leaves room for captions
     const visV = (bottom - top) / Hpx, visH = right / Wpx, cyF = (top + bottom) / 2 / Hpx, cxF = right / 2 / Wpx;
     const H = Math.max(g.userData.top || b.h, bp.y + 3.5) + 1.5, wide = Math.max(b.w, b.d) * 2 + 8;
     const tv = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)), th = tv * camera.aspect;
