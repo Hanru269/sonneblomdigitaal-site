@@ -141,7 +141,8 @@ function model(D) {
       tag: [pnl(pm.lifetime) + " lifetime", pm.running ? "bot running" : "bot stopped"],
       board: { title: "POLYMARKET BOT", main: pnl(pm.lifetime), mainLabel: "lifetime profit", rows: botRows(pm) },
       sheet: () => sheetHTML("Polymarket Exchange", "Crypto Up/Down 5-minute markets · numbers from Polymarket's public data", pnl(pm.lifetime), "lifetime profit",
-        botSheet(pm).concat([["Unredeemed positions", pnl(pm.open_pnl)]]), [], "", "https://polymarket.com/portfolio", "Read-only: the bot itself is switched off.") },
+        botSheet(pm).concat([["Unredeemed positions", pnl(pm.open_pnl)],
+          ["Paper bot", pm.paper ? `${pm.paper.running ? "🟢" : "⚪"} $${pm.paper.cash} cash (started $${pm.paper.start}), ${pm.paper.open} open` : "not started"]]), [], "", "https://polymarket.com/portfolio", "Read-only: the bot itself is switched off.") },
 
     { id: "library", name: "The Library", short: "LIBRARY", icon: "📚", color: 0xe8a87c, pos: [45, 10], w: 9, d: 7, h: 9, kind: "library",
       status: sv("hq-portal"), today: 0, total: 0,
