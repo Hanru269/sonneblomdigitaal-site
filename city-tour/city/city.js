@@ -247,7 +247,6 @@ const actionsHTML = id => DEMO || !ACTIONS[id] ? "" : `<div class="links acts2">
 async function ask(msg) {
   await openTerm();
   $("#tin").value = msg; $("#tin").dispatchEvent(new Event("input"));
-  if (tBusy) return tAdd("sys", "Claude is still busy. Your task is in the box: tap Send when it's done.");
   if ($("#tsend").disabled || !get(LKEY)) return;  // Library login first: the task waits in the box
   $("#tform").requestSubmit();
 }
@@ -1148,7 +1147,7 @@ let tBusy = false, tRun = 0, tSeen = 0, aiEl = null;
 const tlog = () => $("#tlog");
 function tAdd(cls, text) { const d = document.createElement("div"); d.className = cls; d.textContent = text; tlog().append(d); tScroll(); return d; }
 function tScroll() { const l = tlog(); if (l.scrollHeight - l.scrollTop - l.clientHeight < 160) l.scrollTop = l.scrollHeight; }
-function setBusy(b) { tBusy = b; $("#tsend").disabled = b; $("#tstop").hidden = !b; if (!b) document.querySelectorAll("#tlog .cursor").forEach(c => c.remove()); }
+function setBusy(b) { tBusy = b; $("#tstop").hidden = !b; $("#tin").placeholder = b ? "Add a message: Claude pauses, reads it, then carries on…" : "Talk to Claude…"; if (!b) document.querySelectorAll("#tlog .cursor").forEach(c => c.remove()); }
 
 async function openTerm() {
   $("#sheet").hidden = true; $("#term").hidden = false;
@@ -1185,8 +1184,9 @@ function libraryLogin(msg) {
   tlog().append(f); f.querySelector("input").focus();
 }
 
+let tGen = 0;  // newest attach wins: an older stream that ends (e.g. a run paused for a new message) must not flip the UI to idle
 async function attach(req) {
-  setBusy(true); aiEl = tAdd("ai", ""); const cur = document.createElement("span"); cur.className = "cursor"; aiEl.after(cur);
+  const my = ++tGen; setBusy(true); aiEl = tAdd("ai", ""); const cur = document.createElement("span"); cur.className = "cursor"; aiEl.after(cur);
   let txt = "", buf = "";
   try {
     const r = await req;
@@ -1201,11 +1201,12 @@ async function attach(req) {
         const e = JSON.parse(line); if (e.n) tSeen = e.n; if (e.run) tRun = e.run;
         if (e.t === "text") { txt += e.d; aiEl.textContent = txt; tScroll(); }
         else if (e.t === "tool") { const d = document.createElement("div"); d.className = "tool"; d.textContent = e.d; aiEl.before(d); tScroll(); }
-        else if (e.t === "done") { if (e.stopped) tAdd("sys", "Stopped."); if (e.cost) tAdd("sys", `done · $${e.cost.toFixed(3)}`); }
+        else if (e.t === "done") { if (e.paused) tAdd("sys", "⏸ Paused here to read your new message."); if (e.stopped) tAdd("sys", "Stopped."); if (e.cost) tAdd("sys", `done · $${e.cost.toFixed(3)}`); }
       }
     }
-    setBusy(false);
-  } catch (e) {  // phone slept or network blipped: re-attach to the same run
+    if (my === tGen) setBusy(false);
+  } catch (e) {
+    if (my !== tGen) return;  // phone slept or network blipped: re-attach to the same run
     const st = await services();
     if (st && st.busy && st.run === tRun) { aiEl.remove(); document.querySelectorAll("#tlog .cursor").forEach(c => c.remove()); return attach(api(`/stream?from=0`)); }
     setBusy(false); if (!txt) tAdd("sys", "Connection lost. Reopen the Library to see the reply.");
@@ -1213,7 +1214,8 @@ async function attach(req) {
 }
 
 $("#tform").addEventListener("submit", e => {
-  e.preventDefault(); const msg = $("#tin").value.trim(); if (!msg || tBusy) return;
+  e.preventDefault(); const msg = $("#tin").value.trim(); if (!msg) return;
+  if (tBusy) tAdd("sys", "⏸ Pausing Claude to read this first. It saves what it did and carries on after.");
   tAdd("me", msg); $("#tin").value = ""; $("#tin").style.height = "";
   attach(api("/chat", { method: "POST", body: JSON.stringify({ msg }) }));
 });
