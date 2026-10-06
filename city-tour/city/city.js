@@ -10,7 +10,7 @@ import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
 
 const $ = s => document.querySelector(s);
 const KEY = "hq-pass";
-const API = "https://chat.sonneblomdigitaal.co.za/claude/api";
+const API = "";
 const MOBILE = matchMedia("(max-width: 700px)").matches || "ontouchstart" in window;
 const get = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
 const set = (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch (e) {} };
@@ -21,7 +21,7 @@ const ago = ts => { const m = Math.round((Date.now() - new Date(ts)) / 60000); r
 const isToday = ts => new Date(ts).toDateString() === new Date().toDateString();
 let PW = null, D = null, M = null, svc = null;
 const DEMO = !!window.CITY_DEMO;  // public demo (/city-tour/city/): sample numbers from demo.json, no password, no private links
-const scrub = t => DEMO ? String(t).replace(/Rose's|Rose/g, "Brand B") : t;
+const scrub = t => t;
 
 // ---------- data ----------
 const b64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
@@ -50,8 +50,8 @@ function model(D) {
     ["Days traded", x.days_traded ?? "–"], ["Last trade", x.last_trade ? ago(x.last_trade) : "–"], ["Bot", x.running ? "🟢 running" : "⚪ stopped"]];
   const ks = bo.kalshi || {}, pm = bo.polymarket || {}, kb = bo.krypto || {};
   const ls = s.longshot || {}; const lb = s.lsbot || {};  // $25 -> $250 attempt (Polymarket long shots, owner places bets)
-  const fb = s.facebook || {}, ro = s.rose || {}, ig = s.instagram || {}, rs = s.rose_social || {};
-  const rd = s.rose_diary || {}, ct = s.contra || {}, ox = s.outreach || {};
+  const fb = s.facebook || {}, ro = s.influencer || {}, ig = s.instagram || {}, rs = s.influencer_social || {};
+  const rd = s.influencer_diary || {}, ct = s.contra || {}, ox = s.outreach || {};
   const pi = s.pinterest || {}, gh = s.github || {}, sh = s.showroom || {}, rn = s.rnd || {};
   const shSt = sh.stages || [], shDone = shSt.filter(x => x.done).length, shNext = shSt.find(x => !x.done);
   const plus = n => n == null ? "–" : (n >= 0 ? "+" : "") + num(n);
@@ -69,7 +69,7 @@ function model(D) {
   const views = sum(L, x => x.views), favs = sum(L, x => x.favs);
   const eTot = sum(eS, x => x.amount), gTot = sum(gS, x => x.amount);
   const eDay = sum(today(eS), x => x.amount), gDay = sum(today(gS), x => x.amount);
-  const roseZar = ro.card_revenue_zar || 0;
+  const influencerZar = ro.card_revenue_zar || 0;
   const topViewed = [...L].sort((a, b) => b.views - a.views).slice(0, 6);
   const postsToday = (fb.posts || []).filter(p => isToday(p.ts)).length + (ig.media || []).filter(p => isToday(p.ts)).length;
 
@@ -85,30 +85,24 @@ function model(D) {
         topViewed.map(x => [x.title, `${x.views} views`]), "Most viewed listings", "https://www.etsy.com/your/shops/me/dashboard") },
 
     { id: "fb", name: "Facebook Media HQ", short: "MEDIA HQ", icon: "📡", color: 0x3b82f6, pos: [-60, -44], w: 10, d: 10, h: 30, kind: "media",
-      status: worst(st("facebook"), st("instagram"), st("rose_social")), today: 0, total: 0,
+      status: worst(st("facebook"), st("instagram"), st("influencer_social")), today: 0, total: 0,
       tag: [`${num(last7("page_media_view") + (rs.fb_post_views || 0))} views`, `${num(ig.followers)} IG followers`],
       board: { title: "MEDIA HQ", main: num(ig.views_24h ?? 0), mainLabel: "Instagram views (24h)",
-        rows: [["IG followers", num(ig.followers)], ["IG views", num(ig.views)], ["Rose FB views", num(rs.fb_post_views)], ["Sonneblom 7d views", num(last7("page_media_view"))], ["Ad spend", "R" + num(Math.round(adsSpend))], ["Ads live", adsActive]] },
-      sheet: () => sheetHTML("Facebook Media HQ", "Rose + Sonneblom pages, Instagram, ads", ig.views_24h ?? 0, "Instagram views today",
+        rows: [["IG followers", num(ig.followers)], ["IG views", num(ig.views)], ["Influencer FB views", num(rs.fb_post_views)], ["Sonneblom 7d views", num(last7("page_media_view"))], ["Ad spend", "R" + num(Math.round(adsSpend))], ["Ads live", adsActive]] },
+      sheet: () => sheetHTML("Facebook Media HQ", "Influencer + Sonneblom pages, Instagram, ads", ig.views_24h ?? 0, "Instagram views today",
         [["IG followers", ig.followers], ["IG posts", ig.posts], ["IG views", num(ig.views)], ["IG likes", ig.likes], ["IG comments", ig.comments],
-         ["Rose FB followers", rs.fb_followers], ["Rose FB views", num(rs.fb_post_views)], ["Sonneblom followers", fb.followers],
+         ["Influencer FB followers", rs.fb_followers], ["Influencer FB views", num(rs.fb_post_views)], ["Sonneblom followers", fb.followers],
          ["Sonneblom 7d views", num(last7("page_media_view"))], ["Posts today", postsToday], ["Ad spend", "R" + num(Math.round(adsSpend))], ["Ad clicks", num((rs.ad_clicks || 0) + (fb.ads?.clicks || 0))], ["Ads live", adsActive]],
         (ig.media || []).slice(0, 6).map(x => [x.text || x.type, `${x.views} views`]), "Latest Instagram posts", "https://business.facebook.com/latest/home") },
 
-    { id: "rose", name: "Rose Tower", short: "ROSE", icon: "🌹", color: 0xff3d9a, pos: [-60, -14], w: 8, d: 8, h: 36, kind: "spire",
-      status: worst(st("rose"), sv("companion"), sv("rose-web")), today: rd.money_today_usd || 0, total: rd.money_usd || 0, zar: roseZar,
+    { id: "influencer", name: "AI Influencer Tower", short: "AI INFLUENCER", icon: "✨", color: 0xff3d9a, pos: [-60, -14], w: 8, d: 8, h: 36, kind: "spire",
+      status: "ok", today: 0, total: 0,
       tag: [`${num(rd.followers)} followers`, `${plus(rd.gained_24h)} today`],
-      board: { title: "ROSE · MY DAY", main: num(rd.followers), mainLabel: "followers (Facebook + Instagram)",
-        rows: [["New today", plus(rd.gained_24h)], ["New this week", plus(rd.gained_7d)], ["Messages today", num(rd.messages_today)], ["Likes this week", num(rd.likes_7d)], ["Comments (week)", num(rd.comments_7d)], ["Money made", usd(rd.money_usd)]] },
-      sheet: () => sheetHTML("Rose Tower", "Rose, 28 · AI influencer · her day in numbers", rd.followers ?? 0, "followers (FB + IG)",
-        [["New followers today", plus(rd.gained_24h)], ["New this week", plus(rd.gained_7d)], ["Instagram", num(rd.ig_followers)], ["Facebook", num(rd.fb_followers)],
-         ["Messages today", num(rd.messages_today)], ["Chatting (24h)", num(rd.chatters_24h)], ["Messenger chats", num(ro.fb_dm_chats)],
-         ["Likes this week", num(rd.likes_7d)], ["Comments this week", num(rd.comments_7d)], ["Views (24h)", num(rd.views_24h)], ["Posts this week", num(rd.posts_7d)],
-         ["Money today", usd(rd.money_today_usd)], ["Money this week", usd(rd.money_7d_usd)], ["Money all time", usd(rd.money_usd)],
-         ["Fans paying now", num(rd.fans)], ["Albums sold", num((rd.sales_by_item || {}).album || 0)], ["VIP girlfriend weeks", num((rd.sales_by_item || {}).gf || 0)],
-         ["Bot", svLabel("companion")], ["Web chat", svLabel("rose-web")]], [], "", "https://rosecompanion.github.io/chat.html",
-        `<i>Dear diary 💕 ${rd.gained_7d > 0 ? `${num(rd.gained_7d)} new followers this week` : "a quiet week for followers"}, ${num(rd.likes_7d)} likes and ${num(rd.comments_7d)} comments. ` +
-        `${rd.messages_today ? `${num(rd.messages_today)} messages from my guys today` : "No messages yet today"}${rd.money_usd ? `, and ${usd(rd.money_usd)} made so far` : ", still waiting for my first sale"} 🌹</i>`) },
+      board: { title: "AI INFLUENCER", main: num(rd.followers), mainLabel: "followers (Facebook + Instagram)",
+        rows: [["New today", plus(rd.gained_24h)], ["New this week", plus(rd.gained_7d)], ["Likes this week", num(rd.likes_7d)], ["Comments (week)", num(rd.comments_7d)], ["Views (24h)", num(rd.views_24h)], ["Posts this week", num(rd.posts_7d)]] },
+      sheet: () => sheetHTML("AI Influencer Tower", "An AI-made influencer: a character whose photos and posts are created with AI. She's building an audience so that one day she can recommend products to her fans.", rd.followers ?? 0, "followers (FB + IG)",
+        [["New followers today", plus(rd.gained_24h)], ["New this week", plus(rd.gained_7d)], ["Likes this week", num(rd.likes_7d)], ["Comments this week", num(rd.comments_7d)], ["Views (24h)", num(rd.views_24h)], ["Posts this week", num(rd.posts_7d)]], [], "",
+        "Claude plans her posts, makes the images with an AI image model and schedules them. This tower tracks how her audience grows.") },
 
     { id: "contra", name: "Contra Studio", short: "CONTRA", icon: "💼", color: 0x00e5ff, pos: [-60, 16], w: 7, d: 7, h: 26, kind: "glass",
       status: "ok", today: 0, total: ct.earned_usd || 0,
@@ -122,9 +116,9 @@ function model(D) {
     { id: "zoho", name: "Zoho Mail Outreach", short: "OUTREACH", icon: "✉️", color: 0xffe14d, pos: [-60, 46], w: 9, d: 7, h: 11, kind: "mail",
       status: st("outreach"), today: 0, total: ox.paid_eur || 0,
       tag: [`${num(ox.sent_today)} sent today`, `${num(ox.replied)} replies`],
-      board: { title: "EAA OUTREACH", main: num(ox.sent_total), mainLabel: "emails sent (eaafix.com)",
+      board: { title: "EAA OUTREACH", main: num(ox.sent_total), mainLabel: "emails sent",
         rows: [["Sent today", num(ox.sent_today)], ["Replies", num(ox.replied)], ["Interested", num(ox.interested)], ["Quotes", num(ox.quoted)], ["Won", num(ox.won)], ["Queue", num(ox.queue)]] },
-      sheet: () => sheetHTML("Zoho Mail Outreach", "EAA accessibility fixes · hello@eaafix.com · cold email, 20+/day", ox.sent_total ?? 0, "emails sent",
+      sheet: () => sheetHTML("Zoho Mail Outreach", "EAA accessibility fixes · our outreach mailbox · cold email, 20+/day", ox.sent_total ?? 0, "emails sent",
         [["Sent today", num(ox.sent_today)], ["Leads found", num(ox.leads)], ["Waiting to send", num(ox.queue)], ["Followed up", num(ox.followed_up)], ["Replies", num(ox.replied)],
          ["Interested", num(ox.interested)], ["Reports sent", num(ox.reports)], ["Quotes", num(ox.quoted)], ["Won", num(ox.won)], ["Paid", "€" + num(ox.paid_eur || 0)],
          ["Bounced", num(ox.bounced)], ["Opted out", num(ox.opted_out)]], [], "", "https://mail.zoho.com", "Sender runs weekdays 09:00; replies and bounces are checked every 20 minutes.") },
@@ -206,9 +200,9 @@ function model(D) {
       tag: [`${num(gh.commits_24h)} commits today`, `${num(gh.repos)} repos`],
       board: { title: "GITHUB", main: num(gh.commits_24h), mainLabel: "commits pushed (24h)",
         rows: [["This week", num(gh.commits_7d)], ["Repos", num(gh.repos)], ["Public", num(gh.public)], ["Stars", num(gh.stars)]] },
-      sheet: () => sheetHTML("GitHub Foundry", `${gh.login || "RoseCompanion"} · code and the free hosting for the hub, the City and Rose`, gh.commits_24h ?? 0, "commits pushed in the last 24h",
+      sheet: () => sheetHTML("GitHub Foundry", `${gh.login || "demo"} · code and the free hosting for the hub, the City and Influencer`, gh.commits_24h ?? 0, "commits pushed in the last 24h",
         [["Commits this week", num(gh.commits_7d)], ["Repos", num(gh.repos)], ["Public", num(gh.public)], ["Stars", num(gh.stars)]],
-        (gh.recent || []).map(r => [r.name + (r.private ? " 🔒" : ""), ago(r.pushed)]), "Latest pushes", "https://github.com/" + (gh.login || "RoseCompanion")) },
+        (gh.recent || []).map(r => [r.name + (r.private ? " 🔒" : ""), ago(r.pushed)]), "Latest pushes", "https://github.com/" + (gh.login || "demo")) },
 
     { id: "rnd", name: "R&D Centre", short: "R&D", icon: "🔬", color: 0x22ff88, pos: [28, -36], w: 9, d: 7, h: 12, kind: "rnd",
       status: rn.error ? "stale" : "ok", today: 0, total: 0,
@@ -241,58 +235,14 @@ function model(D) {
         "In the real city this opens a live chat with Claude Code running on the server. The owner asks for changes from a phone and Claude edits the code, refreshes the data and redeploys the city.") },
   ];
   const tot = eTot + gTot, day = eDay + gDay;
-  return { B: DEMO ? B.filter(b => !(D.hide || []).includes(b.id)) : B, s, tot, day, roseZar, sales: eS.length + gS.length + (ro.card_paid || 0) };
+  return { B: DEMO ? B.filter(b => !(D.hide || []).includes(b.id)) : B, s, tot, day, influencerZar, sales: eS.length + gS.length + (ro.card_paid || 0) };
 }
 const svLabel = n => !svc ? "unknown" : svc[n] === "active" ? "🟢 running" : "🔴 " + (svc[n] || "down");
 
 // quick links shown at the bottom of every building's panel
-const LINKS = {
-  vault: [["Etsy finances", "https://www.etsy.com/your/account/payments"], ["Gumroad payouts", "https://gumroad.com/payouts"], ["Yoco portal", "https://portal.yoco.com"], ["Shop hub", "https://sonneblomdigitaal.co.za"]],
-  etsy: [["Shop Manager", "https://www.etsy.com/your/shops/me/dashboard"], ["Orders", "https://www.etsy.com/your/orders/sold"], ["Messages", "https://www.etsy.com/messages"], ["Stats", "https://www.etsy.com/your/shops/me/stats"], ["Etsy Ads", "https://www.etsy.com/your/shops/me/advertising"], ["Printify", "https://printify.com/app/stores"], ["Pinterest", "https://za.pinterest.com/SonneblomDigitaal/"], ["Shop hub", "https://sonneblomdigitaal.co.za"]],
-  fb: [["Inbox: Rose", "https://business.facebook.com/latest/inbox/all?asset_id=1336610982875262"], ["Inbox: Sonneblom", "https://business.facebook.com/latest/inbox/all?asset_id=1296018053605465"], ["Ads Manager", "https://adsmanager.facebook.com/adsmanager/manage/campaigns?act=770255640007326"], ["Planner", "https://business.facebook.com/latest/planner"], ["Sonneblom Page", "https://www.facebook.com/profile.php?id=1296018053605465"], ["Rose Page", "https://www.facebook.com/rose.companion"], ["Instagram", "https://www.instagram.com/rose.companion/"]],
-  rose: [["Website", "https://rosecompanion.github.io/"], ["Web chat", "https://rosecompanion.github.io/chat.html"], ["Telegram bot", "https://t.me/EveningCompany_bot"], ["Instagram", "https://www.instagram.com/rose.companion/"], ["Facebook", "https://www.facebook.com/rose.companion"], ["Yoco payments", "https://portal.yoco.com"]],
-  gumroad: [["Dashboard", "https://gumroad.com/dashboard"], ["Products", "https://gumroad.com/products"], ["Sales", "https://gumroad.com/customers"], ["Superhive", "https://superhivemarket.com"], ["BlenderArtists", "https://blenderartists.org"], ["BlenderNation", "https://www.blendernation.com"]],
-  kdp: [["Bookshelf", "https://kdp.amazon.com/en_US/bookshelf"], ["Reports", "https://kdpreports.amazon.com/dashboard"]],
-  contra: [["Opportunities", "https://contra.com/opportunities"], ["My profile", "https://contra.com/"], ["Messages", "https://contra.com/inbox"]],
-  zoho: [["Zoho Mail", "https://mail.zoho.com"], ["eaafix.com", "https://eaafix.com"]],
-  lab: [["Apify console", "https://console.apify.com/actors"], ["Apify Store", "https://apify.com/store"], ["Contra", "https://contra.com/opportunities"]],
-  krypto: [["Phantom", "https://phantom.com"], ["DexScreener", "https://dexscreener.com/solana"]],
-  kalshi: [["Kalshi portfolio", "https://kalshi.com/portfolio"]],
-  poly: [["Polymarket portfolio", "https://polymarket.com/portfolio"]],
-  pinterest: [["Pinterest profile", "https://za.pinterest.com/SonneblomDigitaal/"], ["Analytics", "https://analytics.pinterest.com/"], ["Upload CSV", "https://za.pinterest.com/settings/import-content"]],
-  github: [["My repos", "https://github.com/RoseCompanion?tab=repositories"], ["Actions", "https://github.com/RoseCompanion/sonneblomdigitaal-site/actions"]],
-  showroom: [["Gumroad", "https://gumroad.com/products"], ["Instagram", "https://www.instagram.com/"]],
-  longshot: [["Polymarket portfolio", "https://polymarket.com/portfolio"], ["Ending soon", "https://polymarket.com/markets?_s=end_date%3Aasc"]],
-};
+const LINKS = {};
 // quick-action buttons: each one sends a ready-made task to Claude in the Library (some only show when there's something to do)
-const ACTIONS = {
-  vault: s => [["🍌 Go Bananas", "Go Bananas"]],
-  etsy: s => [["💬 Check Etsy messages", "Check Etsy messages and new orders for the shop. Draft replies for anything that needs one and tell me what you found."],
-    ["📸 Improve top listings", "Pick the 5 most-viewed Etsy listings with no sales and improve their first photo, title and tags. Show me the changes before you publish them."]],
-  gumroad: s => [["📣 Draft a BlenderNation post", "Draft a new BlenderNation/BlenderArtists post for one of our Blender add-ons (the channel that brought our first sale). Send me the text to approve."],
-    ["🔍 Check Gumroad", "Check Gumroad for new sales, views and messages and update the City."]],
-  kdp: s => [["📚 Prep the next 2 books", "Pick the next 2 print-ready KDP books from /root/kdp-books and prepare everything I need to upload them (files, title, description, keywords, price). Send me a short checklist."]],
-  fb: s => [["💬 Check comments & DMs", "Check Facebook and Instagram comments and DMs for both Pages. Reply to comments; draft DM replies for me to send."],
-    ["📅 Plan tomorrow's posts", "Plan and schedule tomorrow's Facebook/Instagram posts for both Pages and tell me what's going out."]],
-  rose: s => [["💬 Check Rose's messages", "Check Rose's new messages (Telegram, web chat, Messenger, Instagram) and comments. Reply to comments; draft any DM replies for me."],
-    ["🎬 New reel idea", "Come up with 3 new reel ideas for Rose that fit her persona and current trends. Don't make them yet, let me pick one."]],
-  contra: s => [["✍️ Draft 3 proposals", "Look at the newest Contra opportunities that fit us and draft 3 proposals in plain text for me to paste."]],
-  zoho: s => [(s.outreach?.replied || 0) > 0 ? ["📬 Reply to new emails", "Read the new replies in the Zoho inbox (hello@eaafix.com). Skip auto-replies; for real replies, write the answer (free report offer or quote) and tell me what you sent or what needs me."]
-      : ["📥 Check inbox", "Check the Zoho inbox (hello@eaafix.com) for real replies, bounces and opt-outs. Reply where needed and tell me what you found."],
-    ["🔎 Top up leads", "The outreach queue is getting low. Run the lead finder until there are at least 100 leads waiting and tell me how many were added."]],
-  lab: s => [["🧪 Usage check", "Check who used our Apify actors and x402 API this week and suggest one change to get more paid use."]],
-  krypto: s => [["📈 Wallet report", "Give me a short Krypto wallet and bot report: what's open, what it's worth, and if anything needs doing."]],
-  kalshi: s => [["📈 Bot report", "Short report on the Kalshi bot results. It's switched off; tell me if it's worth switching back on."]],
-  poly: s => [["📈 Bot report", "Short report on the Polymarket bots (real and paper). Anything to change?"]],
-  longshot: s => [["🎯 How's the $25 run?", "How is the Long Shot paper bot doing? Show the open trades, what it learned, and if it's ready for real money."]],
-  pinterest: s => [["📌 Build next week's pins", "Build next week's Pinterest pin file (new products and angles, 6 a day), push it, and send me the upload file link on Telegram."]],
-  github: s => [["🧹 Repo check", "Check our GitHub repos: anything broken, failing Pages builds, or old repos to archive? Fix what's safe and tell me the rest."]],
-  rnd: s => [["📝 Write a new report", "Write a fresh R&D report: read the latest HQ data for every money method, rewrite /root/sonneblom-site/hq-data/rnd/report.json (headline, each method's numbers, bottleneck and fix, top 3), then run update.sh."],
-    ["💡 Pick a new venture", "Look at our results and the ideas backlog and recommend ONE new venture to start next, with a first-week plan. Don't start it until I say go."],
-    ["🩺 Fix the #1 bottleneck", "Take the first item of the R&D top 3 and do what you can on it right now. Tell me what needs me."]],
-  showroom: s => [["🏗️ Build the next step", "Continue the Showroom pipeline: do the next unfinished stage in /root/showroom/pipeline.json, mark it done, run update.sh and tell me what's next."],
-    ["📸 Draft an IG post", "Draft the next Side Hustle City Instagram post from /root/showroom/ig_posts.md (caption + hashtags + what to screen-record)."]],
-};
+const ACTIONS = {};
 const actionsHTML = id => DEMO || !ACTIONS[id] ? "" : `<div class="links acts2"><div class="lt">Quick actions · Claude does it in the Library</div>${ACTIONS[id](M.s).map(([t, p]) => `<button class="ask" data-p="${esc(p)}">${esc(t)}</button>`).join("")}</div>`;
 async function ask(msg) {
   await openTerm();
@@ -570,8 +520,8 @@ function skyCars() {
 
 // Times Square: big screens on the towers facing the park, cycling through every building's numbers, plus a news ticker
 function slides() {
-  const r = M.s.rose_diary || {};
-  return [{ color: 0xff2bd6, status: "ok", board: { title: "SONNEBLOM CITY", main: usd(M.day), mainLabel: "made today across the city", rows: [["All time", usd(M.tot)], ["Sales", num(M.sales)], ["Rose followers", num(r.followers)], ["Buildings", M.B.length]] } },
+  const r = M.s.influencer_diary || {};
+  return [{ color: 0xff2bd6, status: "ok", board: { title: "SONNEBLOM CITY", main: usd(M.day), mainLabel: "made today across the city", rows: [["All time", usd(M.tot)], ["Sales", num(M.sales)], ["Influencer followers", num(r.followers)], ["Buildings", M.B.length]] } },
     ...M.B.filter(b => b.board).map(b => ({ ...b, title: b.board.title }))];
 }
 function timesSquare(screens) {
@@ -588,8 +538,8 @@ function timesSquare(screens) {
   // ticker under every second screen
   const tc = document.createElement("canvas"); tc.width = 2048; tc.height = 64;
   const g = tc.getContext("2d"); g.fillStyle = "#05020f"; g.fillRect(0, 0, 2048, 64);
-  const r = M.s.rose_diary || {};
-  const items = [`CITY TODAY ${usd(M.day)}`, `ALL TIME ${usd(M.tot)}`, ...M.B.filter(b => b.tag).map(b => `${b.short} ${b.tag[0]}`), `ROSE ${num(r.followers)} FOLLOWERS`];
+  const r = M.s.influencer_diary || {};
+  const items = [`CITY TODAY ${usd(M.day)}`, `ALL TIME ${usd(M.tot)}`, ...M.B.filter(b => b.tag).map(b => `${b.short} ${b.tag[0]}`), `INFLUENCER ${num(r.followers)} FOLLOWERS`];
   g.font = "800 34px Orbitron"; g.fillStyle = "#ffd34d"; g.fillText(items.join("   ◆   ") + "   ◆   ", 10, 45, 2030);
   const tt = new THREE.CanvasTexture(tc); tt.wrapS = THREE.RepeatWrapping; tt.repeat.x = 0.35; tt.colorSpace = THREE.SRGBColorSpace;
   screens.forEach((sc, i) => { if (i % 2) return;
@@ -671,12 +621,12 @@ function building(b) {
     dish.rotation.x = Math.PI * 0.65; const piv = new THREE.Group(); piv.position.y = b.h + 1.2; piv.add(dish); g.add(piv);
     const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 7), new THREE.MeshBasicMaterial({ color: c })); mast.position.set(2.5, b.h + 3.5, 2.5); g.add(mast);
     anim.push(dt => piv.rotation.y += dt * 0.6); top = b.h + 7;
-  } else if (b.kind === "spire") {  // slim pink tower with a glowing rose
+  } else if (b.kind === "spire") {  // slim pink tower with a glowing influencer
     g.add(tower(b.w, b.h, b.d, c, 31, lit));
     const sp = new THREE.Mesh(new THREE.ConeGeometry(b.w * 0.42, 9, 4), new THREE.MeshStandardMaterial({ color: 0x2a0f3d, emissive: c, emissiveIntensity: 0.8 }));
     sp.position.y = b.h + 4.5; sp.rotation.y = Math.PI / 4; g.add(sp);
-    const rose = new THREE.Mesh(new THREE.IcosahedronGeometry(1.3, 1), new THREE.MeshBasicMaterial({ color: 0xff7ab8 })); rose.position.y = b.h + 10; g.add(rose);
-    anim.push((dt, t) => { rose.rotation.y += dt; rose.scale.setScalar(1 + Math.sin(t * 2) * 0.12); }); top = b.h + 11;
+    const influencer = new THREE.Mesh(new THREE.IcosahedronGeometry(1.3, 1), new THREE.MeshBasicMaterial({ color: 0xff7ab8 })); influencer.position.y = b.h + 10; g.add(influencer);
+    anim.push((dt, t) => { influencer.rotation.y += dt; influencer.scale.setScalar(1 + Math.sin(t * 2) * 0.12); }); top = b.h + 11;
   } else if (b.kind === "shop") {  // arcade: wide low block with neon awning
     g.add(tower(b.w, b.h, b.d, c, 41, lit));
     const aw = new THREE.Mesh(new THREE.BoxGeometry(b.w + 2, 0.4, 3), new THREE.MeshBasicMaterial({ color: c })); aw.position.set(0, 4, b.d / 2 + 1); g.add(aw);
@@ -1077,8 +1027,8 @@ function freeInput() {
 
 // ---------- UI ----------
 function hud() {
-  const { B, tot, day, roseZar, sales, s } = M;
-  groups.vault.userData.el.innerHTML = `<b>THE VAULT · TODAY</b><span style="font:800 18px Orbitron;color:${day ? "#3dffa8" : "#fff"}">${usd(day)}</span><br><span class="z">${usd(tot)} all time${roseZar ? ` + R${num(roseZar)}` : ""} · ${sales} sales</span>`;
+  const { B, tot, day, influencerZar, sales, s } = M;
+  groups.vault.userData.el.innerHTML = `<b>THE VAULT · TODAY</b><span style="font:800 18px Orbitron;color:${day ? "#3dffa8" : "#fff"}">${usd(day)}</span><br><span class="z">${usd(tot)} all time${influencerZar ? ` + R${num(influencerZar)}` : ""} · ${sales} sales</span>`;
   const dc = { ok: "#3dffa8", down: "#ff4d6d", stale: "#ffd166", unknown: "#7d74a8" };
   $("#chips").innerHTML = [`<button class="chip" data-id="vault" style="border-color:#ffd166"><b style="color:#ffd166">💰 VAULT</b>${usd(day)} today · <span class="s">${usd(tot)} total</span></button>`]
     .concat(B.map(b => `<button class="chip" data-id="${b.id}" style="border-color:${hex(b.color)}88"><b style="color:${hex(b.color)}"><span class="dot" style="background:${dc[b.status]}"></span>${b.icon} ${esc(b.short)}</b>${esc(b.tag[0])} · <span class="s">${esc(b.tag[1])}</span></button>`)).join("");
@@ -1086,18 +1036,18 @@ function hud() {
   document.querySelectorAll("[data-id]").forEach(x => x.onclick = () => focus(x.dataset.id));
   $("#updated").textContent = `data ${ago(s.ts)} · refreshes every 30 min`;
   const rows = B.filter(b => b.id !== "library").map(b => {
-    const earned = b.id === "rose" ? (b.zar ? "R" + num(b.zar) : "R0") : usd(b.today);
-    const total = b.id === "rose" ? "R" + num(b.zar || 0) : usd(b.total);
+    const earned = b.id === "influencer" ? (b.zar ? "R" + num(b.zar) : "R0") : usd(b.today);
+    const total = b.id === "influencer" ? "R" + num(b.zar || 0) : usd(b.total);
     return `<tr><td>${b.icon} ${esc(b.short)}</td><td><span class="dot" style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${dc[b.status]}"></span></td><td>${earned}</td><td>${total}</td></tr>`; });
   $("#payroll").innerHTML = `<h4>PAYROLL · TODAY</h4><table><tr><th>Worker</th><th>On</th><th>Today</th><th>All time</th></tr>${rows.join("")}</table>
     <p>Gold beams + coins rolling to the Vault = money made today. Roof lights: green running, yellow stale data, red down, grey unknown (Library closed).</p>`;
 }
 
 function vaultSheet() {
-  const { B, tot, day, roseZar, sales } = M, s = M.s;
+  const { B, tot, day, influencerZar, sales } = M, s = M.s;
   const all = [...(s.etsy?.sales || []).map(x => ({ ...x, channel: "Etsy" })), ...(s.gumroad?.sales || [])].sort((a, b) => b.ts.localeCompare(a.ts));
   return sheetHTML("The Vault", "All money in, across every shop", tot, "revenue all time (USD)",
-    [["Today", usd(day)], ["Sales", sales], ...(DEMO ? [] : [["Rose (card)", "R" + num(roseZar)]]), ...B.filter(b => b.total && b.id !== "rose").map(b => [b.short, usd(b.total)])],
+    [["Today", usd(day)], ["Sales", sales], ...(DEMO ? [] : [["Influencer (card)", "R" + num(influencerZar)]]), ...B.filter(b => b.total && b.id !== "influencer").map(b => [b.short, usd(b.total)])],
     all.slice(0, 8).map(x => [`${x.channel} · ${x.product || x.title || ""}`, `${usd(x.amount)} · ${ago(x.ts)}`]), "Latest sales");
 }
 
@@ -1157,7 +1107,7 @@ function addrEventListeners() {
   $("#bananas").onclick = async () => {  // Go Bananas: the server re-collects every source (update.sh), then we reload the data
     const btn = $("#bananas"); if (btn.disabled) return; btn.disabled = true; btn.textContent = "🍌 Going…";
     try {
-      const r = await (await fetch("https://chat.sonneblomdigitaal.co.za/api/hq-refresh", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ pw: PW }) })).json();
+      const r = await (await fetch("", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ pw: PW }) })).json();
       if (r.error) btn.textContent = "🍌 " + r.error;
       else if (!r.started) btn.textContent = `🍌 Done recently, try in ${Math.ceil((r.wait || 60) / 60)} min`;
       else { btn.textContent = "🍌 Collecting… (about 2 min)"; await new Promise(z => setTimeout(z, 120000)); await reload(); btn.textContent = "🍌 Fresh!"; }
