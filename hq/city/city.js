@@ -42,6 +42,7 @@ function model(D) {
     ["Highest profit day", `${pnl(x.best_day)} · ${x.best_day_date || ""}`], ["Worst day", `${pnl(x.worst_day)} · ${x.worst_day_date || ""}`],
     ["Days traded", x.days_traded ?? "–"], ["Last trade", x.last_trade ? ago(x.last_trade) : "–"], ["Bot", x.running ? "🟢 running" : "⚪ stopped"]];
   const ks = bo.kalshi || {}, pm = bo.polymarket || {}, kb = bo.krypto || {};
+  const ls = s.longshot || {};  // $25 -> $250 attempt (Polymarket long shots, owner places bets)
   const fb = s.facebook || {}, ro = s.rose || {}, ig = s.instagram || {}, rs = s.rose_social || {};
   const rd = s.rose_diary || {}, ct = s.contra || {}, ox = s.outreach || {};
   const plus = n => n == null ? "–" : (n >= 0 ? "+" : "") + num(n);
@@ -170,6 +171,18 @@ function model(D) {
         botSheet(pm).concat([["Unredeemed positions", pnl(pm.open_pnl)],
           ["Paper bot", pm.paper ? `${pm.paper.running ? "🟢" : "⚪"} $${pm.paper.cash} cash (started $${pm.paper.start}), ${pm.paper.open} open` : "not started"]]), [], "", "https://polymarket.com/portfolio", "Read-only: the bot itself is switched off.") },
 
+    { id: "longshot", name: "Long Shot Tower", short: "10X", icon: "🎯", color: 0xff3b6b, pos: [42, 44], w: 5, d: 5, h: 20, kind: "coin",
+      status: st("longshot"), today: 0, total: 0,
+      tag: [ls.funded ? usd(ls.value || 0) + " of $250" : "waiting for $25", `${(ls.picks || []).length} long shots`],
+      board: { title: "$25 → $250", main: ls.funded ? usd(ls.value || 0) : "$0", mainLabel: ls.funded ? `${Math.round(100 * (ls.progress || 0))}% of the way to $250` : "waiting for the $25 deposit",
+        rows: [["Start", usd(ls.start || 25)], ["Goal", usd(ls.goal || 250)], ["Open bets", (ls.positions || []).length], ["Long shots today", (ls.picks || []).length]] },
+      sheet: () => sheetHTML("Long Shot Tower", "The $25 → $250 attempt: Polymarket outcomes priced 8-12c (pays about 10×). You place the bets; the City only watches.",
+        ls.funded ? usd(ls.value || 0) : "$0", ls.funded ? "wallet value (cash + bets)" : "waiting for the $25 deposit",
+        [["Start", usd(ls.start || 25)], ["Goal", usd(ls.goal || 250)], ["Progress", Math.round(100 * (ls.progress || 0)) + "%"], ["Cash", usd(ls.cash || 0)], ["Started", ls.started || "–"]]
+          .concat((ls.positions || []).map(p => [`${p.title} · ${p.outcome}`, `${usd(p.value)} (cost ${usd(p.cost)})`])),
+        (ls.picks || []).slice(0, 6).map(p => [`${p.q} · ${p.outcome}`, `${Math.round(p.price * 100)}c → ${p.pays}× · ends ${(p.ends || "").slice(5, 10)}`]),
+        "Today's long shots (8-12c)", "https://polymarket.com/portfolio", "A 10c price means the market gives it about a 10% chance. Info only, not advice.") },
+
     { id: "library", name: "The Library", short: "LIBRARY", icon: "📚", color: 0xe8a87c, pos: [45, 10], w: 9, d: 7, h: 9, kind: "library",
       status: sv("hq-portal"), today: 0, total: 0,
       tag: ["Claude", "tap to talk"],
@@ -195,6 +208,7 @@ const LINKS = {
   krypto: [["Phantom", "https://phantom.com"], ["DexScreener", "https://dexscreener.com/solana"]],
   kalshi: [["Kalshi portfolio", "https://kalshi.com/portfolio"]],
   poly: [["Polymarket portfolio", "https://polymarket.com/portfolio"]],
+  longshot: [["Polymarket portfolio", "https://polymarket.com/portfolio"], ["Ending soon", "https://polymarket.com/markets?_s=end_date%3Aasc"]],
 };
 const linksHTML = id => (LINKS[id] || []).length ? `<div class="links"><div class="lt">Quick links</div>${LINKS[id].map(([t, u]) => `<a href="${u}" target="_blank" rel="noopener">${esc(t)} ↗</a>`).join("")}</div>` : "";
 
