@@ -122,7 +122,7 @@ function model(D) {
 
     { id: "krypto", name: "Krypto Mint", short: "KRYPTO", icon: "🪙", color: 0x9945ff, pos: [0, 44], w: 6, d: 6, h: 16, kind: "coin",
       status: worst(st("krypto"), sv("krypto")), today: 0, total: 0,
-      tag: [`${(kr.sol ?? 0).toFixed(3)} SOL`, kr.armed_scripts?.length ? "bot trading" : "bot off"],
+      tag: [usd(kr.usd || 0) + " wallet", kr.armed_scripts?.length ? "bot trading" : "bot off"],
       board: { title: "KRYPTO MINT", main: usd(kr.usd || 0), mainLabel: "Phantom wallet (SOL + tokens)",
         rows: [["SOL", (kr.sol ?? 0).toFixed(4)], ["Rand", "R" + num(Math.round(kr.zar || 0))], ["Bot lifetime", pnl(kb.lifetime)], ["Trading", kr.armed_scripts?.length ? kr.armed_scripts.join(", ") : "off"]] },
       sheet: () => sheetHTML("Krypto Mint", "Phantom / Krypto Bot wallet on Solana (read-only)", usd(kr.usd || 0), "wallet value",
