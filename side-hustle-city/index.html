@@ -185,5 +185,67 @@ footer{color:var(--dim);font-size:13px;text-align:center;margin-top:34px}
 <footer>Side Hustle City · by Sonneblom Digitaal · demo and video use sample numbers · <a href="../city-tour/">How it was built</a></footer>
 </main>
 <script>document.querySelectorAll("[data-plan]").forEach(a => { if (PLANS[a.dataset.plan]) a.href = PLANS[a.dataset.plan]; });</script>
+<!-- Side Hustle City checkout: replaces the mailto PLANS map on /side-hustle-city/. Buy buttons (data-plan hosted|full|dfy)
+     open this box, ask for an email (+ optional Instagram/Facebook name), POST to shc_pay.py and go to Yoco. If the
+     checkout API is down, it falls back to the old mailto so no buyer hits a dead end. -->
+<div id="buy" hidden>
+  <form id="buyf">
+    <button type="button" id="buyx" aria-label="Close">×</button>
+    <h3 id="buyt">Checkout</h3>
+    <p id="buyp"></p>
+    <input id="buye" type="email" placeholder="Your email (we send your order here)" required autocomplete="email">
+    <input id="buyh" type="text" placeholder="Instagram or Facebook name (optional)" autocomplete="off">
+    <button class="btn gold" id="buyg">Pay securely by card →</button>
+    <small>Card, Apple Pay or Google Pay via Yoco. Yoco charges in South African rand at today's rate; your bank converts it. Monthly plans are never charged automatically: we email a pay link each month.</small>
+    <div id="buyerr" hidden></div>
+  </form>
+</div>
+<style>
+#buy{position:fixed;inset:0;z-index:99;background:rgba(5,2,20,.8);display:grid;place-items:center;padding:16px}
+#buy[hidden]{display:none}
+#buyf{position:relative;max-width:420px;width:100%;background:#140a33;border:1px solid #ff3d9a66;border-radius:18px;padding:22px;display:grid;gap:10px;color:#f4ecff;font-family:Inter,sans-serif}
+#buyf h3{margin:0;font-family:Orbitron,sans-serif}
+#buyf p{margin:0;opacity:.85}
+#buyf input{padding:12px;border-radius:10px;border:1px solid #6d5bd0;background:#0b0420;color:#fff;font-size:16px}
+#buyf small{opacity:.65;font-size:12px;line-height:1.4}
+#buyx{position:absolute;right:10px;top:6px;background:none;border:0;color:#fff;font-size:28px;cursor:pointer}
+#buyerr{color:#ffd166;font-size:14px}
+</style>
+<script>
+const SHC = "https://chat.sonneblomdigitaal.co.za/shc/checkout";
+const MAIL = p => "mailto:hello@eaafix.com?subject=" + encodeURIComponent("Side Hustle City - " + p);
+const PLAN_INFO = { hosted: ["Hosted plan", "$29.99 a month. We host and run your city, with new tools every week."],
+                    full: ["Full system", "$499.99 once. The full kit by email: code, setup guide and the Claude prompts."],
+                    dfy: ["Done for you", "$299 setup, then $9.99 a month after 30 days. We build it for you."] };
+let buyPlan = null;
+document.querySelectorAll("[data-plan]").forEach(a => {
+  const p = a.dataset.plan;
+  if (!PLAN_INFO[p]) { a.href = MAIL("Question"); return; }
+  a.href = MAIL(PLAN_INFO[p][0]);
+  a.addEventListener("click", e => { e.preventDefault(); buyPlan = p; buyt.textContent = PLAN_INFO[p][0]; buyp.textContent = PLAN_INFO[p][1];
+    buyerr.hidden = true; buy.hidden = false; buye.focus(); });
+});
+buyx.onclick = () => (buy.hidden = true);
+buy.onclick = e => { if (e.target === buy) buy.hidden = true; };
+buyf.onsubmit = async e => {
+  e.preventDefault(); buyg.disabled = true; buyg.textContent = "Opening secure checkout…"; buyerr.hidden = true;
+  try {
+    const r = await fetch(SHC, { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ plan: buyPlan, email: buye.value, handle: buyh.value }) });
+    const j = await r.json();
+    if (j.url) return (location.href = j.url);
+    buyerr.textContent = j.error || "Something went wrong."; buyerr.hidden = false;
+  } catch (err) {
+    location.href = MAIL(PLAN_INFO[buyPlan][0]);  // checkout API unreachable: email us instead
+  }
+  buyg.disabled = false; buyg.textContent = "Pay securely by card →";
+};
+const q = new URLSearchParams(location.search);
+if (q.get("paid")) { const n = document.createElement("div"); n.id = "paidnote";
+  n.textContent = "✅ Thanks! We are confirming your payment. Your email arrives within a few minutes (check spam too).";
+  n.style.cssText = "position:fixed;top:12px;left:12px;right:12px;z-index:100;background:#0fd28a;color:#062;padding:14px;border-radius:12px;font:700 15px Inter,sans-serif;text-align:center";
+  document.body.prepend(n); }
+</script>
+
 </body>
 </html>
