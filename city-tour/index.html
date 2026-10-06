@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#0b0420">
+<title>Sonneblom City · how it works</title>
+<meta property="og:title" content="Sonneblom City: my side hustles as a 3D city">
+<meta property="og:description" content="A dashboard built with Claude: every side hustle is a building. How it works, the tools, and a demo you can walk around in.">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0b0420;--card:#160a3c;--line:#2d1a6e;--dim:#a99cd6;--txt:#f3efff;--g:#3dffa8;--y:#ffd166;--p:#ff2bd6;--c:#00f0ff}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(circle at 50% -10%,#2a1170,var(--bg) 60%) fixed;color:var(--txt);font:16px/1.6 Inter,system-ui,sans-serif}
+main{max-width:760px;margin:0 auto;padding:28px 18px 60px}
+h1{font:800 34px/1.15 Orbitron,sans-serif;margin:8px 0 6px;letter-spacing:.5px}
+h1 b{color:var(--y)}
+h2{font:800 19px Orbitron,sans-serif;color:var(--c);margin:38px 0 10px;letter-spacing:.5px}
+p{margin:0 0 12px}
+.lead{color:var(--dim);font-size:17px}
+.cta{display:block;text-align:center;margin:22px 0;padding:16px;border-radius:14px;background:linear-gradient(90deg,var(--y),#ff8a3d);color:#1a0b3a;font:800 18px Orbitron,sans-serif;text-decoration:none;box-shadow:0 0 30px #ffb02066}
+.cta small{display:block;font:600 12px Inter,sans-serif;opacity:.8;margin-top:2px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin:10px 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+.grid .card{margin:0}
+.card b{display:block;font-size:15px}
+.card span{color:var(--dim);font-size:14px}
+.flow{display:flex;flex-direction:column;gap:6px;margin:12px 0}
+.flow div{background:var(--card);border-left:4px solid var(--c);border-radius:8px;padding:10px 12px;font-size:15px}
+.flow div:nth-child(even){border-color:var(--p)}
+.flow i{color:var(--dim);font-style:normal;font-size:13px;display:block}
+.arrow{color:var(--dim);text-align:center;margin:-2px 0}
+pre{background:#07031a;border:1px solid var(--line);border-radius:12px;padding:14px;overflow-x:auto;font:13px/1.5 'JetBrains Mono',monospace;color:#d8d0ff}
+pre .k{color:var(--p)} pre .s{color:var(--g)} pre .c{color:#7d74a8}
+.stats{display:flex;flex-wrap:wrap;gap:10px;margin:12px 0}
+.stats div{flex:1 1 140px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;text-align:center}
+.stats b{display:block;font:800 26px Orbitron,sans-serif;color:var(--g)}
+.stats span{color:var(--dim);font-size:13px}
+ol{padding-left:20px} li{margin:6px 0}
+.prompt{background:#07031a;border:1px dashed var(--y);border-radius:12px;padding:14px;font-size:15px}
+footer{color:var(--dim);font-size:13px;text-align:center;margin-top:40px}
+</style>
+</head>
+<body>
+<main>
+<div style="font:600 13px Inter;color:var(--y);letter-spacing:2px">A SIDE PROJECT BUILT WITH CLAUDE</div>
+<h1>SONNEBLOM <b>CITY</b></h1>
+<p class="lead">All my side hustles in one 3D city. Every business is a building. Its billboard shows the latest numbers, a light on the roof shows if it's running, and a gold beam shoots up when it made money today.</p>
+<a class="cta" href="city/">🏙️ Walk around the demo city<small>Works on your phone · all numbers in the demo are made up</small></a>
+
+<h2>Why a city?</h2>
+<p>I run lots of small things at once: an Etsy shop, digital downloads on Gumroad, books on Amazon, social pages, a few small bots. Checking 10 websites every morning got old, so I asked Claude to pull everything into one place and make it fun to look at. Now I open one link on my phone and see everything.</p>
+
+<h2>What's in the city</h2>
+<div class="grid">
+  <div class="card"><b>💰 The Vault</b><span>The centre of town. Everything that comes in adds up here.</span></div>
+  <div class="card"><b>🛍️ Etsy Megastore</b><span>Listings, views, favourites and orders, straight from the Etsy API. Printed products come through Printify.</span></div>
+  <div class="card"><b>🎨 Gumroad Arcade</b><span>Digital downloads and Blender add-ons: products, page views, sales.</span></div>
+  <div class="card"><b>📦 Amazon KDP</b><span>Paperback books (Amazon has no API, so numbers are typed in).</span></div>
+  <div class="card"><b>📡 Media HQ</b><span>Facebook and Instagram: followers, views, posts, ads.</span></div>
+  <div class="card"><b>📌 Pinterest Studio</b><span>Pins planned for the week and how many are still waiting to go out.</span></div>
+  <div class="card"><b>✉️ Outreach Post Office</b><span>A cold-email campaign: sent, replies, quotes.</span></div>
+  <div class="card"><b>💼 Contra Studio</b><span>Freelance jobs and proposals.</span></div>
+  <div class="card"><b>🧪 API Lab</b><span>Small paid web tools other programs can use.</span></div>
+  <div class="card"><b>🪙 Money quarter</b><span>Small trading bots, read-only: today, best day, win rate.</span></div>
+  <div class="card"><b>🐙 GitHub Foundry</b><span>All the code. Shows how many changes went out today.</span></div>
+  <div class="card"><b>🔬 R&amp;D Centre</b><span>Claude reads all the numbers and writes a report: what's stuck and what to try next.</span></div>
+  <div class="card"><b>🏗️ Showroom</b><span>Under construction. Gets taller as each step of a new project is finished.</span></div>
+  <div class="card"><b>📚 The Library</b><span>Where I chat with Claude from my phone. Claude can change the city while I watch.</span></div>
+</div>
+
+<h2>How it works</h2>
+<div class="flow">
+  <div>1 · Shops &amp; platforms<i>Etsy, Gumroad, Printify, Facebook/Instagram, GitHub, Apify, the Solana blockchain…</i></div>
+  <div class="arrow">↓</div>
+  <div>2 · Collector script (Python)<i>Every 30 minutes a small server asks each platform's API for the latest numbers and saves one snapshot file.</i></div>
+  <div class="arrow">↓</div>
+  <div>3 · Lock it up<i>The snapshot is encrypted (AES-256, the same kind banks use), so only someone with the password can read it.</i></div>
+  <div class="arrow">↓</div>
+  <div>4 · Free hosting<i>The encrypted file and the city's code are pushed to GitHub Pages: free hosting, nothing to maintain.</i></div>
+  <div class="arrow">↓</div>
+  <div>5 · Your browser builds the city<i>On your phone the password unlocks the data, and Three.js (a 3D library) builds the city: buildings, cars, people, rain, neon.</i></div>
+</div>
+<p>The private numbers are never visible on the internet. The website only ever holds a locked file.</p>
+
+<h2>The tools</h2>
+<div class="grid">
+  <div class="card"><b>Claude (Claude Code)</b><span>The builder. Wrote every line, runs on a small Linux server, and keeps the city updated.</span></div>
+  <div class="card"><b>Python</b><span>Collectors that talk to every platform's API.</span></div>
+  <div class="card"><b>Three.js</b><span>3D in the browser: buildings, lights, bloom glow, walk and fly modes.</span></div>
+  <div class="card"><b>GitHub Pages</b><span>Free website hosting. Every update is a "git push".</span></div>
+  <div class="card"><b>Web Crypto</b><span>AES-256-GCM + PBKDF2: the data is locked on the server and unlocked in the browser.</span></div>
+  <div class="card"><b>Cron + systemd</b><span>The server's alarm clock: refreshes every 30 min and keeps bots running.</span></div>
+  <div class="card"><b>Telegram bot</b><span>Sends alerts and links straight to my phone.</span></div>
+  <div class="card"><b>Playwright</b><span>A robot browser Claude uses to screenshot the city and check it works before it goes live.</span></div>
+</div>
+
+<div class="stats">
+  <div><b>2 400+</b><span>lines of code for the city</span></div>
+  <div><b>17</b><span>buildings</span></div>
+  <div><b>10+</b><span>platforms connected</span></div>
+  <div><b>R0</b><span>hosting cost</span></div>
+</div>
+
+<h2>A peek at the code</h2>
+<p>Each building is one small block of settings. Adding a new business means adding one of these:</p>
+<pre><span class="c">// one building = one side hustle</span>
+{ id: <span class="s">"etsy"</span>, name: <span class="s">"Etsy Megastore"</span>, icon: <span class="s">"🛍️"</span>,
+  color: 0xff8a3d, pos: [-25, 6], h: 11, kind: <span class="s">"market"</span>,
+  board: { title: <span class="s">"ETSY MEGASTORE"</span>, main: views,
+           rows: [[<span class="s">"Orders"</span>, orders], [<span class="s">"Favourites"</span>, favs]] } }</pre>
+<p>The collector is just as simple: one small function per platform.</p>
+<pre><span class="k">def</span> github():
+    <span class="c">"""Repos and commits pushed today, from the GitHub API."""</span>
+    repos = gh(<span class="s">"/user/repos"</span>)
+    events = gh(<span class="s">"/users/me/events"</span>)
+    <span class="k">return</span> {<span class="s">"repos"</span>: len(repos), <span class="s">"commits_24h"</span>: count_pushes(events, hours=24)}</pre>
+<p>And this is how the browser unlocks the data with the password:</p>
+<pre>key = <span class="k">await</span> crypto.subtle.deriveKey(
+  { name: <span class="s">"PBKDF2"</span>, salt, iterations: 310000, hash: <span class="s">"SHA-256"</span> },
+  passwordKey, { name: <span class="s">"AES-GCM"</span>, length: 256 }, false, [<span class="s">"decrypt"</span>]);
+data = JSON.parse(<span class="k">await</span> crypto.subtle.decrypt({ name: <span class="s">"AES-GCM"</span>, iv }, key, locked));</pre>
+
+<h2>Build your own with Claude</h2>
+<ol>
+  <li>Get <b>Claude Code</b> (claude.com/claude-code) on a computer or a cheap cloud server (Linux, about $5 a month).</li>
+  <li>Create API keys: Etsy (developer account → app), Gumroad (Settings → Advanced → Application), and a free GitHub account.</li>
+  <li>Give Claude the prompt below, then add one building at a time.</li>
+  <li>Ask Claude to set up a schedule (cron) so the numbers refresh every 30 minutes.</li>
+  <li>Open the link on your phone and tap "Add to Home Screen". It works like an app.</li>
+</ol>
+<div class="prompt">“Build me a private dashboard for my Etsy shop and Gumroad store. Write a Python script that pulls my listings, views and sales from the Etsy and Gumroad APIs every 30 minutes, encrypts the result with a password, and publishes it to GitHub Pages. Then build a page with Three.js that unlocks the data in the browser and shows each shop as a glowing 3D building with a billboard of its numbers. Start simple with Etsy, show me a screenshot, then we'll add more.”</div>
+<p style="margin-top:12px">Tip: go step by step. Ask for one building, check it on your phone, then ask for the next one. Claude remembers how everything fits together.</p>
+
+<a class="cta" href="city/">🏙️ Open the demo city<small>Tap a building to see its numbers · try Bird and Street mode</small></a>
+<footer>Sonneblom City · built with Claude · demo numbers are made up</footer>
+</main>
+</body>
+</html>
