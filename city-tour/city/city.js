@@ -1167,12 +1167,33 @@ function todoNote(t) {
 }
 $("#askbar").onclick = () => DEMO ? focus("library") : openTerm();
 
+// LIVE strip under the building buttons: Influencer users, Side Hustle City visits, Etsy + Gumroad visits today (collect.py pulse().stats)
+function liveStrip(p) {
+  const el = $("#livestats"), st = (p || {}).stats;
+  if (DEMO || !st) return (el.hidden = true);
+  const v = x => x === null || x === undefined ? "—" : num(x);
+  el.hidden = false;
+  el.innerHTML = `<span class="lv">● LIVE</span>` +
+    `<button data-id="influencer">🌹 Influencer users <b>${v(st.influencer_users)}</b>${st.influencer_new ? ` <em>+${st.influencer_new}</em>` : ""}</button>` +
+    `<button data-id="showroom">🏙️ SHC visits <b>${v(st.shc_visits)}</b></button>` +
+    `<button data-id="etsy" title="from ${esc(st.etsy_src || "")}">🛍️ Etsy visits <b>${v(st.etsy_visits)}</b></button>` +
+    `<button data-id="gumroad" title="${st.gumroad_visits === null ? "read from Gumroad via Chrome on Go Bananas (last " + esc(st.gumroad_at || "never") + ")" : ""}">🎨 Gumroad visits <b>${v(st.gumroad_visits)}</b></button>`;
+}
+
 function hud() {
   const { B, tot, day, influencerZar, sales, s } = M;
   groups.vault.userData.el.innerHTML = `<b>THE VAULT · TODAY</b><span style="font:800 18px Sora;color:${day ? "#3dffa8" : "#fff"}">${usd(day)}</span><br><span class="z">${usd(tot)} all time${influencerZar ? ` + R${num(influencerZar)}` : ""} · ${sales} sales</span>`;
   const dc = { ok: "#3dffa8", down: "#ff4d6d", stale: "#ffd166", unknown: "#7d74a8" };
-  $("#chips").innerHTML = [`<button class="chip" data-id="vault" style="border-color:#ffd166"><b style="color:#ffd166">💰 VAULT</b>${usd(day)} today · <span class="s">${usd(tot)} total</span></button>`]
-    .concat(B.map(b => `<button class="chip" data-id="${b.id}" style="border-color:${hex(b.color)}88"><b style="color:${hex(b.color)}"><span class="dot" style="background:${dc[b.status]}"></span>${b.icon} ${esc(b.short)}</b>${esc(b.tag[0])} · <span class="s">${esc(b.tag[1])}</span></button>`)).join("");
+  // top buttons = building names only; a green blip = something there needs the owner (collect.py pulse().attention, plus anything down)
+  const att = (s.pulse || {}).attention || {};
+  const why = b => [...(att[b.id] || []), ...(b.status === "down" ? ["Something here is down"] : [])];
+  const chip = (id, label, color, w) => `<button class="chip${w.length ? " need" : ""}" data-id="${id}" title="${esc(w.join(" · "))}" style="border-color:${color}88;color:${color}">${w.length ? `<i class="blip"></i>` : ""}${esc(label)}</button>`;
+  const names = { vault: "Vault", etsy: "Etsy", fb: "Media HQ", influencer: "Influencer", contra: "Contra", zoho: "Outreach", gumroad: "Gumroad", kdp: "KDP", lab: "API Lab",
+    krypto: "Krypto", kalshi: "Kalshi", poly: "Polymarket", longshot: "Long Shot", pinterest: "Pinterest", github: "GitHub", rnd: "R&D", showroom: "Showroom", library: "Library" };
+  const list = [chip("vault", "Vault", "#ffd166", att.vault || [])].concat(B.map(b => chip(b.id, names[b.id] || b.short, hex(b.color), why(b))));
+  $("#chips").innerHTML = list.join("");
+  M.need = id => id === "vault" ? att.vault || [] : why(B.find(x => x.id === id) || {});
+  liveStrip(s.pulse);
   todoNote(s.todo);
   document.querySelectorAll("[data-id]").forEach(x => x.onclick = () => focus(x.dataset.id));
   $("#updated").textContent = `data ${ago(s.ts)} · refreshes every 30 min`;
@@ -1203,7 +1224,7 @@ function focus(id) {
     const board = g.userData.board, bp = new THREE.Vector3(); board.getWorldPosition(bp);
     const side = innerWidth >= 900, Hpx = innerHeight, Wpx = innerWidth;
     // free screen band (px) between the header/chips and the panel; the building is centred and sized to fit inside it
-    let top = side ? 120 : 112, bottom = side ? Hpx - 110 : Hpx * 0.48, right = side ? Wpx - 430 : Wpx;
+    let top = side ? 136 : 128, bottom = side ? Hpx - 110 : Hpx * 0.48, right = side ? Wpx - 430 : Wpx;
     if (DEMO && window.__demoBand) [top, bottom, right] = window.__demoBand(Wpx, Hpx);  // video director leaves room for captions
     const visV = (bottom - top) / Hpx, visH = right / Wpx, cyF = (top + bottom) / 2 / Hpx, cxF = right / 2 / Wpx;
     const H = Math.max(g.userData.top || b.h, bp.y + 3.5) + 1.5, wide = Math.max(b.w, b.d) * 2 + 8;
@@ -1229,7 +1250,9 @@ function focus(id) {
   if (id === "library" && !DEMO) return openTerm();
   closeTerm();
   const sheet = $("#sheet"); sheet.style.setProperty("--c", id === "vault" ? "#ffd166" : hex(b.color));
-  $("#sheetbody").innerHTML = (id === "vault" ? vaultSheet() : b.sheet()) + actionsHTML(id) + linksHTML(id);
+  const nd = !DEMO && M.need ? M.need(id) : [];
+  $("#sheetbody").innerHTML = (nd.length ? `<div class="needs"><b><i class="blip"></i>NEEDS YOU</b>${nd.map(x => `<div>${esc(x)}</div>`).join("")}</div>` : "") +
+    (id === "vault" ? vaultSheet() : b.sheet()) + actionsHTML(id) + linksHTML(id);
   sheet.hidden = false; sheet.scrollTop = 0;
 }
 
