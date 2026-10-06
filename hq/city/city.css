@@ -29,7 +29,8 @@ header{position:absolute;top:0;left:0;right:0;display:flex;justify-content:space
 .live{font:700 10px Inter;color:#fff;background:#e11d48;padding:2px 6px;border-radius:4px;margin-left:6px;letter-spacing:1px}
 #clock{font:600 12px 'JetBrains Mono';color:var(--dim);margin-left:6px}
 .acts{display:flex;gap:6px}
-.acts button{width:36px;height:36px;border-radius:10px;border:1px solid var(--line);background:var(--panel);font-size:16px}
+.acts{align-items:center}.acts button{width:46px;height:46px;border-radius:12px;border:1px solid var(--line);background:var(--panel);font-size:21px}
+#bananas{width:auto!important;padding:0 16px;font-size:15px!important;font-weight:800;background:linear-gradient(135deg,#ffe14d,#ffb020)!important;color:#2a1a00;border-color:#ffd34d!important;white-space:nowrap}
 #chips{position:absolute;top:calc(env(safe-area-inset-top) + 56px);left:0;right:0;display:flex;gap:8px;overflow-x:auto;padding:0 14px 6px;scrollbar-width:none}
 #chips::-webkit-scrollbar{display:none}
 .chip{flex:0 0 auto;border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:6px 10px;font-size:11px;line-height:1.25;text-align:left}
@@ -39,8 +40,8 @@ header{position:absolute;top:0;left:0;right:0;display:flex;justify-content:space
 #updated{position:absolute;top:calc(env(safe-area-inset-top) + 112px);left:14px;font:11px 'JetBrains Mono';color:var(--dim);pointer-events:none}
 #dock{position:absolute;bottom:calc(env(safe-area-inset-bottom) + 10px);left:0;right:0;display:flex;gap:8px;overflow-x:auto;padding:0 14px;scrollbar-width:none;justify-content:safe center}
 #dock::-webkit-scrollbar{display:none}
-#dock button{flex:0 0 auto;border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:8px 13px;font-size:13px;font-weight:600;white-space:nowrap}
-#dock button i{font-style:normal;margin-right:4px}
+#dock button{flex:0 0 auto;border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:11px 18px;font-size:15px;font-weight:600;white-space:nowrap}
+#dock button i{font-style:normal;margin-right:6px;font-size:18px}
 #payrollbtn{position:absolute;right:14px;bottom:calc(env(safe-area-inset-bottom) + 58px);border:1px solid var(--gold);color:var(--gold);background:var(--panel);
   border-radius:8px;padding:6px 10px;font:700 11px Orbitron;letter-spacing:1px}
 #payroll{position:absolute;right:14px;bottom:calc(env(safe-area-inset-bottom) + 96px);width:min(380px,calc(100vw - 28px));background:var(--panel);
@@ -101,9 +102,9 @@ header{position:absolute;top:0;left:0;right:0;display:flex;justify-content:space
 #tin{flex:1;resize:none;max-height:140px;background:transparent;border:0;outline:0;color:#fff;font:15px/1.4 'JetBrains Mono';padding:6px 0}
 #tsend{border:0;border-radius:8px;background:#7c3aed;padding:8px 14px;font-weight:700}
 #tsend:disabled{opacity:.4}
-@media (max-width:520px){.brand{font-size:12px;letter-spacing:1px}#clock{display:none}.acts button{width:32px;height:32px;font-size:14px}.tag{font-size:10px;padding:3px 6px}.tag b{font-size:10px}#hint{font-size:11px}}
-#modes{position:absolute;left:14px;bottom:calc(env(safe-area-inset-bottom) + 58px);display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--panel)}
-#modes button{border:0;background:transparent;padding:7px 10px;font-size:12px;font-weight:700;color:var(--dim)}
+@media (max-width:520px){.brand{font-size:12px;letter-spacing:1px}#clock{display:none}.acts button{width:40px;height:40px;font-size:18px}#bananas{padding:0 10px;font-size:12px!important}.tag{font-size:10px;padding:3px 6px}.tag b{font-size:10px}#hint{font-size:11px}}
+#modes{position:absolute;left:14px;bottom:calc(env(safe-area-inset-bottom) + 70px);display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--panel)}
+#modes button{border:0;background:transparent;padding:10px 14px;font-size:14px;font-weight:700;color:var(--dim)}
 #modes button.on{background:#5b21b6;color:#fff}
 #joy{position:absolute;left:22px;bottom:calc(env(safe-area-inset-bottom) + 104px);width:120px;height:120px;border-radius:50%;
   background:radial-gradient(circle,rgba(124,58,237,.25),rgba(14,8,40,.55));border:2px solid var(--line);touch-action:none}
