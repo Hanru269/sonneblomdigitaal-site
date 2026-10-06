@@ -1170,6 +1170,59 @@ function freeInput() {
   document.querySelectorAll("#modes button").forEach(b => b.onclick = () => setMode(b.dataset.mode));
 }
 
+// ---------- Staff: our bots as named employees (collect.py staff() <- hq-data/staff.json) ----------
+// Each one stands at their building (tiny worker + name tag when you tap the building), shows up in the 👥 STAFF chart and
+// in the building panel, and has an Assign button that drops a task for them into the Library for Claude to carry out.
+const STC = { working: "#3dffa8", "on duty": "#3dffa8", "on call": "#7df9ff", late: "#ffd166", off: "#ff4d6d", unknown: "#7d74a8" };
+const staffOf = id => ((M.s.staff || {}).staff || []).filter(x => x.bld === id);
+const agoS = s => s == null ? "" : s < 90 ? "just now" : s < 5400 ? Math.round(s / 60) + " min ago" : s < 129600 ? Math.round(s / 3600) + " h ago" : Math.round(s / 86400) + " d ago";
+const staffRow = x => `<div class="emp"><span class="av" style="border-color:${STC[x.status] || "#7d74a8"}">${x.emoji}</span>
+  <span class="ej"><b>${esc(x.name)}</b> <i style="color:${STC[x.status] || "#7d74a8"}">● ${esc(x.status)}${x.last_s != null ? " · " + agoS(x.last_s) : ""}</i><br>${esc(x.now ? x.now + " · " : "")}${esc(x.job)}</span>
+  <button class="assign" data-emp="${esc(x.id)}">Assign</button></div>`;
+const staffHTML = id => DEMO || !staffOf(id).length ? "" : `<div class="staffbox"><div class="lt">👥 Staff here · tap Assign to give them a job</div>${staffOf(id).map(staffRow).join("")}</div>`;
+function assign(eid) {
+  const x = ((M.s.staff || {}).staff || []).find(y => y.id === eid); if (!x) return;
+  openTerm().then(() => { const t = $("#tin"); t.value = `Task for ${x.name} (${x.job}): `; t.dispatchEvent(new Event("input")); t.focus(); });
+}
+document.addEventListener("click", e => { const b = e.target.closest && e.target.closest("[data-emp]"); if (b) { e.stopPropagation(); assign(b.dataset.emp); } }, true);
+function staffPanel() {
+  const all = (M.s.staff || {}).staff || [], el = $("#staff");
+  if (DEMO || !all.length) { $("#staffbtn").hidden = true; return; }
+  const on = all.filter(x => ["working", "on duty"].includes(x.status)).length;
+  $("#staffbtn").textContent = `👥 STAFF · ${on}/${all.length} ON`;
+  const bn = id => id === "vault" ? "Vault" : (M.B.find(b => b.id === id) || {}).name || id;
+  const groups2 = [...new Set(all.map(x => x.bld))];
+  el.innerHTML = `<h4>👥 STAFF · ${all.length} BOTS</h4><p class="sub2">Every bot that works for you. Tap Assign to give one a job: it goes to Claude in the Library, who sets it up.</p>` +
+    groups2.map(g => `<div class="dept"><div class="dn" data-id="${esc(g)}">${esc(bn(g))}</div>${all.filter(x => x.bld === g).map(staffRow).join("")}</div>`).join("");
+  el.querySelectorAll(".dn[data-id]").forEach(d => d.onclick = () => { el.hidden = true; focus(d.dataset.id); });
+}
+// little workers in front of their building; their name tags only show while that building is focused
+const staffTags = [];
+function staffFigures() {
+  if (DEMO) return;
+  const by = {};
+  ((M.s.staff || {}).staff || []).forEach(x => (by[x.bld] = by[x.bld] || []).push(x));
+  Object.entries(by).forEach(([bid, xs]) => {
+    const b = M.B.find(y => y.id === bid), g = groups[bid]; if (!b || !g) return;
+    const f = faceDir(b), side = new THREE.Vector3(-f.z, 0, f.x), d0 = Math.max(b.w, b.d) / 2 + 2.6;
+    xs.forEach((x, i) => {
+      const k = i - (xs.length - 1) / 2, col = new THREE.Color(STC[x.status] || "#7d74a8");
+      const w = new THREE.Group();
+      const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.32, 0.7, 4, 8), new THREE.MeshStandardMaterial({ color: 0x1b1036, emissive: col, emissiveIntensity: 0.9 }));
+      body.position.y = 0.7; w.add(body);
+      const head = new THREE.Mesh(new THREE.SphereGeometry(0.26, 12, 8), new THREE.MeshStandardMaterial({ color: 0xffe0c2, emissive: 0x332211 })); head.position.y = 1.45; w.add(head);
+      w.position.copy(f.clone().multiplyScalar(d0).add(side.clone().multiplyScalar(k * 1.3))); w.position.y = 0;
+      g.add(w);
+      const el = document.createElement("div"); el.className = "tag stag"; el.style.setProperty("--c", STC[x.status] || "#7d74a8");
+      el.innerHTML = `<b>${x.emoji} ${esc(x.name)}</b>`; el.onclick = () => assign(x.id);
+      const lab = new CSS2DObject(el); lab.position.set(w.position.x, 2.4 + (i % 2) * 0.9, w.position.z); lab.visible = false; g.add(lab);
+      staffTags.push({ bid, lab });
+      const ph = i * 1.7; anim.push((dt, t) => { w.position.y = Math.abs(Math.sin(t * 2.2 + ph)) * (x.status === "working" ? 0.25 : 0.06); });
+    });
+  });
+}
+const showStaffTags = id => staffTags.forEach(o => o.lab.visible = o.bid === id);
+
 // ---------- UI ----------
 // Neon sticky note: the to-do list Claude keeps in hq-data/todo.json. Ticks are remembered on this device until Claude marks them done.
 function todoNote(t) {
@@ -1215,6 +1268,7 @@ function hud() {
   $("#chips").innerHTML = list.join("");
   M.need = id => id === "vault" ? att.vault || [] : why(B.find(x => x.id === id) || {});
   liveStrip(s.pulse);
+  staffPanel();
   todoNote(s.todo);
   document.querySelectorAll("[data-id]").forEach(x => x.onclick = () => focus(x.dataset.id));
   $("#updated").textContent = `data ${ago(s.ts)} · refreshes every 30 min`;
@@ -1235,7 +1289,7 @@ function vaultSheet() {
 }
 
 function focus(id) {
-  $("#hint").style.opacity = 0; $("#payroll").hidden = true;
+  $("#hint").style.opacity = 0; $("#payroll").hidden = true; $("#staff").hidden = true; showStaffTags(id);
   const g = groups[id]; if (!g) return;
   const b = M.B.find(x => x.id === id);
   const portrait = innerWidth < innerHeight;
@@ -1273,7 +1327,7 @@ function focus(id) {
   const sheet = $("#sheet"); sheet.style.setProperty("--c", id === "vault" ? "#ffd166" : hex(b.color));
   const nd = !DEMO && M.need ? M.need(id) : [];
   $("#sheetbody").innerHTML = (nd.length ? `<div class="needs"><b><i class="blip"></i>NEEDS YOU</b>${nd.map(x => `<div>${esc(x)}</div>`).join("")}</div>` : "") +
-    (id === "vault" ? vaultSheet() : b.sheet()) + actionsHTML(id) + linksHTML(id);
+    (id === "vault" ? vaultSheet() : b.sheet()) + staffHTML(id) + actionsHTML(id) + linksHTML(id);
   sheet.hidden = false; sheet.scrollTop = 0;
 }
 
@@ -1281,6 +1335,7 @@ function fly(target, pos) {
   flight = { t0: performance.now(), t: 0, ft: controls.target.clone(), fp: camera.position.clone(), tt: target, tp: pos };
 }
 function home(instant) {
+  showStaffTags(null);
   const t = new THREE.Vector3(0, 4, -4), p = MOBILE && innerWidth < innerHeight ? new THREE.Vector3(0, 215, 190) : new THREE.Vector3(0, 125, 135);  // above a street, looking into the park
   if (mode !== "orbit") setMode("orbit", true);
   if (instant) { controls.target.copy(t); camera.position.copy(p); } else fly(t, p);
@@ -1302,7 +1357,8 @@ function addrEventListeners() {
   freeInput();
   $("#home").onclick = () => { $("#sheet").hidden = true; closeTerm(); home(); };
   $("#sheetx").onclick = () => $("#sheet").hidden = true;
-  $("#payrollbtn").onclick = () => $("#payroll").hidden = !$("#payroll").hidden;
+  $("#payrollbtn").onclick = () => { $("#staff").hidden = true; $("#payroll").hidden = !$("#payroll").hidden; };
+  $("#staffbtn").onclick = () => { $("#payroll").hidden = true; $("#staff").hidden = !$("#staff").hidden; };
   $("#lockbtn").onclick = () => { set(KEY, null); location.reload(); };
   $("#refresh").onclick = () => reload();
   $("#bananas").onclick = async () => {  // Go Bananas: the server re-collects every source (update.sh), then we reload the data
@@ -1432,7 +1488,7 @@ $("#tnew").onclick = async () => { if (tBusy) return; await api("/new", { method
 // ---------- boot ----------
 function build() {
   M = model(D);
-  ground(); vault(); M.B.forEach(building); flowBeam(); moneyBeams(); workBeams(); life(); hud();
+  ground(); vault(); M.B.forEach(building); flowBeam(); moneyBeams(); workBeams(); life(); staffFigures(); hud();
   applySkin(SKIN.id);
 }
 
