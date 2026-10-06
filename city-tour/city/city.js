@@ -954,6 +954,12 @@ function life() {
     leaf.setColorAt(i, col.set(palette[i % palette.length]).multiplyScalar(0.55 + Math.random() * 0.3));
   });
   scene.add(trunk, leaf);
+  // DEMO videos: hide trees within r of a walk line so street shots are never blocked
+  if (DEMO) window.__clearPath = (x0, z0, x1, z1, r) => {
+    const a = new THREE.Vector3(x0, 0, z0), b = new THREE.Vector3(x1, 0, z1), line = new THREE.Line3(a, b), q = new THREE.Vector3(), c = new THREE.Vector3(), zero = new THREE.Matrix4().makeScale(0, 0, 0);
+    spots.forEach(([x, z], i) => { line.closestPointToPoint(q.set(x, 0, z), true, c); if (c.distanceTo(q) < r) { trunk.setMatrixAt(i, zero); leaf.setMatrixAt(i, zero); } });
+    trunk.instanceMatrix.needsUpdate = leaf.instanceMatrix.needsUpdate = true;
+  };
 
   // lamps and benches along every path
   const lamps = [], benches = [];
