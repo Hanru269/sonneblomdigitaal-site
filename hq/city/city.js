@@ -34,6 +34,7 @@ async function decrypt(pw) {
 function model(D) {
   const s = D.snapshot, m = D.manual || {};
   const et = s.etsy || {}, gu = s.gumroad || {}, pf = s.printify || {}, ap = s.apify || {}, x4 = s.x402 || {};
+  const kr = s.krypto || {};
   const fb = s.facebook || {}, ro = s.rose || {}, ig = s.instagram || {}, rs = s.rose_social || {};
   const L = et.listings || [], G = gu.listings || [];
   const eS = et.sales || [], gS = gu.sales || [];
@@ -111,6 +112,15 @@ function model(D) {
       sheet: () => sheetHTML("API Lab", "Apify actors + x402 AgentEdge API", runs, "Apify runs",
         [["Actors", (ap.actors || []).length], ["Users", apUsers], ["x402 balance", "$" + (x4.balance_usdc ?? 0)], ["x402 paid calls", x4.external_tx_since_oct2 ?? 0], ["x402 server", svLabel("x402-agentedge")]],
         [...(ap.actors || [])].sort((a, b) => b.runs - a.runs).slice(0, 6).map(a => [a.title, `${a.runs} runs`]), "Busiest actors", "https://console.apify.com/actors") },
+
+    { id: "krypto", name: "Krypto Mint", short: "KRYPTO", icon: "🪙", color: 0x9945ff, pos: [0, 44], w: 6, d: 6, h: 16, kind: "coin",
+      status: worst(st("krypto"), sv("krypto")), today: 0, total: 0,
+      tag: [`${(kr.sol ?? 0).toFixed(3)} SOL`, kr.armed_scripts?.length ? "bot trading" : "bot off"],
+      board: { title: "KRYPTO MINT", main: usd(kr.usd || 0), mainLabel: "bot wallet (Solana)",
+        rows: [["SOL", (kr.sol ?? 0).toFixed(4)], ["Rand", "R" + num(Math.round(kr.zar || 0))], ["Trading", kr.armed_scripts?.length ? kr.armed_scripts.join(", ") : "off"]] },
+      sheet: () => sheetHTML("Krypto Mint", "Krypto Bot wallet on Solana (read-only)", usd(kr.usd || 0), "wallet value",
+        [["SOL", (kr.sol ?? 0).toFixed(4)], ["Rand", "R" + num(Math.round(kr.zar || 0))], ["Trading script", kr.armed_scripts?.length ? kr.armed_scripts.join(", ") : "off"], ["Bot app", svLabel("krypto")]],
+        [], "", kr.address ? "https://solscan.io/account/" + kr.address : "", "Balance read from the public Solana chain on every HQ refresh.") },
 
     { id: "library", name: "The Library", short: "LIBRARY", icon: "📚", color: 0xe8a87c, pos: [45, 10], w: 9, d: 7, h: 9, kind: "library",
       status: sv("hq-portal"), today: 0, total: 0,
@@ -293,6 +303,11 @@ function building(b) {
     g.add(tower(b.w, b.h, b.d, c, 61, lit));
     const dm = new THREE.Mesh(new THREE.SphereGeometry(b.w * 0.6, 24, 12, 0, 6.28, 0, Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0x2a1a66, emissive: c, emissiveIntensity: 0.7, wireframe: true }));
     dm.position.y = b.h; g.add(dm); anim.push(dt => dm.rotation.y += dt * 0.3); top = b.h + b.w * 0.6;
+  } else if (b.kind === "coin") {  // mint tower with a spinning Solana-purple coin
+    g.add(tower(b.w, b.h, b.d, c, 71, lit));
+    const coin = new THREE.Mesh(new THREE.CylinderGeometry(2.2, 2.2, 0.45, 32), new THREE.MeshStandardMaterial({ color: 0xffd34d, emissive: 0x9945ff, emissiveIntensity: 0.55, metalness: 0.6 }));
+    coin.rotation.x = Math.PI / 2; const piv = new THREE.Group(); piv.position.y = b.h + 3.2; piv.add(coin); g.add(piv);
+    anim.push((dt, t) => { piv.rotation.y += dt * 1.4; piv.position.y = b.h + 3.2 + Math.sin(t * 1.5) * 0.4; }); top = b.h + 5.6;
   } else if (b.kind === "library") {  // classical library: columns, pediment, warm glow
     const base = new THREE.Mesh(new THREE.BoxGeometry(b.w, 1, b.d), new THREE.MeshStandardMaterial({ color: 0xe8dcc8, emissive: c, emissiveIntensity: 0.15 })); base.position.y = 1; g.add(base);
     const hall = new THREE.Mesh(new THREE.BoxGeometry(b.w * 0.8, b.h - 2, b.d * 0.7), new THREE.MeshStandardMaterial({ color: 0x3a2412, emissive: 0xffb36b, emissiveIntensity: 0.55 }));
