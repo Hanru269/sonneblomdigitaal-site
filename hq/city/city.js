@@ -45,6 +45,8 @@ function model(D) {
   const ls = s.longshot || {}; const lb = s.lsbot || {};  // $25 -> $250 attempt (Polymarket long shots, owner places bets)
   const fb = s.facebook || {}, ro = s.rose || {}, ig = s.instagram || {}, rs = s.rose_social || {};
   const rd = s.rose_diary || {}, ct = s.contra || {}, ox = s.outreach || {};
+  const pi = s.pinterest || {}, gh = s.github || {}, sh = s.showroom || {}, rn = s.rnd || {};
+  const shSt = sh.stages || [], shDone = shSt.filter(x => x.done).length, shNext = shSt.find(x => !x.done);
   const plus = n => n == null ? "–" : (n >= 0 ? "+" : "") + num(n);
   const L = et.listings || [], G = gu.listings || [];
   const eS = et.sales || [], gS = gu.sales || [];
@@ -183,6 +185,45 @@ function model(D) {
         (lb.log || []).slice(0, 8).map(l => [l.msg, (l.ts || "").slice(5, 16).replace("T", " ")]),
         "Latest bot moves", "https://polymarket.com", "Most long shots lose. The bot stops at $250 or when the money runs out.") },
 
+    { id: "pinterest", name: "Pinterest Studio", short: "PINTEREST", icon: "📌", color: 0xe60023, pos: [-28, -36], w: 7, d: 7, h: 14, kind: "pin",
+      status: pi.error ? "stale" : pi.last_date && pi.last_date <= new Date(Date.now() + 2 * 864e5).toISOString().slice(0, 10) ? "stale" : "ok", today: 0, total: 0,
+      tag: [`${num(pi.upcoming)} pins queued`, `${num(pi.clicks)} clicks`],
+      board: { title: "PINTEREST", main: num(pi.scheduled), mainLabel: "pins scheduled (CSV uploads)",
+        rows: [["Going out today", num(pi.today)], ["Still queued", num(pi.upcoming)], ["Runs out", (pi.last_date || "–").slice(5)], ["Impressions", num(pi.impressions)], ["Clicks", num(pi.clicks)], ["Upload files", num(pi.files)]] },
+      sheet: () => sheetHTML("Pinterest Studio", "Weekly pin files (CSV bulk upload) pointing to the shop hub", pi.scheduled ?? 0, "pins scheduled",
+        [["Going out today", num(pi.today)], ["Still queued", num(pi.upcoming)], ["Last pin date", pi.last_date || "–"], ["Impressions", num(pi.impressions)], ["Clicks", num(pi.clicks)], ["Upload files", num(pi.files)]], [],
+        "", "https://za.pinterest.com/SonneblomDigitaal/", `Pinterest has no API for us, so this counts the pins in our upload files. Impressions/clicks are typed in on Go Bananas${pi.at ? ` (${esc(pi.at)})` : ""}.`) },
+
+    { id: "github", name: "GitHub Foundry", short: "GITHUB", icon: "🐙", color: 0x8b949e, pos: [28, 46], w: 8, d: 8, h: 18, kind: "git",
+      status: gh.error ? "stale" : "ok", today: 0, total: 0,
+      tag: [`${num(gh.commits_24h)} commits today`, `${num(gh.repos)} repos`],
+      board: { title: "GITHUB", main: num(gh.commits_24h), mainLabel: "commits pushed (24h)",
+        rows: [["This week", num(gh.commits_7d)], ["Repos", num(gh.repos)], ["Public", num(gh.public)], ["Stars", num(gh.stars)]] },
+      sheet: () => sheetHTML("GitHub Foundry", `${gh.login || "RoseCompanion"} · code and the free hosting for the hub, the City and Rose`, gh.commits_24h ?? 0, "commits pushed in the last 24h",
+        [["Commits this week", num(gh.commits_7d)], ["Repos", num(gh.repos)], ["Public", num(gh.public)], ["Stars", num(gh.stars)]],
+        (gh.recent || []).map(r => [r.name + (r.private ? " 🔒" : ""), ago(r.pushed)]), "Latest pushes", "https://github.com/" + (gh.login || "RoseCompanion")) },
+
+    { id: "rnd", name: "R&D Centre", short: "R&D", icon: "🔬", color: 0x22ff88, pos: [28, -36], w: 9, d: 7, h: 12, kind: "rnd",
+      status: rn.error ? "stale" : "ok", today: 0, total: 0,
+      tag: [`${(rn.flags || []).length} alerts`, "report " + (rn.written || "–").slice(5)],
+      board: { title: "R&D CENTRE", main: String((rn.flags || []).length), mainLabel: "bottleneck alerts right now",
+        rows: (rn.top3 || []).slice(0, 3).map((t, i) => ["Fix " + (i + 1), t.split(" ").slice(0, 3).join(" ")]) },
+      sheet: () => `<h2>R&D Centre</h2><div class="sub">How every money method is doing, and what's holding it back · report ${esc(rn.written || "")}</div>
+        <div class="note"><b>${esc(rn.headline || "")}</b></div>
+        ${(rn.flags || []).length ? `<div class="list"><div style="color:var(--dim);font-size:12px"><span>Live alerts (every refresh)</span></div>${rn.flags.map(f => `<div><span>⚠️ ${esc(f)}</span></div>`).join("")}</div>` : ""}
+        <div class="list"><div style="color:var(--dim);font-size:12px"><span>Top 3 this week</span></div>${(rn.top3 || []).map((t, i) => `<div><span>${i + 1}. ${esc(t)}</span></div>`).join("")}</div>
+        ${(rn.items || []).map(x => `<div class="note"><b>${esc(x.name)}</b> · <i>${esc(x.score)}</i><br>${esc(x.numbers)}<br>🚧 ${esc(x.bottleneck)}<br>✅ ${esc(x.fix)}</div>`).join("")}` },
+
+    { id: "showroom", name: "Showroom (under construction)", short: "SHOWROOM", icon: "🏗️", color: 0xffb020, pos: [-28, 46], w: 9, d: 8, h: 16, kind: "construction",
+      status: "ok", today: 0, total: sh.revenue_usd || 0, built: shSt.length ? shDone / shSt.length : 0,
+      tag: [`${Math.round(100 * (shSt.length ? shDone / shSt.length : 0))}% built`, shNext ? "next: " + shNext.name.split(" ")[0] : "open"],
+      board: { title: "SHOWROOM", main: Math.round(100 * (shSt.length ? shDone / shSt.length : 0)) + "%", mainLabel: "selling pipeline built",
+        rows: [["Steps done", `${shDone}/${shSt.length}`], ["Next", shNext ? shNext.name.split(" ")[0] : "–"], ["IG followers", num(sh.ig_followers)], ["Sales", num(sh.sales)]] },
+      sheet: () => sheetHTML("Showroom", `Selling "${sh.product || "Side Hustle City"}": ${sh.pitch || ""}`, Math.round(100 * (shSt.length ? shDone / shSt.length : 0)) + "%", "of the pipeline built",
+        [["IG page", sh.ig_handle || "not made yet"], ["IG followers", num(sh.ig_followers)], ["IG posts", num(sh.ig_posts)], ["Sales", num(sh.sales)], ["Revenue", usd(sh.revenue_usd || 0)]],
+        shSt.map(x => [(x.done ? "✅ " : "🚧 ") + x.name, x.note || ""]), "Build steps", "",
+        "We sell the dashboard, not a money dream: \"I use this to see my side hustles better.\"") },
+
     { id: "library", name: "The Library", short: "LIBRARY", icon: "📚", color: 0xe8a87c, pos: [0, -66], w: 20, d: 12, h: 12, kind: "library",
       status: sv("hq-portal"), today: 0, total: 0,
       tag: ["Claude", "tap to talk"],
@@ -208,6 +249,9 @@ const LINKS = {
   krypto: [["Phantom", "https://phantom.com"], ["DexScreener", "https://dexscreener.com/solana"]],
   kalshi: [["Kalshi portfolio", "https://kalshi.com/portfolio"]],
   poly: [["Polymarket portfolio", "https://polymarket.com/portfolio"]],
+  pinterest: [["Pinterest profile", "https://za.pinterest.com/SonneblomDigitaal/"], ["Analytics", "https://analytics.pinterest.com/"], ["Upload CSV", "https://za.pinterest.com/settings/import-content"]],
+  github: [["My repos", "https://github.com/RoseCompanion?tab=repositories"], ["Actions", "https://github.com/RoseCompanion/sonneblomdigitaal-site/actions"]],
+  showroom: [["Gumroad", "https://gumroad.com/products"], ["Instagram", "https://www.instagram.com/"]],
   longshot: [["Polymarket portfolio", "https://polymarket.com/portfolio"], ["Ending soon", "https://polymarket.com/markets?_s=end_date%3Aasc"]],
 };
 const linksHTML = id => (LINKS[id] || []).length ? `<div class="links"><div class="lt">Quick links</div>${LINKS[id].map(([t, u]) => `<a href="${u}" target="_blank" rel="noopener">${esc(t)} ↗</a>`).join("")}</div>` : "";
@@ -622,6 +666,50 @@ function building(b) {
     const planes = [...Array(4)].map((_, i) => { const m = new THREE.Mesh(new THREE.ConeGeometry(0.5, 1.6, 3), new THREE.MeshBasicMaterial({ color: 0xffffff }));
       m.rotation.x = Math.PI / 2; const piv = new THREE.Group(); piv.add(m); m.position.x = 5 + i; piv.rotation.y = i * 1.6; piv.position.y = b.h + 4 + i; g.add(piv); return piv; });
     anim.push(dt => planes.forEach((p, i) => p.rotation.y += dt * (0.8 + i * 0.2))); top = b.h + 6;
+  } else if (b.kind === "pin") {  // Pinterest: white studio tower with a giant red map pin bobbing on the roof
+    g.add(tower(b.w, b.h, b.d, c, 91, lit));
+    const red = new THREE.MeshStandardMaterial({ color: c, emissive: c, emissiveIntensity: 0.6 });
+    const pin = new THREE.Group(); pin.position.y = b.h + 4.2;
+    const head = new THREE.Mesh(new THREE.SphereGeometry(1.8, 24, 16), red); head.position.y = 1.2; pin.add(head);
+    const tip = new THREE.Mesh(new THREE.ConeGeometry(1.2, 3, 24), red); tip.rotation.x = Math.PI; tip.position.y = -1.3; pin.add(tip);
+    const dotP = new THREE.Mesh(new THREE.SphereGeometry(0.55, 12, 8), new THREE.MeshBasicMaterial({ color: 0xffffff })); dotP.position.set(0.8, 1.7, 1.2); pin.add(dotP);
+    g.add(pin); anim.push((dt, t) => { pin.rotation.y += dt * 0.8; pin.position.y = b.h + 4.2 + Math.sin(t * 2) * 0.5; }); top = b.h + 7;
+  } else if (b.kind === "git") {  // GitHub: dark foundry with a glowing commit graph (branches + nodes) growing from the roof
+    g.add(tower(b.w, b.h, b.d, 0x6e40c9, 95, lit));
+    const gm = new THREE.MeshBasicMaterial({ color: 0x3dffa8, toneMapped: false }), node = new THREE.SphereGeometry(0.45, 12, 8);
+    const graph = new THREE.Group(); graph.position.y = b.h;
+    const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 8), gm); stem.position.y = 4; graph.add(stem);
+    [[0, 1.5], [0, 3.5], [0, 5.5], [0, 7.5]].forEach(([x, y]) => { const n = new THREE.Mesh(node, gm); n.position.set(x, y, 0); graph.add(n); });
+    [[-1, 2.5, 5], [1, 4, 7]].forEach(([sx, y0, y1]) => {  // two side branches that merge back
+      const br = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, y1 - y0 - 1), new THREE.MeshBasicMaterial({ color: sx < 0 ? 0xff7b72 : 0x58a6ff, toneMapped: false }));
+      br.position.set(sx * 2, (y0 + y1) / 2, 0); graph.add(br);
+      for (const y of [y0 + 0.5, y1 - 0.5]) { const n = new THREE.Mesh(node, br.material); n.position.set(sx * 2, y, 0); graph.add(n); }
+    });
+    g.add(graph); anim.push(dt => graph.rotation.y += dt * 0.5); top = b.h + 8.5;
+  } else if (b.kind === "rnd") {  // R&D: low lab with a glass roof and a spinning atom above it
+    g.add(tower(b.w, b.h, b.d, c, 97, lit));
+    const roof = new THREE.Mesh(new THREE.BoxGeometry(b.w * 0.8, 1.2, b.d * 0.8), new THREE.MeshStandardMaterial({ color: 0x0b3a2a, metalness: 0.9, roughness: 0.1, emissive: c, emissiveIntensity: 0.3, transparent: true, opacity: 0.85 }));
+    roof.position.y = b.h + 0.6; g.add(roof);
+    const atom = new THREE.Group(); atom.position.y = b.h + 5;
+    atom.add(new THREE.Mesh(new THREE.SphereGeometry(0.8, 16, 12), new THREE.MeshBasicMaterial({ color: 0xffffff })));
+    const rings = [0, 1.05, 2.1].map(a => { const r = new THREE.Mesh(new THREE.TorusGeometry(2.6, 0.09, 8, 48), new THREE.MeshBasicMaterial({ color: c, toneMapped: false }));
+      r.rotation.set(Math.PI / 2, a, 0); const e = new THREE.Mesh(new THREE.SphereGeometry(0.3, 8, 6), new THREE.MeshBasicMaterial({ color: 0x00f0ff })); e.position.x = 2.6; r.add(e); atom.add(r); return r; });
+    g.add(atom); anim.push(dt => { atom.rotation.y += dt * 0.6; rings.forEach((r, i) => r.rotation.z += dt * (1.5 + i * 0.4)); }); top = b.h + 8;
+  } else if (b.kind === "construction") {  // Showroom: half-built floors in scaffolding, a turning crane, warning lights; grows with the pipeline
+    const built = Math.max(0.2, b.built || 0), hb = b.h * built;
+    g.add(tower(b.w, hb, b.d, c, 99, lit));
+    const steel = new THREE.MeshStandardMaterial({ color: 0xffb020, emissive: 0xff8a00, emissiveIntensity: 0.4 });
+    const frame = neonEdges(new THREE.BoxGeometry(b.w + 0.6, b.h, b.d + 0.6), 0xffb020); frame.position.y = b.h / 2; g.add(frame);
+    for (let y = 3; y < b.h; y += 3) { const f = neonEdges(new THREE.BoxGeometry(b.w + 0.6, 0.01, b.d + 0.6), 0xffb020); f.position.y = y; g.add(f); }
+    const back = faceDir(b).multiplyScalar(-(Math.max(b.w, b.d) / 2 + 2));  // crane stands behind the site, away from the camera
+    const mast = new THREE.Mesh(new THREE.BoxGeometry(0.7, b.h + 10, 0.7), steel); mast.position.set(back.x, (b.h + 10) / 2, back.z); g.add(mast);
+    const jib = new THREE.Group(); jib.position.set(back.x, b.h + 10, back.z);
+    const arm = new THREE.Mesh(new THREE.BoxGeometry(16, 0.5, 0.5), steel); arm.position.x = -5; jib.add(arm);
+    const cable = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 6), new THREE.MeshBasicMaterial({ color: 0xdddddd })); cable.position.set(-11, -3, 0); jib.add(cable);
+    const load = new THREE.Mesh(new THREE.BoxGeometry(1.6, 1, 1.6), new THREE.MeshStandardMaterial({ color: 0x5eead4, emissive: 0x00f0ff, emissiveIntensity: 0.4 })); load.position.set(-11, -6.5, 0); jib.add(load);
+    const warn = new THREE.Mesh(new THREE.SphereGeometry(0.35, 8, 6), new THREE.MeshBasicMaterial({ color: 0xff2d55 })); warn.position.set(3, 0.6, 0); jib.add(warn);
+    g.add(jib); anim.push((dt, t) => { jib.rotation.y = Math.sin(t * 0.25) * 1.2; warn.visible = Math.sin(t * 5) > 0; });
+    top = b.h + 2;
   } else if (b.kind === "library") {  // Lincoln Memorial: stepped base, Doric colonnade all round, plain frieze + attic, seated figure inside
     const marble = new THREE.MeshStandardMaterial({ color: 0xece6da, emissive: 0xfff1dc, emissiveIntensity: 0.22, roughness: 0.6 });
     const W = b.w, D = b.d, base = 1.5, ch = b.h - 4.1;
