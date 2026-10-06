@@ -1048,8 +1048,9 @@ function loop() {
 function tick() { $("#clock").textContent = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }); }
 
 // ---------- portal (Library) ----------
+const LKEY = "library-pass";  // the Library has its own strong password (it can run anything on the server)
 async function api(path, opt = {}) {
-  return fetch(API + path, { ...opt, headers: { Authorization: "Bearer " + PW, "Content-Type": "application/json", ...(opt.headers || {}) } });
+  return fetch(API + path, { ...opt, headers: { Authorization: "Bearer " + (get(LKEY) || ""), "Content-Type": "application/json", ...(opt.headers || {}) } });
 }
 async function services() {
   try { const r = await api("/status"); if (r.ok) { const j = await r.json(); svc = j.services; return j; } } catch (e) {}
@@ -1065,6 +1066,7 @@ function setBusy(b) { tBusy = b; $("#tsend").disabled = b; $("#tstop").hidden = 
 async function openTerm() {
   $("#sheet").hidden = true; $("#term").hidden = false;
   if (tlog().childElementCount) return;
+  if (!get(LKEY)) return libraryLogin();
   const st = await services();
   if (!st) {
     tAdd("sys", "The Library is closed: the portal on the server isn't switched on yet (it needs the owner's approval in the terminal).");
@@ -1080,6 +1082,21 @@ async function openTerm() {
   tlog().scrollTop = 1e9;
 }
 function closeTerm() { $("#term").hidden = true; }
+// first visit on a device: ask for the Library password, check it against the portal, remember it on this device
+function libraryLogin(msg) {
+  tlog().innerHTML = ""; $("#tsend").disabled = true;
+  tAdd("sys", msg || "The Library has its own password (separate from the City one). Enter it once; this device remembers it.");
+  const f = document.createElement("form"); f.className = "llogin";
+  f.innerHTML = `<input type="password" placeholder="Library password" autocomplete="current-password" required><button>Open the Library</button>`;
+  f.onsubmit = async e => {
+    e.preventDefault(); const v = f.querySelector("input").value.trim(); set(LKEY, v);
+    let r = null; try { r = await api("/status"); } catch (err) {}
+    if (r && r.ok) { tlog().innerHTML = ""; $("#tsend").disabled = false; return openTerm(); }
+    set(LKEY, null);
+    libraryLogin(r && r.status === 429 ? "Too many wrong tries. Wait 15 minutes." : r ? "Wrong password, try again." : "The Library is closed: the server didn't answer.");
+  };
+  tlog().append(f); f.querySelector("input").focus();
+}
 
 async function attach(req) {
   setBusy(true); aiEl = tAdd("ai", ""); const cur = document.createElement("span"); cur.className = "cursor"; aiEl.after(cur);
