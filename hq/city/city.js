@@ -1268,7 +1268,7 @@ $("#tform").addEventListener("submit", e => {
   attach(api("/chat", { method: "POST", body: JSON.stringify({ msg }) }));
 });
 $("#tin").addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey && !MOBILE) { e.preventDefault(); $("#tform").requestSubmit(); } });
-$("#tin").addEventListener("input", e => { e.target.style.height = ""; e.target.style.height = Math.min(140, e.target.scrollHeight) + "px"; });
+$("#tin").addEventListener("input", e => { e.target.style.height = ""; e.target.style.height = Math.min(180, e.target.scrollHeight) + "px"; });
 $("#tx").onclick = closeTerm;
 $("#sheetbody").addEventListener("click", e => { const b = e.target.closest("button.ask"); if (b) ask(b.dataset.p); });
 $("#tstop").onclick = () => api("/stop", { method: "POST", body: "{}" });
