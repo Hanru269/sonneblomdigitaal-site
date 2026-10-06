@@ -371,7 +371,7 @@ function paintBoard(g, b) {
 }
 
 // ---------- scene ----------
-let renderer, scene, camera, controls, labels, composer, clock = new THREE.Clock();
+let renderer, scene, camera, controls, labels, composer, bloom, clock = new THREE.Clock();
 const picks = [], anim = [], groups = {};
 let flight = null;
 
@@ -402,7 +402,7 @@ function initScene() {
   const pr = renderer.getPixelRatio();
   composer = new EffectComposer(renderer, new THREE.WebGLRenderTarget(innerWidth * pr, innerHeight * pr, { type: THREE.HalfFloatType, samples: MOBILE ? 2 : 4 }));
   composer.addPass(new RenderPass(scene, camera));
-  const bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth / 2, innerHeight / 2), 0.6, 0.45, 0.82);
+  bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth / 2, innerHeight / 2), 0.6, 0.45, 0.82);
   composer.addPass(bloom); composer.addPass(new OutputPass());
 
   addrEventListeners();
@@ -631,10 +631,12 @@ function rain() {
   for (let i = 0; i < N; i++) { const x = rnd(-70, 70), y = rnd(0, 60), z = rnd(-70, 70); p.set([x, y, z, x, y - 1.2, z], i * 6); sp.push(rnd(45, 65)); }
   const geo = new THREE.BufferGeometry(); geo.setAttribute("position", new THREE.BufferAttribute(p, 3));
   const lines = new THREE.LineSegments(geo, new THREE.LineBasicMaterial({ color: 0x9fb6ff, transparent: true, opacity: 0.28, depthWrite: false }));
-  scene.add(lines);
+  lines.userData.weather = true; scene.add(lines);
   anim.push(dt => {
     lines.position.set(Math.round(camera.position.x / 10) * 10, Math.max(0, camera.position.y - 40), Math.round(camera.position.z / 10) * 10);
-    for (let i = 0; i < N; i++) { let y = p[i * 6 + 1] - sp[i] * dt; if (y < 0) y += 60; p[i * 6 + 1] = y; p[i * 6 + 4] = y - 1.2; }
+    const W = SKIN.weather || {}, len = W.len ?? 1.2, f = W.speed ?? 1;
+    if (!lines.visible) return;
+    for (let i = 0; i < N; i++) { let y = p[i * 6 + 1] - sp[i] * f * dt; if (y < 0) y += 60; p[i * 6 + 1] = y; p[i * 6 + 4] = y - len; }
     geo.attributes.position.needsUpdate = true;
   });
 }
@@ -1199,13 +1201,30 @@ function freeInput() {
 }
 
 // ---------- UI ----------
+// Neon sticky note: the to-do list Claude keeps in hq-data/todo.json. Ticks are remembered on this device until Claude marks them done.
+function todoNote(t) {
+  const el = $("#todo");
+  if (DEMO || !t || !t.items) return (el.hidden = true);
+  let ticks = {}; try { ticks = JSON.parse(get("todo-ticks") || "{}"); } catch (e) {}
+  const min = get("todo-min") === "1", done = t.items.filter(x => x.done || ticks[x.id]).length;
+  const who = { you: "YOU", claude: "CLAUDE", both: "US" };
+  el.hidden = false; el.classList.toggle("min", min);
+  el.innerHTML = `<h4><span>📝 ${esc(t.title || "TO DO")} · ${done}/${t.items.length}</span><button id="todomin">${min ? "show" : "hide"}</button></h4>` +
+    t.items.map(x => { const d = x.done || ticks[x.id];
+      return `<label class="${d ? "done" : ""}"><input type="checkbox" data-t="${esc(x.id)}" ${d ? "checked" : ""} ${x.done ? "disabled" : ""}><span>${esc(x.text)}<span class="who">${who[x.who] || ""}</span></span></label>`; }).join("");
+  $("#todomin").onclick = () => { try { localStorage.setItem("todo-min", min ? "0" : "1"); } catch (e) {} todoNote(t); };
+  el.querySelectorAll("input[data-t]").forEach(i => i.onchange = () => {
+    ticks[i.dataset.t] = i.checked; try { localStorage.setItem("todo-ticks", JSON.stringify(ticks)); } catch (e) {} todoNote(t); });
+}
+$("#askbar").onclick = () => DEMO ? focus("library") : openTerm();
+
 function hud() {
   const { B, tot, day, roseZar, sales, s } = M;
   groups.vault.userData.el.innerHTML = `<b>THE VAULT · TODAY</b><span style="font:800 18px Sora;color:${day ? "#3dffa8" : "#fff"}">${usd(day)}</span><br><span class="z">${usd(tot)} all time${roseZar ? ` + R${num(roseZar)}` : ""} · ${sales} sales</span>`;
   const dc = { ok: "#3dffa8", down: "#ff4d6d", stale: "#ffd166", unknown: "#7d74a8" };
   $("#chips").innerHTML = [`<button class="chip" data-id="vault" style="border-color:#ffd166"><b style="color:#ffd166">💰 VAULT</b>${usd(day)} today · <span class="s">${usd(tot)} total</span></button>`]
     .concat(B.map(b => `<button class="chip" data-id="${b.id}" style="border-color:${hex(b.color)}88"><b style="color:${hex(b.color)}"><span class="dot" style="background:${dc[b.status]}"></span>${b.icon} ${esc(b.short)}</b>${esc(b.tag[0])} · <span class="s">${esc(b.tag[1])}</span></button>`)).join("");
-  $("#dock").innerHTML = [`<button data-id="vault"><i>💰</i>Vault</button>`].concat(B.map(b => `<button data-id="${b.id}"><i>${b.icon}</i>${esc(b.name.replace("The ", ""))}</button>`)).join("");
+  todoNote(s.todo);
   document.querySelectorAll("[data-id]").forEach(x => x.onclick = () => focus(x.dataset.id));
   $("#updated").textContent = `data ${ago(s.ts)} · refreshes every 30 min`;
   const rows = B.filter(b => b.id !== "library").map(b => {
@@ -1306,7 +1325,7 @@ function addrEventListeners() {
 }
 
 window.__city = () => ({ camera, controls, flight, groups });
-if (DEMO) window.__demo = { focus, setMode, home, fly, keys, look: (y, p) => { yaw = y; pitch = p; applyLook(); }, get mode() { return mode; } };  // DEMO-only hook for scripted walkthrough videos
+if (DEMO) window.__demo = { applySkin: id => applySkin(id), focus, setMode, home, fly, keys, look: (y, p) => { yaw = y; pitch = p; applyLook(); }, get mode() { return mode; } };  // DEMO-only hook for scripted walkthrough videos
 function loop() {
   requestAnimationFrame(loop);
   const dt = Math.min(clock.getDelta(), 0.05), t = clock.elapsedTime;
@@ -1421,7 +1440,87 @@ $("#tnew").onclick = async () => { if (tBusy) return; await api("/new", { method
 function build() {
   M = model(D);
   ground(); vault(); M.B.forEach(building); flowBeam(); moneyBeams(); workBeams(); life(); hud();
+  applySkin(SKIN.id);
 }
+
+// ---------- City skins ----------
+// A skin is plain data (sky, fog, lights, bloom, weather and a colour recipe for every neon/material colour), so new
+// ones can be sold as small JSON files. Applying one re-tints the built scene; the originals are kept so you can switch back.
+// Colour recipe: hue (0-1) pulls every colour toward that hue by hueMix, hue2 sends half the colours (by original hue) there
+// instead, sat/light scale saturation/lightness, gray mixes toward grey.
+const SKINS = [
+  { id: "neon", name: "Neon Night", price: 0, swatch: ["#0a0420", "#ff2bd6", "#00f0ff"],
+    bg: 0x0a0420, fog: 0x1a0b3a, fogD: 0.0042, hemi: [0x9c7bff, 0x10052a, 0.9], sun: [0xc9b8ff, 0.8], bloom: 0.6, exposure: 1.05, weather: { kind: "rain" } },
+  { id: "golden", name: "Golden Hour", price: 1, swatch: ["#ff8a3d", "#ffd166", "#7a2e5a"],
+    bg: 0xf08a4b, fog: 0xf2a65a, fogD: 0.0018, hemi: [0xffd6a0, 0x5a2a3a, 1.25], sun: [0xffb36b, 1.6], bloom: 0.35, exposure: 1.1,
+    tint: { hue: 0.07, hueMix: 0.45, sat: 1.05, light: 1.05 }, weather: { kind: "none" } },
+  { id: "arctic", name: "Arctic Snow", price: 1, swatch: ["#cfe6ff", "#ffffff", "#5fb8ff"],
+    bg: 0xbcd6f2, fog: 0xd8e8fa, fogD: 0.002, hemi: [0xffffff, 0x8aa6c8, 1.5], sun: [0xffffff, 1.2], bloom: 0.25, exposure: 1.0,
+    tint: { hue: 0.57, hueMix: 0.6, sat: 0.55, light: 1.25 }, ground: { asphalt: 0xe9f1fa, grass: 0xf4f8ff }, weather: { kind: "snow", color: 0xffffff, speed: 0.12, len: 0.25, opacity: 0.9 } },
+  { id: "matrix", name: "Matrix", price: 1, swatch: ["#000000", "#22ff66", "#0a3d1a"],
+    bg: 0x000300, fog: 0x001a06, fogD: 0.0048, hemi: [0x3dff7a, 0x000000, 0.7], sun: [0x7dffa0, 0.5], bloom: 0.85, exposure: 1.0,
+    tint: { hue: 0.36, hueMix: 1, sat: 1.1 }, ground: { asphalt: 0x000000, grass: 0x031a08 }, weather: { kind: "rain", color: 0x22ff66, speed: 0.6, len: 2.2, opacity: 0.55 } },
+  { id: "vapor", name: "Vaporwave", price: 1, swatch: ["#2b1055", "#ff71ce", "#01cdfe"],
+    bg: 0x2b1055, fog: 0x7a2c8f, fogD: 0.0026, hemi: [0xff71ce, 0x01cdfe, 1.0], sun: [0xfffb96, 0.9], bloom: 0.7, exposure: 1.1,
+    tint: { hue: 0.88, hue2: 0.52, hueMix: 0.85, sat: 1.15, light: 1.08 }, ground: { asphalt: 0x1a0638, grass: 0x3a1a6a }, weather: { kind: "none" } },
+  { id: "day", name: "Sunny Day", price: 1, swatch: ["#7cc8ff", "#ffffff", "#4caf50"],
+    bg: 0x8fd0ff, fog: 0xbfe4ff, fogD: 0.0011, hemi: [0xffffff, 0x6b8f5a, 1.6], sun: [0xfff3d6, 2.0], bloom: 0.12, exposure: 1.0,
+    tint: { sat: 0.85, light: 1.1 }, ground: { asphalt: 0x3a3f4a, grass: 0x4caf50 }, weather: { kind: "none" } },
+];
+const OWNED = window.CITY_SKINS_OWNED || null;  // kit buyers: list of unlocked skin ids (null = all, as in our own city and the demo preview)
+let SKIN = SKINS.find(k => k.id === get("city-skin")) || SKINS[0];
+const tmpC = new THREE.Color(), hsl = {};
+function tintColor(c, t) {
+  if (!t) return c;
+  c.getHSL(hsl); let h = hsl.h;
+  const target = t.hue2 != null && Math.abs(((h - t.hue2 + 1.5) % 1) - 0.5) < Math.abs(((h - t.hue + 1.5) % 1) - 0.5) ? t.hue2 : t.hue;
+  if (target != null) { let d = ((target - h + 1.5) % 1) - 0.5; h = (h + d * (t.hueMix ?? 1) + 1) % 1; }
+  c.setHSL(h, Math.min(1, hsl.s * (t.sat ?? 1)), Math.min(1, hsl.l * (t.light ?? 1)));
+  if (t.gray) c.lerp(tmpC.setScalar(c.getHSL(hsl).l), t.gray);
+  return c;
+}
+function applySkin(id) {
+  SKIN = SKINS.find(k => k.id === id) || SKINS[0];
+  const k = SKIN, base = SKINS[0];
+  scene.background = new THREE.Color(k.bg); scene.fog.color.set(k.fog); scene.fog.density = k.fogD;
+  renderer.toneMappingExposure = k.exposure; if (bloom) bloom.strength = k.bloom;
+  const seen = new Set();
+  scene.traverse(o => {
+    if (o.isHemisphereLight) { o.color.set(k.hemi[0]); o.groundColor.set(k.hemi[1]); o.intensity = k.hemi[2]; }
+    if (o.isDirectionalLight) { o.color.set(k.sun[0]); o.intensity = k.sun[1]; }
+    if (o.userData.weather) {
+      const w = k.weather || {}; o.visible = w.kind !== "none";
+      o.material.color.set(w.color ?? 0x9fb6ff); o.material.opacity = w.opacity ?? 0.28; return;
+    }
+    if (o.isInstancedMesh && o.instanceColor) {
+      const ic = o.instanceColor; if (!o.userData.ic0) o.userData.ic0 = ic.array.slice();
+      for (let i = 0; i < o.count; i++) { tmpC.fromArray(o.userData.ic0, i * 3); tintColor(tmpC, k.tint).toArray(ic.array, i * 3); }
+      ic.needsUpdate = true;
+    }
+    for (const m of [].concat(o.material || [])) {
+      if (seen.has(m)) continue; seen.add(m);
+      const u = m.userData;
+      if (m.color) { u.c0 ??= m.color.getHex(); m.color.setHex(u.c0); }
+      if (m.emissive) { u.e0 ??= m.emissive.getHex(); m.emissive.setHex(u.e0); }
+      const g = k.ground || {};
+      if (u.c0 === 0x0b0716 && g.asphalt != null) { m.color.set(g.asphalt); continue; }
+      if (u.c0 === 0x1d6b3c && g.grass != null) { m.color.set(g.grass); if (m.emissive) m.emissive.set(g.grass).multiplyScalar(0.15); continue; }
+      if (m.map && m.color && m.color.getHex() === 0xffffff) continue;  // textured screens/billboards keep their own colours
+      if (m.color) tintColor(m.color, k.tint);
+      if (m.emissive && m.emissive.getHex() !== 0xffffff) tintColor(m.emissive, k.tint);
+    }
+  });
+  set("city-skin", SKIN.id);
+  if (!$("#skins").hidden) skinPicker();
+}
+function skinPicker() {
+  const el = $("#skins"), own = id => !OWNED || OWNED.includes(id) || id === "neon";
+  el.innerHTML = `<h4>🎨 City skins</h4><p>${DEMO ? "Preview every skin free. Extra skins are $1 each." : OWNED ? "Locked skins are $1 each on the Side Hustle City page." : "Tap a skin to switch the whole city."}</p>
+    <div class="g">${SKINS.map(k => `<button class="sk${k.id === SKIN.id ? " on" : ""}" data-sk="${k.id}"><div class="sw" style="background:linear-gradient(120deg,${k.swatch.join(",")})"></div>
+      <span class="nm">${esc(k.name)}<i>${k.price ? (own(k.id) ? (DEMO ? "$1" : "") : "🔒 $1") : "free"}</i></span></button>`).join("")}</div>`;
+  el.querySelectorAll("[data-sk]").forEach(b => b.onclick = () => own(b.dataset.sk) ? applySkin(b.dataset.sk) : window.open("https://sonneblomdigitaal.co.za/side-hustle-city/#skins", "_blank"));
+}
+$("#skinbtn").onclick = () => { const el = $("#skins"); el.hidden = !el.hidden; if (!el.hidden) skinPicker(); };
 async function reload() {
   try { D = await decrypt(PW); } catch (e) { return; }
   await services();

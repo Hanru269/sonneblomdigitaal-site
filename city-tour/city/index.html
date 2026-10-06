@@ -12,7 +12,7 @@
 <link rel="icon" href="../icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="city.css?v=1f58648e">
+<link rel="stylesheet" href="city.css?v=b051343c">
 <script type="importmap">
 {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.161.0/examples/jsm/"}}
 </script>
@@ -39,6 +39,7 @@
     <div class="brand">SONNEBLOM <b>CITY</b> <span class="live">● DEMO</span> <span id="clock"></span></div>
     <div class="acts">
       <button id="bananas" title="Go Bananas: refresh every number in the city">🍌 Go Bananas</button>
+      <button id="skinbtn" title="City skins: switch the look">🎨</button>
       <button id="home" title="Overview">⌂</button>
       <button id="refresh" title="Reload data">↻</button>
       <button id="lockbtn" title="Lock">🔒</button>
@@ -46,7 +47,9 @@
   </header>
   <div id="chips"></div>
   <div id="updated"></div>
-  <nav id="dock"></nav>
+  <button id="askbar" type="button"><span class="mag">🔍</span><span class="ph">Ask Claude in the Library…</span><span class="lib">📚</span></button>
+  <aside id="todo"></aside>
+  <div id="skins" hidden></div>
   <div id="modes"><button data-mode="orbit" class="on">🗺️ Map</button><button data-mode="fly">🦅 Bird</button><button data-mode="walk">🚶 Street</button></div>
   <div id="joy" hidden><div id="knob"></div></div>
   <div id="updown" hidden><button id="up">▲</button><button id="dn">▼</button></div>
@@ -74,6 +77,6 @@
   </form>
 </section>
 
-<script type="module" src="city.js?v=6442e60d"></script>
+<script type="module" src="city.js?v=d215937b"></script>
 </body>
 </html>

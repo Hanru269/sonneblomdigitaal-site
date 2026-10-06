@@ -126,3 +126,36 @@ header{position:absolute;top:0;left:0;right:0;display:flex;justify-content:space
 .acts2 .ask:active{background:rgba(255,209,102,.3)}
 @media (max-width:640px){#tlog{font-size:16.5px;padding:14px 12px}.tacts button{font-size:15px;padding:8px 12px}}
 .tag.work{--c:#7df9ff;pointer-events:none;box-shadow:0 0 14px #7df9ff66}
+
+/* Windows-style search bubble: the only bottom button, opens the Library chat */
+#askbar{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom) + 12px);width:min(560px,calc(100vw - 28px));display:flex;align-items:center;gap:12px;
+  padding:13px 20px;border-radius:999px;border:1px solid #ffffff2a;background:rgba(24,16,48,.72);backdrop-filter:blur(18px) saturate(1.4);-webkit-backdrop-filter:blur(18px) saturate(1.4);
+  box-shadow:0 8px 30px rgba(0,0,0,.45),inset 0 1px 0 #ffffff22;color:#cfc6ef;font:500 16px Sora,sans-serif;text-align:left;cursor:text}
+#askbar .mag{font-size:17px;opacity:.9}#askbar .ph{flex:1}#askbar .lib{font-size:19px}
+#askbar:hover{border-color:#a78bfa88;background:rgba(36,24,70,.8)}
+/* neon sticky note (to-do list, from hq-data/todo.json) */
+#todo{position:absolute;right:12px;top:calc(env(safe-area-inset-top) + 150px);width:250px;max-height:52vh;overflow:auto;padding:12px 14px 10px;border-radius:6px 6px 6px 18px;
+  background:linear-gradient(160deg,#fff36b,#ffd21f);color:#2a1a00;transform:rotate(1.2deg);font:600 13px/1.35 Sora,sans-serif;z-index:5;
+  box-shadow:0 0 18px #ffe600aa,0 0 42px #ff9d0066,0 10px 24px rgba(0,0,0,.5);border:2px solid #fff9b0}
+#todo[hidden]{display:none}
+#todo h4{margin:0 0 6px;display:flex;justify-content:space-between;align-items:center;font:800 15px Sora,sans-serif;letter-spacing:1.5px;text-shadow:0 0 6px #fff8}
+#todo h4 button{border:0;background:#2a1a0022;border-radius:6px;padding:2px 8px;font:800 12px Sora;color:#2a1a00}
+#todo label{display:flex;gap:8px;align-items:flex-start;padding:4px 0;border-top:1px dashed #2a1a0033;cursor:pointer}
+#todo input{accent-color:#ff2d95;width:17px;height:17px;flex:0 0 auto;margin-top:1px}
+#todo label.done span{text-decoration:line-through;opacity:.5}
+#todo .who{font-size:10px;font-weight:800;padding:1px 5px;border-radius:5px;background:#2a1a0018;margin-left:4px;white-space:nowrap}
+#todo.min{width:auto;padding:8px 12px}#todo.min label{display:none}#todo.min h4{margin:0;gap:10px}
+@media (max-width:520px){#todo{width:200px;font-size:12px;top:calc(env(safe-area-inset-top) + 140px)}#askbar{font-size:15px;padding:12px 16px}}
+#modes{bottom:calc(env(safe-area-inset-bottom) + 78px)}#payrollbtn{bottom:calc(env(safe-area-inset-bottom) + 78px)}
+#joy,#updown{bottom:calc(env(safe-area-inset-bottom) + 130px)}
+
+/* skin picker */
+#skins{position:absolute;top:calc(env(safe-area-inset-top) + 70px);right:12px;z-index:20;width:min(340px,calc(100vw - 24px));padding:14px;border-radius:16px;
+  background:rgba(14,8,34,.92);border:1px solid var(--line);backdrop-filter:blur(14px);box-shadow:0 10px 40px rgba(0,0,0,.6)}
+#skins[hidden]{display:none}
+#skins h4{margin:0 0 4px;font:800 15px Sora}#skins p{margin:0 0 10px;font-size:12px;color:var(--dim)}
+#skins .g{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+#skins button.sk{border:2px solid transparent;border-radius:12px;padding:0;overflow:hidden;background:#000;color:#fff;text-align:left;cursor:pointer}
+#skins button.sk.on{border-color:#fff200;box-shadow:0 0 14px #fff20088}
+#skins .sw{height:46px}#skins .nm{display:block;padding:6px 8px;font:700 12px Sora;background:#0b0620}
+#skins .nm i{font-style:normal;float:right;color:#ffd166}
