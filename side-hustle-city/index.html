@@ -196,7 +196,8 @@ footer{color:var(--dim);font-size:13px;text-align:center;margin-top:34px}
     <input id="buye" type="email" placeholder="Your email (we send your order here)" required autocomplete="email">
     <input id="buyh" type="text" placeholder="Instagram or Facebook name (optional)" autocomplete="off">
     <button class="btn gold" id="buyg">Pay securely by card →</button>
-    <small>Card, Apple Pay or Google Pay via Yoco. Yoco charges in South African rand at today's rate; your bank converts it. Monthly plans are never charged automatically: we email a pay link each month.</small>
+    <button type="button" class="btn" id="buypp" style="background:#ffc439;color:#003087;font-weight:800;border:0">Pay with PayPal (USD)</button>
+    <small>Card, Apple Pay or Google Pay via Yoco, or PayPal in US dollars. Yoco charges in South African rand at today's rate; your bank converts it. Monthly plans are never charged automatically: we email a pay link each month.</small>
     <div id="buyerr" hidden></div>
   </form>
 </div>
@@ -227,18 +228,21 @@ document.querySelectorAll("[data-plan]").forEach(a => {
 });
 buyx.onclick = () => (buy.hidden = true);
 buy.onclick = e => { if (e.target === buy) buy.hidden = true; };
+let buyMethod = "card";
+buypp.onclick = () => { buyMethod = "paypal"; buyf.requestSubmit(); };
+buyg.onclick = () => (buyMethod = "card");
 buyf.onsubmit = async e => {
-  e.preventDefault(); buyg.disabled = true; buyg.textContent = "Opening secure checkout…"; buyerr.hidden = true;
+  e.preventDefault(); buyg.disabled = buypp.disabled = true; buyg.textContent = "Opening secure checkout…"; buyerr.hidden = true;
   try {
     const r = await fetch(SHC, { method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ plan: buyPlan, email: buye.value, handle: buyh.value }) });
+      body: JSON.stringify({ plan: buyPlan, email: buye.value, handle: buyh.value, method: buyMethod }) });
     const j = await r.json();
     if (j.url) return (location.href = j.url);
     buyerr.textContent = j.error || "Something went wrong."; buyerr.hidden = false;
   } catch (err) {
     location.href = MAIL(PLAN_INFO[buyPlan][0]);  // checkout API unreachable: email us instead
   }
-  buyg.disabled = false; buyg.textContent = "Pay securely by card →";
+  buyg.disabled = buypp.disabled = false; buyg.textContent = "Pay securely by card →";
 };
 const q = new URLSearchParams(location.search);
 if (q.get("paid")) { const n = document.createElement("div"); n.id = "paidnote";
