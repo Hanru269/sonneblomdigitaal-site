@@ -1270,7 +1270,7 @@ function staffPanel() {
   const bn = id => id === "vault" ? "The Vault" : (M.B.find(b => b.id === id) || {}).name || id;
   const prof = x => !x.profile ? "" : `<details class="prof"><summary>Job profile</summary><p>${esc(x.profile.mission || "")}</p>
     <b>MUST</b><ul>${(x.profile.must || []).map(m => `<li>${esc(m)}</li>`).join("")}</ul>
-    <b>NEVER</b><ul>${(x.profile.never || []).map(m => `<li>${esc(m)}</li>`).join("")}</ul><i>Runs: ${esc(x.profile.cron || "")}</i></details>`;
+    <b>NEVER</b><ul>${(x.profile.never || []).map(m => `<li>${esc(m)}</li>`).join("")}</ul>${(x.profile.warnings || []).length ? `<b style="color:#ff5a5a">⚠️ WARNINGS (${x.profile.warnings.length})</b><ul>${x.profile.warnings.map(w => `<li>${esc(w.date)}: ${esc(w.text)}</li>`).join("")}</ul>` : ""}<i>Runs: ${esc(x.profile.cron || "")}</i></details>`;
   const rep = x => !x.report ? "" : `<div class="rep">📨 ${esc(x.report.ts.slice(11, 16))} · ${esc(x.report.title)}${(x.report.lines || []).length ? `<br>${x.report.lines.slice(0, 4).map(l => esc(l.slice(0, 140))).join("<br>")}` : ""}</div>`;
   const card = x => `<div class="mgr"><div class="emp"><span class="av big" style="border-color:${STC[x.status] || "#7d74a8"}">${x.emoji}</span>
     <span class="ej"><b>${esc(x.name)}</b> <i style="color:${STC[x.status] || "#7d74a8"}">● ${esc(x.status)}</i><br><span class="ttl">${esc(x.title || x.job)}</span> · <span class="dn" data-id="${esc(x.bld)}">${esc(bn(x.bld))}</span></span>
