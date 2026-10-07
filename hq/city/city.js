@@ -53,7 +53,7 @@ function model(D) {
     ["Highest profit day", `${pnl(x.best_day)} · ${x.best_day_date || ""}`], ["Worst day", `${pnl(x.worst_day)} · ${x.worst_day_date || ""}`],
     ["Days traded", x.days_traded ?? "–"], ["Last trade", x.last_trade ? ago(x.last_trade) : "–"], ["Bot", x.running ? "🟢 running" : "⚪ stopped"]];
   const ks = bo.kalshi || {}, pm = bo.polymarket || {}, kb = bo.krypto || {};
-  const ls = s.longshot || {}; const lb = s.lsbot || {}; const lr = s.lslive || {}; const kx = s.k10x || {}; const sb = s.solbot || {};
+  const ls = s.longshot || {}; const lb = s.lsbot || {}; const lr = s.lslive || {}; const polyReal = lr.value != null ? +(lr.value - (lr.start_real || lr.start || 19.53)).toFixed(2) : 0; const kx = s.k10x || {}; const sb = s.solbot || {};
   const race = [{ name: "Polymarket", method: "momentum on favourites", value: lb.value, trades: lb.trades || 0, wins: lb.wins || 0 },
     { name: "Kalshi", method: "fair value (price + volatility)", value: kx.value, trades: kx.trades || 0, wins: kx.wins || 0 },
     { name: "Phantom SOL", method: "dip buying (mean reversion)", value: sb.value, trades: sb.trades || 0, wins: sb.wins || 0 }]
@@ -88,7 +88,7 @@ function model(D) {
   const postsToday = (fb.posts || []).filter(p => isToday(p.ts)).length + (ig.media || []).filter(p => isToday(p.ts)).length;
 
   const B = [
-    { id: "etsy", name: "Etsy Megastore", short: "ETSY", icon: "🛍️", color: 0xff8a3d, pos: [-25, 6], w: 14, d: 10, h: 11, kind: "market",
+    { id: "etsy", name: "Etsy Megastore", short: "ETSY", icon: "🛍️", color: 0xff8a3d, pos: [-58, 60], w: 14, d: 10, h: 11, kind: "market", face: [0, 1],
       status: st("etsy"), today: eDay, total: eTot,
       tag: [`${num(L.length)} listings`, eDay ? usd(eDay) + " today" : `${num(views)} views`],
       board: { title: "ETSY MEGASTORE", main: num(views), mainLabel: "listing views (all time)",
@@ -98,12 +98,12 @@ function model(D) {
          ["Printify products", pf.products ?? "–"], ["Printify orders", pf.orders ?? 0], ["Shop visits", m.etsy_visits ?? "–"], ["Ads clicks", m.etsy_ads_clicks ?? "–"]],
         topViewed.map(x => [x.title, `${x.views} views`]), "Most viewed listings", "https://www.etsy.com/your/shops/me/dashboard") },
 
-    { id: "fb", name: "Facebook Media HQ", short: "MEDIA HQ", icon: "📡", color: 0x3b82f6, pos: [-60, -44], w: 10, d: 10, h: 30, kind: "media",
+    { id: "fb", name: "Meta Skyscraper", short: "META", icon: "📡", color: 0x3b82f6, pos: [-62, 0], w: 11, d: 11, h: 46, kind: "mega", face: [1, 0],
       status: worst(st("facebook"), st("instagram"), st("rose_social")), today: 0, total: 0,
       tag: [`${num(md.views ?? 0)} views`, `${num(md.followers ?? 0)} followers`],
-      board: { title: "MEDIA HQ", main: num(md.followers ?? 0), mainLabel: "followers (Rose + SHC + Sonneblom)",
+      board: { title: "META SKYSCRAPER", main: num(md.followers ?? 0), mainLabel: "followers (Rose + SHC + Sonneblom)",
         rows: [["Total views", num(md.views ?? 0)], ...(md.accounts || []).map(a => [a.name, `${num(a.followers)} · ${a.views == null ? "–" : num(a.views)} views`]), ["IG views 24h", num(ig.views_24h ?? 0)]] },
-      sheet: () => sheetHTML("Facebook Media HQ", "Rose, Side Hustle City + Sonneblom pages, Instagram, ads", md.followers ?? 0, "followers across all accounts",
+      sheet: () => sheetHTML("Meta Skyscraper", "Rose, Side Hustle City + Sonneblom pages, Instagram, ads", md.followers ?? 0, "followers across all accounts",
         [["Total followers", num(md.followers ?? 0)], ["Total views", num(md.views ?? 0)],
          ...(md.accounts || []).flatMap(a => [[a.name + " followers", num(a.followers)], [a.name + " views", a.views == null ? "– (Go Bananas)" : num(a.views)]]),
          ["IG followers", ig.followers], ["IG posts", ig.posts], ["IG views", num(ig.views)], ["IG likes", ig.likes], ["IG comments", ig.comments],
@@ -111,7 +111,7 @@ function model(D) {
          ["Sonneblom 7d views", num(last7("page_media_view"))], ["Posts today", postsToday], ["Ad spend", "R" + num(Math.round(adsSpend))], ["Ad clicks", num((rs.ad_clicks || 0) + (fb.ads?.clicks || 0))], ["Ads live", adsActive]],
         (ig.media || []).slice(0, 6).map(x => [x.text || x.type, `${x.views} views`]), "Latest Instagram posts", "https://business.facebook.com/latest/home") },
 
-    { id: "rose", name: "Rose Tower", short: "ROSE", icon: "🌹", color: 0xff3d9a, pos: [-60, -14], w: 8, d: 8, h: 36, kind: "spire",
+    { id: "rose", name: "Rose Tower", short: "ROSE", icon: "🌹", color: 0xff3d9a, pos: [-62, -28], w: 8, d: 8, h: 36, kind: "spire", face: [1, 0],
       status: worst(st("rose"), sv("companion"), sv("rose-web")), today: rd.money_today_usd || 0, total: rd.money_usd || 0, zar: roseZar,
       tag: [`${num(rd.followers)} followers`, `${plus(rd.gained_24h)} today`],
       board: { title: "ROSE · MY DAY", main: num(rd.followers), mainLabel: "followers (Facebook + Instagram)",
@@ -126,7 +126,7 @@ function model(D) {
         `<i>Dear diary 💕 ${rd.gained_7d > 0 ? `${num(rd.gained_7d)} new followers this week` : "a quiet week for followers"}, ${num(rd.likes_7d)} likes and ${num(rd.comments_7d)} comments. ` +
         `${rd.messages_today ? `${num(rd.messages_today)} messages from my guys today` : "No messages yet today"}${rd.money_usd ? `, and ${usd(rd.money_usd)} made so far` : ", still waiting for my first sale"} 🌹</i>`) },
 
-    { id: "contra", name: "Contra Studio", short: "CONTRA", icon: "💼", color: 0x00e5ff, pos: [-60, 16], w: 7, d: 7, h: 26, kind: "glass",
+    { id: "contra", name: "Contra Studio", short: "CONTRA", icon: "💼", color: 0x00e5ff, pos: [35, 60], w: 7, d: 7, h: 26, kind: "glass", face: [0, 1],
       status: "ok", today: 0, total: ct.earned_usd || 0,
       tag: [`${num(ct.busy)} jobs busy`, `${num(ct.done)} done`],
       board: { title: "CONTRA STUDIO", main: num(ct.sent), mainLabel: "proposals / jobs sent",
@@ -135,7 +135,7 @@ function model(D) {
         [["Jobs busy", num(ct.busy)], ["Jobs done", num(ct.done)], ["Projects linked", num(ct.projects)], ["Earned", usd(ct.earned_usd)], ["Profile views", ct.views ? num(ct.views) : "–"]], [],
         "", "https://contra.com/opportunities", `Contra has no API, so these come from a Go Bananas sweep${ct.at ? ` (${esc(ct.at)})` : ""}. Tell Claude when a job starts or finishes.`) },
 
-    { id: "zoho", name: "Zoho Mail Outreach", short: "OUTREACH", icon: "✉️", color: 0xffe14d, pos: [-60, 46], w: 9, d: 7, h: 11, kind: "mail",
+    { id: "zoho", name: "Zoho Mail Outreach", short: "OUTREACH", icon: "✉️", color: 0xffe14d, pos: [-62, 40], w: 9, d: 7, h: 11, kind: "mail", face: [1, 0],
       status: st("outreach"), today: 0, total: ox.paid_eur || 0,
       tag: [`${num(ox.sent_today)} sent today`, `${num(ox.replied)} replies`],
       board: { title: "EAA OUTREACH", main: num(ox.sent_total), mainLabel: "emails sent (eaafix.com)",
@@ -145,7 +145,7 @@ function model(D) {
          ["Interested", num(ox.interested)], ["Reports sent", num(ox.reports)], ["Quotes", num(ox.quoted)], ["Won", num(ox.won)], ["Paid", "€" + num(ox.paid_eur || 0)],
          ["Bounced", num(ox.bounced)], ["Opted out", num(ox.opted_out)]], [], "", "https://mail.zoho.com", "Sender runs weekdays 09:00; replies and bounces are checked every 20 minutes.") },
 
-    { id: "gumroad", name: "Gumroad Arcade", short: "GUMROAD", icon: "🎨", color: 0x2ee6c5, pos: [25, 6], w: 11, d: 9, h: 9, kind: "market",
+    { id: "gumroad", name: "Gumroad Arcade", short: "GUMROAD", icon: "🎨", color: 0x2ee6c5, pos: [-36, 60], w: 11, d: 9, h: 9, kind: "market", face: [0, 1],
       status: st("gumroad"), today: gDay, total: gTot,
       tag: [`${num(gS.length)} sale${gS.length === 1 ? "" : "s"}`, usd(gTot)],
       board: { title: "GUMROAD ARCADE", main: usd(gTot), mainLabel: "revenue (all time)",
@@ -154,7 +154,7 @@ function model(D) {
         [["Sales", gS.length], ["Today", usd(gDay)], ["Products", G.length], ["Live", G.filter(x => x.published).length], ["Page views", m.gumroad_views ?? "–"]],
         gS.slice(-6).reverse().map(x => [x.product, `${usd(x.amount)} · ${ago(x.ts)}`]), "Sales", "https://gumroad.com/dashboard") },
 
-    { id: "kdp", name: "Amazon KDP Books", short: "KDP", icon: "📦", color: 0xffb020, pos: [0, 32], w: 9, d: 7, h: 7, kind: "market",
+    { id: "kdp", name: "Amazon KDP Books", short: "KDP", icon: "📦", color: 0xffb020, pos: [-17, 60], w: 9, d: 7, h: 7, kind: "market", face: [0, 1],
       status: "ok", today: 0, total: m.kdp_royalty || 0,
       tag: [`${m.kdp_books ?? 0} books live`, `${m.kdp_drafts ?? 0} drafts`],
       board: { title: "AMAZON KDP", main: String(m.kdp_books ?? 0), mainLabel: "paperbacks published",
@@ -163,7 +163,7 @@ function model(D) {
         [["Drafts", m.kdp_drafts ?? 0], ["Sales", m.kdp_sales ?? 0], ["Royalties", usd(m.kdp_royalty || 0)], ["Print-ready on disk", 25]], [],
         "", "https://kdp.amazon.com/en_US/bookshelf", `KDP has no API, so these numbers are entered by hand (${esc(m.kdp_at || "")}). Tell Claude in the Library when they change.`) },
 
-    { id: "lab", name: "API Lab", short: "LAB", icon: "🧪", color: 0xa78bfa, pos: [60, 48], w: 6, d: 6, h: 12, kind: "dome",
+    { id: "lab", name: "API Lab", short: "LAB", icon: "🧪", color: 0xa78bfa, pos: [56, 60], w: 6, d: 6, h: 12, kind: "dome", face: [0, 1],
       status: worst(st("apify"), st("x402"), sv("x402-agentedge")), today: 0, total: 0,
       tag: [`${num(runs)} runs`, `${(ap.actors || []).length} actors`],
       board: { title: "API LAB", main: num(runs), mainLabel: "Apify runs (all time)",
@@ -172,7 +172,7 @@ function model(D) {
         [["Actors", (ap.actors || []).length], ["Users", apUsers], ["x402 balance", "$" + (x4.balance_usdc ?? 0)], ["x402 paid calls", x4.external_tx_since_oct2 ?? 0], ["x402 server", svLabel("x402-agentedge")]],
         [...(ap.actors || [])].sort((a, b) => b.runs - a.runs).slice(0, 6).map(a => [a.title, `${a.runs} runs`]), "Busiest actors", "https://console.apify.com/actors") },
 
-    { id: "krypto", name: "Krypto Mint", short: "KRYPTO", icon: "🪙", color: 0x9945ff, pos: [60, -48], w: 6, d: 6, h: 16, kind: "coin",
+    { id: "krypto", name: "Krypto Mint", short: "KRYPTO", icon: "🪙", color: 0x9945ff, pos: [-58, -64], w: 6, d: 6, h: 16, kind: "coin", face: [0, 1],
       status: st("krypto"), today: 0, total: 0,
       tag: sb.value != null ? [usd(sb.value) + " of $250 (practice)", `${(sb.lots || []).length} open · ${sb.trades || 0} done`] : [usd(kr.usd || 0) + " wallet", kr.armed_scripts?.length ? "bot trading" : "bot off"],
       board: sb.value != null ? { title: "PHANTOM $25 → $250", main: usd(sb.value), mainLabel: "SOL dip bot · practice money",
@@ -183,7 +183,7 @@ function model(D) {
          ["SOL", (kr.sol ?? 0).toFixed(4)], ["Tokens (open)", usd(kr.tokens_usd || 0)], ["Rand", "R" + num(Math.round(kr.zar || 0))], ["Trading script", kr.armed_scripts?.length ? kr.armed_scripts.join(", ") : "off"], ["Bot app", kr.app_running ? "🟢 running" : "🔴 stopped"], ...botSheet(kb).slice(0, 9)],
         (kr.tokens || []).map(t => [t.symbol, usd(t.usd)]), "Open tokens", kr.address ? "https://solscan.io/account/" + kr.address : "", "Balance read from the public Solana chain on every HQ refresh.") },
 
-    { id: "kalshi", name: "Kalshi Casino", short: "KALSHI", icon: "🎲", color: 0x00d395, pos: [60, 0], w: 5, d: 5, h: 13, kind: "coin",
+    { id: "kalshi", name: "Kalshi Casino", short: "KALSHI", icon: "🎲", color: 0x00d395, pos: [23, -64], w: 5, d: 5, h: 13, kind: "coin", face: [0, 1],
       status: st("bots"), today: 0, total: 0,
       tag: kx.value != null ? [usd(kx.value) + " of $250 (practice)", `${(kx.positions || []).length} open · ${kx.trades || 0} done`] : [pnl(ks.today) + " today", "best day " + pnl(ks.best_day)],
       board: kx.value != null ? { title: "KALSHI $25 → $250", main: usd(kx.value), mainLabel: "fair-value bot · practice money",
@@ -197,8 +197,8 @@ function model(D) {
         : sheetHTML("Kalshi Casino", "BTC/ETH 15-minute contracts · numbers from Kalshi's own settlements", pnl(ks.lifetime), "lifetime profit",
         botSheet(ks).concat([["Balance", usd(ks.balance || 0)]]), [], "", "https://kalshi.com/portfolio", "Read-only: the bot itself is switched off.") },
 
-    { id: "poly", name: "Polymarket Exchange", short: "POLYMARKET", icon: "📈", color: 0x2e5cff, pos: [60, -24], w: 5, d: 5, h: 15, kind: "coin",
-      status: st("longshot"), today: 0, total: 0,
+    { id: "poly", name: "Polymarket Exchange", short: "POLYMARKET", icon: "📈", color: 0x2e5cff, pos: [-34, -64], w: 5, d: 5, h: 15, kind: "coin", face: [0, 1],
+      status: st("longshot"), today: 0, total: polyReal,
       tag: [usd(lb.value || 0) + " of $250" + (lb.mode === "paper" ? " (practice)" : ""), `${(lb.positions || []).length} open · ${lb.trades || 0} done`],
       board: { title: "POLYMARKET $25 → $250", main: usd(lb.value || 0), mainLabel: `${lb.style_name || "–"} style` + (lb.mode === "paper" ? " · practice money" : ""),
         rows: [["Profit", `${pnlU(lb.value, 25)} (${pct(lb.value, 25)})`], ["Open trades", (lb.positions || []).length], ["Trades done", `${lb.trades || 0} (${lb.wins || 0} wins)`], ["Race place", place("Polymarket")], ["REAL money", lr.value != null ? `${usd(lr.value)} (${pct(lr.value, lr.start_real || 19.53)}) · ${(lr.positions || []).length} open` : "–"]] },
@@ -208,7 +208,7 @@ function model(D) {
           .concat((lb.positions || []).map(p => [`${p.q} · ${p.outcome}`, `${usd(p.stake)} @ ${Math.round(p.entry * 100)}c → now ${Math.round((p.mark ?? p.entry) * 100)}c`])),
         (lb.log || []).slice(0, 8).map(l => [l.msg, (l.ts || "").slice(5, 16).replace("T", " ")]), "Latest bot moves", "https://polymarket.com", "The old 5-minute Up/Down bot stays switched off.") },
 
-    { id: "longshot", name: "Long Shot Tower", short: "BOT RACE", icon: "🏁", color: 0xff3b6b, pos: [60, 24], w: 5, d: 5, h: 20, kind: "coin",
+    { id: "longshot", name: "Long Shot Tower", short: "BOT RACE", icon: "🏁", color: 0xff3b6b, pos: [-23, -64], w: 5, d: 5, h: 20, kind: "coin", face: [0, 1],
       status: "ok", today: 0, total: 0,
       tag: race.length ? [`🥇 ${race[0].name} ${pct(race[0].value, 25)}`, `${race.length} bots · $25 → $250`] : ["no bots", ""],
       board: { title: "BOT RACE · $25 → $250", main: race.length ? race[0].name : "–", mainLabel: "leading" + (race.length ? ` · ${pnlU(race[0].value, 25)} (${pct(race[0].value, 25)})` : ""),
@@ -219,7 +219,7 @@ function model(D) {
         race.map(r => [`${r.name}: ${r.method}`, `${usd(r.value)} · ${r.trades} trades (${r.wins} wins)`]), "Leaderboard (value · trades)", "",
         "Profit is measured from each bot's $25 start. Tap the Polymarket, Kalshi or Krypto building for that bot's open trades.") },
 
-    { id: "pinterest", name: "Pinterest Studio", short: "PINTEREST", icon: "📌", color: 0xe60023, pos: [-28, -36], w: 7, d: 7, h: 14, kind: "pin",
+    { id: "pinterest", name: "Pinterest Studio", short: "PINTEREST", icon: "📌", color: 0xe60023, pos: [-62, 22], w: 7, d: 7, h: 14, kind: "pin", face: [1, 0],
       status: pi.error ? "stale" : pi.last_date && pi.last_date <= new Date(Date.now() + 2 * 864e5).toISOString().slice(0, 10) ? "stale" : "ok", today: 0, total: 0,
       tag: [`${num(pi.upcoming)} pins queued`, `${num(pi.clicks)} clicks`],
       board: { title: "PINTEREST", main: num(pi.scheduled), mainLabel: "pins scheduled (CSV uploads)",
@@ -228,7 +228,24 @@ function model(D) {
         [["Going out today", num(pi.today)], ["Still queued", num(pi.upcoming)], ["Last pin date", pi.last_date || "–"], ["Impressions", num(pi.impressions)], ["Clicks", num(pi.clicks)], ["Upload files", num(pi.files)]], [],
         "", "https://za.pinterest.com/SonneblomDigitaal/", `Pinterest has no API for us, so this counts the pins in our upload files. Impressions/clicks are typed in on Go Bananas${pi.at ? ` (${esc(pi.at)})` : ""}.`) },
 
-    { id: "github", name: "GitHub Foundry", short: "GITHUB", icon: "🐙", color: 0x8b949e, pos: [28, 46], w: 8, d: 8, h: 18, kind: "git",
+    // Warehouses (owner 2026-10-07): every product we sell, stored and viewable by shelf
+    { id: "whdig", name: "Digital Warehouse", short: "DIGITAL", icon: "🗂️", color: 0x38bdf8, pos: [62, -20], w: 14, d: 10, h: 8, kind: "warehouse", face: [-1, 0],
+      status: "ok", today: 0, total: 0,
+      tag: [`${num(L.filter(x => !x.physical).length + G.length)} products`, "printables · add-ons · books"],
+      board: { title: "DIGITAL WAREHOUSE", main: num(L.filter(x => !x.physical).length + G.length), mainLabel: "digital products in stock",
+        rows: [["Etsy downloads", num(L.filter(x => !x.physical).length)], ["Gumroad", num(G.length)], ["KDP books", m.kdp_books ?? "–"]] },
+      sheet: () => sheetHTML("Digital Warehouse", "Every digital product we sell: printables, bundles, Blender add-ons, services. Tap a box to open it.", L.filter(x => !x.physical).length + G.length, "products",
+        [["Etsy downloads", L.filter(x => !x.physical).length], ["Gumroad", G.length], ["KDP books", m.kdp_books ?? "–"]], [], "") +
+        shelfHTML("Gumroad", G) + shelfHTML("Etsy downloads", L.filter(x => !x.physical)) },
+    { id: "whpod", name: "Print Warehouse", short: "PRINT", icon: "📦", color: 0xf59e0b, pos: [62, 10], w: 14, d: 10, h: 8, kind: "warehouse", face: [-1, 0],
+      status: "ok", today: 0, total: 0,
+      tag: [`${num(L.filter(x => x.physical).length)} products`, "printed on demand"],
+      board: { title: "PRINT WAREHOUSE", main: num(L.filter(x => x.physical).length), mainLabel: "print-on-demand products",
+        rows: [["Printify products", num(pf.products)], ["Orders", num(pf.orders || 0)]] },
+      sheet: () => sheetHTML("Print Warehouse", "Tees, mugs, posters and gifts, printed to order by Printify and sold on Etsy.", L.filter(x => x.physical).length, "products",
+        [["Printify products", pf.products ?? "–"], ["Orders", pf.orders ?? 0]], [], "") + shelfHTML("Etsy gifts", L.filter(x => x.physical)) },
+
+    { id: "github", name: "GitHub Foundry", short: "GITHUB", icon: "🐙", color: 0x8b949e, pos: [58, -64], w: 8, d: 8, h: 18, kind: "git", face: [0, 1],
       status: gh.error ? "stale" : "ok", today: 0, total: 0,
       tag: [`${num(gh.commits_24h)} commits today`, `${num(gh.repos)} repos`],
       board: { title: "GITHUB", main: num(gh.commits_24h), mainLabel: "commits pushed (24h)",
@@ -237,7 +254,7 @@ function model(D) {
         [["Commits this week", num(gh.commits_7d)], ["Repos", num(gh.repos)], ["Public", num(gh.public)], ["Stars", num(gh.stars)]],
         (gh.recent || []).map(r => [r.name + (r.private ? " 🔒" : ""), ago(r.pushed)]), "Latest pushes", "https://github.com/" + (gh.login || "RoseCompanion")) },
 
-    { id: "rnd", name: "R&D Centre", short: "R&D", icon: "🔬", color: 0x22ff88, pos: [28, -36], w: 9, d: 7, h: 12, kind: "rnd",
+    { id: "rnd", name: "R&D Centre", short: "R&D", icon: "🔬", color: 0x22ff88, pos: [35, -64], w: 9, d: 7, h: 12, kind: "rnd", face: [0, 1],
       status: rn.error ? "stale" : "ok", today: 0, total: 0,
       tag: [`${(rn.flags || []).length} alerts`, "report " + (rn.written || "–").slice(5)],
       board: { title: "R&D CENTRE", main: String((rn.flags || []).length), mainLabel: "bottleneck alerts right now",
@@ -249,7 +266,7 @@ function model(D) {
         ${(rn.items || []).map(x => `<div class="note"><b>${esc(x.name)}</b> · <i>${esc(x.score)}</i><br>${esc(x.numbers)}<br>🚧 ${esc(x.bottleneck)}<br>✅ ${esc(x.fix)}</div>`).join("")}` },
 
     { id: "showroom", name: shOpen ? "Side Hustle City" : "Showroom (under construction)", short: shOpen ? "SHC" : "SHOWROOM", icon: shOpen ? "🏙️" : "🏗️",
-      color: 0xffb020, pos: [-28, 46], w: 9, d: 8, h: 16, kind: shOpen ? "store" : "construction",
+      color: 0xffb020, pos: [17, 60], w: 9, d: 8, h: 16, face: [0, 1], kind: shOpen ? "store" : "construction",
       status: "ok", today: 0, total: (shF.page || {}).revenue_usd || sh.revenue_usd || 0, built: shSt.length ? shDone / shSt.length : 0,
       tag: shOpen ? ["OPEN · selling", `${num((shF.page || {}).paid || 0)} sales`] : [`${Math.round(100 * (shSt.length ? shDone / shSt.length : 0))}% built`, shNext ? "next: " + shNext.name.split(" ")[0] : "open"],
       board: shOpen ? { title: "SIDE HUSTLE CITY", main: usd((shF.page || {}).revenue_usd || 0), mainLabel: "sold · store is open",
@@ -276,7 +293,7 @@ function model(D) {
         [["Model", "Claude (Claude Code)"], ["Runs on", "the server, 24/7"], ["Can", "read data, write code, deploy"]], [], "",
         "In the real city this opens a live chat with Claude Code running on the server. The owner asks for changes from a phone and Claude edits the code, refreshes the data and redeploys the city.") },
   ];
-  const tot = eTot + gTot, day = eDay + gDay;
+  const tot = eTot + gTot + polyReal, day = eDay + gDay;  // Vault counts the REAL-money Polymarket bot profit (owner 2026-10-07; practice money is not counted)
   const flow = { clicks: (rs.ad_clicks || 0) + (fb.ads?.clicks || 0), views: last7("page_media_view") + (rs.fb_post_views || 0), ads: adsActive };
   const working = (D.working || []).filter(id => B.some(b => b.id === id));
   return { flow, working, B: DEMO ? B.filter(b => !(D.hide || []).includes(b.id)) : B, s, tot, day, roseZar, sales: eS.length + gS.length + (ro.card_paid || 0) };
@@ -367,6 +384,13 @@ function sheetHTML(title, sub, big, bigLabel, kvs, list, listTitle, link, note) 
     ${link ? `<a class="go" href="${link}" target="_blank" rel="noopener">Open ↗</a>` : ""}`);
 }
 
+// Warehouse shelf: product boxes (photo + price) linking to the live listing
+function shelfHTML(title, items) {
+  if (!items.length) return "";
+  return `<div class="shelf"><div class="lt">${esc(title)} · ${items.length}</div><div class="boxes">${items.map(x =>
+    `<a class="box" ${DEMO ? "" : `href="${esc(x.url || "#")}" target="_blank" rel="noopener"`}>${x.img ? `<img loading="lazy" src="${esc(x.img)}" alt="">` : `<i>📦</i>`}<span>${esc((x.title || "").slice(0, 46))}</span><b>${usd(x.price)}</b></a>`).join("")}</div></div>`;
+}
+
 // ---------- textures ----------
 function windowTex(color, lit = 0.55, seed = 1) {
   const c = document.createElement("canvas"); c.width = 64; c.height = 128;
@@ -448,7 +472,7 @@ const STREETS = [84];                  // one ring road round the park (both sig
 const EXT = 100;                       // city edge
 const VAULT = [0, 6];                  // the Vault in the middle of the market square
 const POOL = [-5, 5, -54, -16];        // reflecting pool x0, x1, z0, z1 (in front of the Library)
-const PLAZA = [-36, 36, -6, 20];       // paved market square round the Vault
+const PLAZA = [-22, 22, -6, 20];       // paved square round the Vault in the city park
 const NEON = [0xff2bd6, 0x00f0ff, 0xfff200, 0xff3b6b, 0x8b5cf6, 0x22ff88, 0xff8a00];
 const rnd = (a, b) => a + Math.random() * (b - a);
 const pick = a => a[Math.floor(Math.random() * a.length)];
@@ -690,6 +714,7 @@ function tower(w, h, d, color, seed, lit) {
 
 // which way a building's front (and billboard) faces: side quarters face the boulevard, markets face the Vault, the Library faces the pool
 function faceDir(b) {
+  if (b.face) return new THREE.Vector3(b.face[0], 0, b.face[1]);
   if (b.kind === "library") return new THREE.Vector3(0, 0, 1);
   if (Math.abs(b.pos[0]) > 40) return new THREE.Vector3(-Math.sign(b.pos[0]), 0, 0);
   return new THREE.Vector3(VAULT[0] - b.pos[0], 0, VAULT[1] - b.pos[1]).normalize();
@@ -792,6 +817,25 @@ function building(b) {
       for (const y of [y0 + 0.5, y1 - 0.5]) { const n = new THREE.Mesh(node, br.material); n.position.set(sx * 2, y, 0); graph.add(n); }
     });
     g.add(graph); anim.push(dt => graph.rotation.y += dt * 0.5); top = b.h + 8.5;
+  } else if (b.kind === "warehouse") {  // warehouse: long shed, saw-tooth roof, 3 lit roll-up doors, crates + pallets out front
+    const f = faceDir(b), m = new THREE.Group(); m.rotation.y = Math.atan2(f.x, f.z); g.add(m);
+    m.add(tower(b.w, b.h, b.d, c, 91, lit * 0.5));
+    const tooth = new THREE.MeshStandardMaterial({ color: 0x2a2244, emissive: c, emissiveIntensity: 0.35, metalness: 0.4, roughness: 0.5 });
+    for (let i = 0; i < 4; i++) {  // saw-tooth roof: sloped plates with a lit glazing strip on each step
+      const x = -b.w / 2 + b.w / 8 + i * b.w / 4;
+      const pl = new THREE.Mesh(new THREE.BoxGeometry(b.w / 4 * 0.98, 0.2, b.d * 1.04), tooth); pl.rotation.x = 0.28; pl.position.set(x, b.h + 1.4, 0); m.add(pl);
+      const gl = new THREE.Mesh(new THREE.PlaneGeometry(b.w / 4 * 0.9, 2.8), new THREE.MeshBasicMaterial({ color: c, toneMapped: false, transparent: true, opacity: 0.7, side: THREE.DoubleSide }));
+      gl.position.set(x, b.h + 1.4, -b.d / 2 - 0.05); m.add(gl);
+    }
+    for (let i = -1; i <= 1; i++) {
+      const door = new THREE.Mesh(new THREE.PlaneGeometry(b.w / 4.2, b.h * 0.6), new THREE.MeshStandardMaterial({ color: 0x1a1a2a, emissive: c, emissiveIntensity: 0.25 }));
+      door.position.set(i * b.w / 3.2, b.h * 0.3, b.d / 2 + 0.05); m.add(door);
+      for (let y = 0.6; y < b.h * 0.6; y += 0.7) { const l = new THREE.Mesh(new THREE.PlaneGeometry(b.w / 4.2, 0.06), new THREE.MeshBasicMaterial({ color: c, toneMapped: false })); l.position.set(i * b.w / 3.2, y, b.d / 2 + 0.07); m.add(l); }
+    }
+    const crate = new THREE.MeshStandardMaterial({ color: 0xc8924a, emissive: 0x553311, emissiveIntensity: 0.3, roughness: 0.8 });
+    [[-b.w / 2 + 1, 0], [-b.w / 2 + 2.4, 0], [-b.w / 2 + 1.7, 1.2], [b.w / 2 - 1.2, 0], [b.w / 2 - 1.2, 1.2]].forEach(([x, y]) => {
+      const cr = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1.2, 1.2), crate); cr.position.set(x, 0.6 + y, b.d / 2 + 1.6); m.add(cr); });
+    top = b.h + 2.2;
   } else if (b.kind === "rnd") {  // R&D: low lab with a glass roof and a spinning atom above it
     g.add(tower(b.w, b.h, b.d, c, 97, lit));
     const roof = new THREE.Mesh(new THREE.BoxGeometry(b.w * 0.8, 1.2, b.d * 0.8), new THREE.MeshStandardMaterial({ color: 0x0b3a2a, metalness: 0.9, roughness: 0.1, emissive: c, emissiveIntensity: 0.3, transparent: true, opacity: 0.85 }));
@@ -1035,10 +1079,14 @@ function life() {
   seg(0, PLAZA[3], 0, PARK, 6, 0xffd166);                                                    // grand entrance from the south
   seg(-BX, VAULT[1] + 8, PLAZA[0], VAULT[1] + 8, 5); seg(PLAZA[1], VAULT[1] + 8, BX, VAULT[1] + 8, 5);  // market street to both boulevards
   seg(-PARK, 0, -BX, 0, 4); seg(BX, 0, PARK, 0, 4);                                          // side gates
+  seg(-PARK + 2, -48, -14, -48, 4, 0x9945ff); seg(14, -48, PARK - 2, -48, 4, 0x9945ff);                    // Bot Row walk
+  seg(-PARK + 2, 70, PARK - 2, 70, 7, 0xff8a3d);                                             // Shop Street
   M.B.forEach(b => {
     const size = Math.max(b.w, b.d) * 0.8;
     solids.push({ x: b.pos[0], z: b.pos[1], r: size + 0.6, h: b.h + 12 });
-    if (Math.abs(b.pos[0]) > 40) { const sx = Math.sign(b.pos[0]); seg(sx * BX, b.pos[1], b.pos[0] - sx * (size + 0.5), b.pos[1], 3.4, b.color); }  // spur from the boulevard to the door
+    if (b.face && b.face[0]) { const sx = Math.sign(b.pos[0]); seg(sx * BX, b.pos[1], b.pos[0] - sx * (size + 0.5), b.pos[1], 3.4, b.color); }  // media/warehouse spur from the boulevard to the door
+    else if (b.face && b.pos[1] > 40) seg(b.pos[0], b.pos[1] + size + 0.5, b.pos[0], 70, 3.4, b.color);   // Shop Street: door to the street
+    else if (b.face && b.pos[1] < -40) seg(b.pos[0], b.pos[1] + size + 0.5, b.pos[0], -48, 3.4, b.color);  // Bot Row: door to the bot walk
   });
   // market square paving, reflecting pool, Library forecourt
   const pave = new THREE.Mesh(new THREE.PlaneGeometry(PLAZA[1] - PLAZA[0], PLAZA[3] - PLAZA[2]), stone); pave.rotation.x = -Math.PI / 2; pave.position.set(0, 0.305, (PLAZA[2] + PLAZA[3]) / 2); scene.add(pave);
@@ -1354,7 +1402,7 @@ function hud() {
   const att = (s.pulse || {}).attention || {};
   const why = b => [...(att[b.id] || []), ...(b.status === "down" ? ["Something here is down"] : [])];
   const chip = (id, label, color, w) => `<button class="chip${w.length ? " need" : ""}" data-id="${id}" title="${esc(w.join(" · "))}" style="border-color:${color}88;color:${color}">${w.length ? `<i class="blip"></i>` : ""}${esc(label)}</button>`;
-  const names = { vault: "Vault", etsy: "Etsy", fb: "Media HQ", rose: "Rose", contra: "Contra", zoho: "Outreach", gumroad: "Gumroad", kdp: "KDP", lab: "API Lab",
+  const names = { vault: "Vault", etsy: "Etsy", fb: "Meta", whdig: "Digital WH", whpod: "Print WH", rose: "Rose", contra: "Contra", zoho: "Outreach", gumroad: "Gumroad", kdp: "KDP", lab: "API Lab",
     krypto: "Krypto", kalshi: "Kalshi", poly: "Polymarket", longshot: "Long Shot", pinterest: "Pinterest", github: "GitHub", rnd: "R&D", showroom: "SHC", library: "Library" };
   const list = [chip("vault", "Vault", "#ffd166", att.vault || [])].concat(B.map(b => chip(b.id, names[b.id] || b.short, hex(b.color), why(b))));
   $("#chips").innerHTML = list.join("");
@@ -1369,14 +1417,15 @@ function hud() {
     const total = b.id === "rose" ? "R" + num(b.zar || 0) : usd(b.total);
     return `<tr><td>${b.icon} ${esc(b.short)}</td><td><span class="dot" style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${dc[b.status]}"></span></td><td>${earned}</td><td>${total}</td></tr>`; });
   $("#payroll").innerHTML = `<h4>PAYROLL · TODAY</h4><table><tr><th>Worker</th><th>On</th><th>Today</th><th>All time</th></tr>${rows.join("")}</table>
-    <p>Gold beams + coins rolling to the Vault = money made today. The blue-to-orange arc from Media HQ to Etsy = ad traffic; the little runners are visitors (more traffic, more runners). Thin arcs into the Vault = money makers (bright with sparks when they earned today). A cyan beam into the sky = Claude is working on that hustle right now. Roof lights: green running, yellow stale data, red down, grey unknown (Library closed).</p>`;
+    <p>Gold beams + coins rolling to the Vault = money made today. The blue-to-orange arc from the Meta Skyscraper to Etsy = ad traffic; the little runners are visitors (more traffic, more runners). Thin arcs into the Vault = money makers (bright with sparks when they earned today). A cyan beam into the sky = Claude is working on that hustle right now. Roof lights: green running, yellow stale data, red down, grey unknown (Library closed).</p>`;
 }
 
 function vaultSheet() {
   const { B, tot, day, roseZar, sales } = M, s = M.s;
   const all = [...(s.etsy?.sales || []).map(x => ({ ...x, channel: "Etsy" })), ...(s.gumroad?.sales || [])].sort((a, b) => b.ts.localeCompare(a.ts));
   return sheetHTML("The Vault", "All money in, across every shop", tot, "revenue all time (USD)",
-    [["Today", usd(day)], ["Sales", sales], ...(DEMO ? [] : [["Rose (card)", "R" + num(roseZar)]]), ...B.filter(b => b.total && b.id !== "rose").map(b => [b.short, usd(b.total)])],
+    [["Today", usd(day)], ["Sales", sales], ...(DEMO ? [] : [["Rose (card)", "R" + num(roseZar)]]), ...B.filter(b => b.total && b.id !== "rose").map(b => [b.id === "poly" ? "Polymarket bot (real, incl. open)" : b.short, usd(b.total)]),
+     ...(DEMO || !s.lsbot ? [] : [["Polymarket practice (not counted)", ((s.lsbot.value || 0) < 25 ? "-$" : "+$") + Math.abs((s.lsbot.value || 0) - 25).toFixed(2)]])],
     all.slice(0, 8).map(x => [`${x.channel} · ${x.product || x.title || ""}`, `${usd(x.amount)} · ${ago(x.ts)}`]), "Latest sales") + ideasHTML(s.ideas);
 }
 // Future business ideas parked in the Vault (hq-data/ideas.json)
@@ -1586,9 +1635,25 @@ $("#tstop").onclick = () => api("/stop", { method: "POST", body: "{}" });
 $("#tnew").onclick = async () => { if (tBusy) return; await api("/new", { method: "POST", body: "{}" }); tlog().innerHTML = ""; tAdd("sys", "New conversation. Claude still has its memory notes."); };
 
 // ---------- boot ----------
+// District signs (owner 2026-10-07): Media block west, Warehouses east, Shop Street south, Bot Row north, City Park in the middle
+function districts() {
+  const D_ = [["MEDIA BLOCK", 0x3b82f6, -62, -54, [-72, -50, -36, 48]], ["WAREHOUSES", 0x38bdf8, 62, -36, [50, 74, -30, 20]],
+    ["SHOP STREET", 0xff8a3d, 0, 76, [-70, 70, 52, 74]], ["BOT ROW", 0x9945ff, -40, -76, [-66, -18, -72, -44]], ["BOT ROW", 0x9945ff, 40, -76, [18, 66, -72, -44]],
+    ["CITY PARK", 0x22ff88, 0, 24, null]];
+  D_.forEach(([t, c, x, z, r]) => {
+    const cv = document.createElement("canvas"); cv.width = 1024; cv.height = 160; const g = cv.getContext("2d");
+    g.font = "800 92px Sora, sans-serif"; g.textAlign = "center"; g.textBaseline = "middle";
+    g.shadowColor = "#" + c.toString(16).padStart(6, "0"); g.shadowBlur = 28; g.fillStyle = "#fff"; g.fillText(t, 512, 84);
+    const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace;
+    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false, toneMapped: false }));
+    sp.scale.set(26, 4.1, 1); sp.position.set(x, t === "CITY PARK" ? 3 : 15, z); scene.add(sp);
+    if (r) { const [x0, x1, z0, z1] = r, e = neonEdges(new THREE.BoxGeometry(x1 - x0, 0.01, z1 - z0), c); e.position.set((x0 + x1) / 2, 0.34, (z0 + z1) / 2); scene.add(e); }
+  });
+}
+
 function build() {
   M = model(D);
-  ground(); vault(); M.B.forEach(building); flowBeam(); moneyBeams(); workBeams(); life(); staffFigures(); hud();
+  ground(); vault(); M.B.forEach(building); districts(); flowBeam(); moneyBeams(); workBeams(); life(); staffFigures(); hud();
   applySkin(SKIN.id);
 }
 

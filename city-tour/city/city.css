@@ -189,3 +189,9 @@ header{position:absolute;top:0;left:0;right:0;display:flex;justify-content:space
 .rep{font-size:11px;color:#cfc7f0;background:#0006;border-radius:8px;padding:6px 8px;margin:2px 0 4px;line-height:1.4}
 .prof{font-size:11px;color:var(--dim);margin:2px 0 4px}.prof summary{cursor:pointer;color:#3dffa8;font-weight:700}.prof ul{margin:2px 0 6px;padding-left:16px}.prof b{color:#fff;font-size:10px;letter-spacing:1px}
 .team{margin-left:14px;border-left:1px dashed #ffffff22;padding-left:8px}.team .emp .av{flex-basis:28px;height:28px;font-size:14px}
+/* warehouse shelves (owner 2026-10-07): product boxes with photo + price */
+.shelf{margin:10px 0}.shelf .lt{color:var(--dim);font-size:12px;margin-bottom:6px}
+.shelf .boxes{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:6px;max-height:46vh;overflow:auto}
+.shelf .box{display:flex;flex-direction:column;background:#0008;border:1px solid #ffffff1a;border-radius:8px;overflow:hidden;color:#fff;text-decoration:none;font-size:10px}
+.shelf .box img{width:100%;aspect-ratio:1;object-fit:cover;background:#222}.shelf .box i{font-size:30px;text-align:center;padding:18px 0;font-style:normal}
+.shelf .box span{padding:3px 5px 0;line-height:1.25;height:2.5em;overflow:hidden}.shelf .box b{padding:2px 5px 5px;color:var(--gold)}
