@@ -1200,7 +1200,7 @@ function staffPanel() {
   const card = x => `<div class="mgr"><div class="emp"><span class="av big" style="border-color:${STC[x.status] || "#7d74a8"}">${x.emoji}</span>
     <span class="ej"><b>${esc(x.name)}</b> <i style="color:${STC[x.status] || "#7d74a8"}">● ${esc(x.status)}</i><br><span class="ttl">${esc(x.title || x.job)}</span> · <span class="dn" data-id="${esc(x.bld)}">${esc(bn(x.bld))}</span></span>
     <button class="assign" data-emp="${esc(x.id)}">Assign</button></div>${rep(x)}${prof(x)}
-    <div class="team">${all.filter(y => y.boss === x.id && y.role !== "manager").map(staffRow).join("")}</div></div>`;
+    <div class="team"></div></div>`;  // owner 7 Oct: managers only, no employee rows under them
   const ceo = all.find(x => x.role === "ceo"), mgrs = all.filter(x => x.role === "manager");
   el.innerHTML = `<h4>👥 THE COMPANY · ${all.length} STAFF</h4><p class="sub2">You own it. Every manager reports to you and to CLAUDE (CEO). Tap Assign to give anyone a job.</p>` +
     (ceo ? `<div class="ceo">${card(ceo).replace('<div class="team">', '<div class="team" hidden>')}</div>` : "") + mgrs.map(card).join("");
