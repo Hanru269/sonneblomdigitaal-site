@@ -21,6 +21,10 @@ const ago = ts => { const m = Math.round((Date.now() - new Date(ts)) / 60000); r
 const isToday = ts => new Date(ts).toDateString() === new Date().toDateString();
 let PW = null, D = null, M = null, svc = null;
 const DEMO = !!window.CITY_DEMO;  // public demo (/city-tour/city/): sample numbers from demo.json, no password, no private links
+// Guest pass (owner 2026-10-07): /hq/city/#g=<key> opens the REAL city read-only for a friend: data from data.guest.enc.json
+// (encrypted with the guest key, removed by build.py when the pass expires), no Library/actions/Assign/Go Bananas/links.
+const GKEY = DEMO ? null : new URLSearchParams(location.hash.slice(1)).get("g"), GUEST = !!GKEY;
+const GUEST_QA = "https://chat.sonneblomdigitaal.co.za/guest/?k=" + encodeURIComponent(GKEY || "");
 const scrub = t => DEMO ? String(t).replace(/Rose's|Rose/g, "Brand B") : t;
 
 // ---------- data ----------
@@ -31,7 +35,7 @@ async function decrypt(pw) {
     for (const ch of ["etsy", "gumroad"]) (d.snapshot[ch].sales || []).forEach(x => { if (x.ago != null) x.ts = new Date(Date.now() - x.ago * 60000).toISOString(); });
     return d;
   }
-  const enc = await (await fetch("../data.enc.json?t=" + Date.now(), { cache: "no-store" })).json();
+  const enc = await (await fetch((GUEST ? "../data.guest.enc.json" : "../data.enc.json") + "?t=" + Date.now(), { cache: "no-store" })).json();
   const base = await crypto.subtle.importKey("raw", new TextEncoder().encode(pw), "PBKDF2", false, ["deriveKey"]);
   const key = await crypto.subtle.deriveKey({ name: "PBKDF2", salt: b64(enc.salt), iterations: enc.iter, hash: "SHA-256" },
     base, { name: "AES-GCM", length: 256 }, false, ["decrypt"]);
@@ -328,14 +332,14 @@ const ACTIONS = {
     ["🏗️ Build the next step", "Continue the Showroom pipeline: do the next unfinished stage in /root/showroom/pipeline.json, mark it done, run update.sh and tell me what's next."],
     ["📸 Draft an IG post", "Draft the next Side Hustle City Instagram post from /root/showroom/ig_posts.md (caption + hashtags + what to screen-record)."]],
 };
-const actionsHTML = id => DEMO || !ACTIONS[id] ? "" : `<div class="links acts2"><div class="lt">Quick actions · Claude does it in the Library</div>${ACTIONS[id](M.s).map(([t, p]) => `<button class="ask" data-p="${esc(p)}">${esc(t)}</button>`).join("")}</div>`;
+const actionsHTML = id => DEMO || GUEST || !ACTIONS[id] ? "" : `<div class="links acts2"><div class="lt">Quick actions · Claude does it in the Library</div>${ACTIONS[id](M.s).map(([t, p]) => `<button class="ask" data-p="${esc(p)}">${esc(t)}</button>`).join("")}</div>`;
 async function ask(msg) {
   await openTerm();
   $("#tin").value = msg; $("#tin").dispatchEvent(new Event("input"));
   if ($("#tsend").disabled || !get(LKEY)) return;  // Library login first: the task waits in the box
   $("#tform").requestSubmit();
 }
-const linksHTML = id => !DEMO && (LINKS[id] || []).length ? `<div class="links"><div class="lt">Quick links</div>${LINKS[id].map(([t, u]) => `<a href="${u}" target="_blank" rel="noopener">${esc(t)} ↗</a>`).join("")}</div>` : "";
+const linksHTML = id => !DEMO && !GUEST && (LINKS[id] || []).length ? `<div class="links"><div class="lt">Quick links</div>${LINKS[id].map(([t, u]) => `<a href="${u}" target="_blank" rel="noopener">${esc(t)} ↗</a>`).join("")}</div>` : "";
 
 // Showroom sales funnel: each step's conversion vs a normal rate, worst one flagged as the bottleneck.
 function funnelHTML(f) {
@@ -1251,8 +1255,9 @@ const agoS = s => s == null ? "" : s < 90 ? "just now" : s < 5400 ? Math.round(s
 const staffRow = x => `<div class="emp"><span class="av" style="border-color:${STC[x.status] || "#7d74a8"}">${x.emoji}</span>
   <span class="ej"><b>${esc(x.name)}</b> <i style="color:${STC[x.status] || "#7d74a8"}">● ${esc(x.status)}${x.last_s != null ? " · " + agoS(x.last_s) : ""}</i><br>${esc(x.now ? x.now + " · " : "")}${esc(x.job)}</span>
   <button class="assign" data-emp="${esc(x.id)}">Assign</button></div>`;
-const staffHTML = id => DEMO || !staffOf(id).length ? "" : `<div class="staffbox"><div class="lt">👥 Staff here · tap Assign to give them a job</div>${staffOf(id).map(staffRow).join("")}</div>`;
+const staffHTML = id => DEMO || GUEST || !staffOf(id).length ? "" : `<div class="staffbox"><div class="lt">👥 Staff here · tap Assign to give them a job</div>${staffOf(id).map(staffRow).join("")}</div>`;
 function assign(eid) {
+  if (GUEST) return;
   const x = ((M.s.staff || {}).staff || []).find(y => y.id === eid); if (!x) return;
   openTerm().then(() => { const t = $("#tin"); t.value = `Task for ${x.name} (${x.job}): `; t.dispatchEvent(new Event("input")); t.focus(); });
 }
@@ -1489,6 +1494,7 @@ function tScroll() { const l = tlog(); if (l.scrollHeight - l.scrollTop - l.clie
 function setBusy(b) { tBusy = b; $("#tstop").hidden = !b; $("#tin").placeholder = b ? "Add a message: Claude pauses, reads it, then carries on…" : "Talk to Claude…"; if (!b) document.querySelectorAll("#tlog .cursor").forEach(c => c.remove()); }
 
 async function openTerm() {
+  if (GUEST) return void window.open(GUEST_QA, "_blank");  // guests get the ask-only Q&A page, never the real Library
   $("#sheet").hidden = true; $("#term").hidden = false;
   if (tlog().childElementCount) return;
   if (!get(LKEY)) return libraryLogin();
@@ -1664,9 +1670,10 @@ async function reload() {
 }
 async function enter(pw, remember) {
   $("#loading").hidden = false;
-  try { D = await decrypt(pw); } catch (e) { $("#loading").hidden = true; $("#err").hidden = false; set(KEY, null); return; }
+  try { D = await decrypt(pw); } catch (e) { $("#loading").hidden = true; $("#err").hidden = false; if (GUEST) $("#err").textContent = "This guest link has expired or is not valid."; else set(KEY, null); return; }
   PW = pw; if (remember) set(KEY, pw);
   $("#lock").hidden = true;
+  if (GUEST) { $("#bananas").hidden = true; $("#lockbtn").hidden = true; document.querySelectorAll("#askbar .ph").forEach(e => e.textContent = "Ask Claude how this was built…"); }
   await Promise.all([document.fonts.load("800 54px Sora"), document.fonts.load("600 30px Inter"), services()]).catch(() => {});
   initScene(); build();
   $("#loading").hidden = true; $("#hud").hidden = false;
@@ -1676,5 +1683,5 @@ async function enter(pw, remember) {
   loop();
 }
 $("#unlock").addEventListener("submit", e => { e.preventDefault(); enter($("#pw").value, $("#remember").checked); });
-const saved = get(KEY); if (DEMO) enter("demo", false); else if (saved) enter(saved, true);
+const saved = get(KEY); if (DEMO) enter("demo", false); else if (GUEST) enter(GKEY, false); else if (saved) enter(saved, true);
 if (!DEMO && "serviceWorker" in navigator) navigator.serviceWorker.register("../sw.js", { scope: "../" }).catch(() => {});
