@@ -49,7 +49,7 @@ function model(D) {
     ["Highest profit day", `${pnl(x.best_day)} · ${x.best_day_date || ""}`], ["Worst day", `${pnl(x.worst_day)} · ${x.worst_day_date || ""}`],
     ["Days traded", x.days_traded ?? "–"], ["Last trade", x.last_trade ? ago(x.last_trade) : "–"], ["Bot", x.running ? "🟢 running" : "⚪ stopped"]];
   const ks = bo.kalshi || {}, pm = bo.polymarket || {}, kb = bo.krypto || {};
-  const ls = s.longshot || {}; const lb = s.lsbot || {};  // $25 -> $250 attempt (Polymarket long shots, owner places bets)
+  const ls = s.longshot || {}; const lb = s.lsbot || {}; const kx = s.k10x || {};  // $25 -> $250 attempt (Polymarket long shots, owner places bets)
   const fb = s.facebook || {}, ro = s.influencer || {}, ig = s.instagram || {}, rs = s.influencer_social || {}, md = s.media || {};
   const rd = s.influencer_diary || {}, ct = s.contra || {}, ox = s.outreach || {};
   const pi = s.pinterest || {}, gh = s.github || {}, sh = s.showroom || {}, rn = s.rnd || {};
@@ -165,9 +165,16 @@ function model(D) {
 
     { id: "kalshi", name: "Kalshi Casino", short: "KALSHI", icon: "🎲", color: 0x00d395, pos: [60, 0], w: 5, d: 5, h: 13, kind: "coin",
       status: st("bots"), today: 0, total: 0,
-      tag: [pnl(ks.today) + " today", "best day " + pnl(ks.best_day)],
-      board: { title: "KALSHI BOT", main: pnl(ks.today), mainLabel: "profit today", rows: botRows(ks) },
-      sheet: () => sheetHTML("Kalshi Casino", "BTC/ETH 15-minute contracts · numbers from Kalshi's own settlements", pnl(ks.lifetime), "lifetime profit",
+      tag: kx.value != null ? [usd(kx.value) + " of $250 (practice)", `${(kx.positions || []).length} open · ${kx.trades || 0} done`] : [pnl(ks.today) + " today", "best day " + pnl(ks.best_day)],
+      board: kx.value != null ? { title: "KALSHI $25 → $250", main: usd(kx.value), mainLabel: "fair-value bot · practice money",
+          rows: [["Open trades", (kx.positions || []).length], ["Trades done", `${kx.trades || 0} (${kx.wins || 0} wins)`], ["Polymarket bot", usd(lb.value || 0)], ["Leader", (kx.value || 0) >= (lb.value || 0) ? "Kalshi" : "Polymarket"]] }
+        : { title: "KALSHI BOT", main: pnl(ks.today), mainLabel: "profit today", rows: botRows(ks) },
+      sheet: () => kx.value != null ? sheetHTML("Kalshi Casino", "$25 → $250 challenge on Kalshi, FAIR-VALUE method: it prices Bitcoin/Ethereum 'above $X' markets itself from the live price and volatility, buys only when Kalshi is at least 5c too cheap (after fees), and holds to settlement. Practice money, real Kalshi prices.",
+          usd(kx.value), "bot value (cash + open trades)",
+          [["Cash", usd(kx.cash || 0)], ["Progress", Math.round(100 * (kx.progress || 0)) + "%"], ["Trades done", `${kx.trades || 0} (${kx.wins || 0} wins)`], ["Polymarket Long Shot bot", usd(lb.value || 0)], ["Leader", (kx.value || 0) >= (lb.value || 0) ? "Kalshi" : "Polymarket"]]
+            .concat((kx.positions || []).map(p => [`${p.side.toUpperCase()} ${p.label}`, `${p.contracts} @ ${Math.round(p.price * 100)}c · fair ${Math.round(p.fair * 100)}%`])),
+          (kx.log || []).slice(0, 8).map(l => [l.msg, (l.ts || "").slice(5, 16).replace("T", " ")]), "Latest bot moves", "https://kalshi.com", "The old 15-minute Kalshi bot stays switched off.")
+        : sheetHTML("Kalshi Casino", "BTC/ETH 15-minute contracts · numbers from Kalshi's own settlements", pnl(ks.lifetime), "lifetime profit",
         botSheet(ks).concat([["Balance", usd(ks.balance || 0)]]), [], "", "https://kalshi.com/portfolio", "Read-only: the bot itself is switched off.") },
 
     { id: "poly", name: "Polymarket Exchange", short: "POLYMARKET", icon: "📈", color: 0x2e5cff, pos: [60, -24], w: 5, d: 5, h: 15, kind: "coin",
