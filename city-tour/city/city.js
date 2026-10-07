@@ -50,7 +50,7 @@ function model(D) {
     ["Days traded", x.days_traded ?? "–"], ["Last trade", x.last_trade ? ago(x.last_trade) : "–"], ["Bot", x.running ? "🟢 running" : "⚪ stopped"]];
   const ks = bo.kalshi || {}, pm = bo.polymarket || {}, kb = bo.krypto || {};
   const ls = s.longshot || {}; const lb = s.lsbot || {};  // $25 -> $250 attempt (Polymarket long shots, owner places bets)
-  const fb = s.facebook || {}, ro = s.influencer || {}, ig = s.instagram || {}, rs = s.influencer_social || {};
+  const fb = s.facebook || {}, ro = s.influencer || {}, ig = s.instagram || {}, rs = s.influencer_social || {}, md = s.media || {};
   const rd = s.influencer_diary || {}, ct = s.contra || {}, ox = s.outreach || {};
   const pi = s.pinterest || {}, gh = s.github || {}, sh = s.showroom || {}, rn = s.rnd || {};
   const shF = sh.funnel || {};
@@ -88,11 +88,13 @@ function model(D) {
 
     { id: "fb", name: "Facebook Media HQ", short: "MEDIA HQ", icon: "📡", color: 0x3b82f6, pos: [-60, -44], w: 10, d: 10, h: 30, kind: "media",
       status: worst(st("facebook"), st("instagram"), st("influencer_social")), today: 0, total: 0,
-      tag: [`${num(last7("page_media_view") + (rs.fb_post_views || 0))} views`, `${num(ig.followers)} IG followers`],
-      board: { title: "MEDIA HQ", main: num(ig.views_24h ?? 0), mainLabel: "Instagram views (24h)",
-        rows: [["IG followers", num(ig.followers)], ["IG views", num(ig.views)], ["Influencer FB views", num(rs.fb_post_views)], ["Sonneblom 7d views", num(last7("page_media_view"))], ["Ad spend", "R" + num(Math.round(adsSpend))], ["Ads live", adsActive]] },
-      sheet: () => sheetHTML("Facebook Media HQ", "Influencer + Sonneblom pages, Instagram, ads", ig.views_24h ?? 0, "Instagram views today",
-        [["IG followers", ig.followers], ["IG posts", ig.posts], ["IG views", num(ig.views)], ["IG likes", ig.likes], ["IG comments", ig.comments],
+      tag: [`${num(md.views ?? 0)} views`, `${num(md.followers ?? 0)} followers`],
+      board: { title: "MEDIA HQ", main: num(md.followers ?? 0), mainLabel: "followers (Influencer + SHC + Sonneblom)",
+        rows: [["Total views", num(md.views ?? 0)], ...(md.accounts || []).map(a => [a.name, `${num(a.followers)} · ${a.views == null ? "–" : num(a.views)} views`]), ["IG views 24h", num(ig.views_24h ?? 0)]] },
+      sheet: () => sheetHTML("Facebook Media HQ", "Influencer, Side Hustle City + Sonneblom pages, Instagram, ads", md.followers ?? 0, "followers across all accounts",
+        [["Total followers", num(md.followers ?? 0)], ["Total views", num(md.views ?? 0)],
+         ...(md.accounts || []).flatMap(a => [[a.name + " followers", num(a.followers)], [a.name + " views", a.views == null ? "– (Go Bananas)" : num(a.views)]]),
+         ["IG followers", ig.followers], ["IG posts", ig.posts], ["IG views", num(ig.views)], ["IG likes", ig.likes], ["IG comments", ig.comments],
          ["Influencer FB followers", rs.fb_followers], ["Influencer FB views", num(rs.fb_post_views)], ["Sonneblom followers", fb.followers],
          ["Sonneblom 7d views", num(last7("page_media_view"))], ["Posts today", postsToday], ["Ad spend", "R" + num(Math.round(adsSpend))], ["Ad clicks", num((rs.ad_clicks || 0) + (fb.ads?.clicks || 0))], ["Ads live", adsActive]],
         (ig.media || []).slice(0, 6).map(x => [x.text || x.type, `${x.views} views`]), "Latest Instagram posts", "https://business.facebook.com/latest/home") },
