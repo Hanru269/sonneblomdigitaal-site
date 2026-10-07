@@ -1764,3 +1764,39 @@ async function enter(pw, remember) {
 $("#unlock").addEventListener("submit", e => { e.preventDefault(); enter($("#pw").value, $("#remember").checked); });
 const saved = get(KEY); if (DEMO) enter("demo", false); else if (GUEST) enter(GKEY, false); else if (saved) enter(saved, true);
 if (!DEMO && "serviceWorker" in navigator) navigator.serviceWorker.register("../sw.js", { scope: "../" }).catch(() => {});
+
+// 7 Oct (owner): drag the to-do note, the Ask bar and the Library window anywhere; positions kept per device.
+// A short tap still clicks; moving more than 6 px drags. Double-tap a drag handle to reset its position.
+function draggable(el, key, handleSel) {
+  if (!el) return;
+  const K = "pos-" + key, place = p => {
+    const w = el.offsetWidth || 200, h = el.offsetHeight || 60;
+    const x = Math.max(4, Math.min(innerWidth - w - 4, p.x)), y = Math.max(4, Math.min(innerHeight - Math.min(h, 80) - 4, p.y));
+    Object.assign(el.style, { left: x + "px", top: y + "px", right: "auto", bottom: "auto", transform: "none", position: "fixed" });
+  };
+  const restore = () => { try { const p = JSON.parse(localStorage.getItem(K) || "null"); if (p) place(p); } catch (e) {} };
+  restore(); addEventListener("resize", restore);
+  let st = null, moved = false;
+  el.addEventListener("pointerdown", e => {
+    const h = handleSel ? e.target.closest(handleSel) : el;
+    if (!h || e.target.closest("input,textarea,label,#todo h4 button,.tacts")) return;
+    const r = el.getBoundingClientRect(); st = { dx: e.clientX - r.left, dy: e.clientY - r.top, sx: e.clientX, sy: e.clientY }; moved = false;
+  });
+  addEventListener("pointermove", e => {
+    if (!st) return;
+    if (!moved && Math.hypot(e.clientX - st.sx, e.clientY - st.sy) < 6) return;
+    moved = true; e.preventDefault(); place({ x: e.clientX - st.dx, y: e.clientY - st.dy });
+  }, { passive: false });
+  addEventListener("pointerup", () => {
+    if (st && moved) { const r = el.getBoundingClientRect(); try { localStorage.setItem(K, JSON.stringify({ x: r.left, y: r.top })); } catch (e) {} }
+    st = null;
+  });
+  el.addEventListener("click", e => { if (moved) { e.stopImmediatePropagation(); e.preventDefault(); moved = false; } }, true);
+  el.addEventListener("dblclick", e => {
+    if (handleSel && !e.target.closest(handleSel)) return;
+    try { localStorage.removeItem(K); } catch (x) {} el.removeAttribute("style");
+  });
+}
+draggable($("#todo"), "todo", "h4");
+draggable($("#askbar"), "askbar");
+if (innerWidth > 640) draggable($("#term"), "term", ".termbar");

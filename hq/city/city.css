@@ -195,3 +195,6 @@ header{position:absolute;top:0;left:0;right:0;display:flex;justify-content:space
 .shelf .box{display:flex;flex-direction:column;background:#0008;border:1px solid #ffffff1a;border-radius:8px;overflow:hidden;color:#fff;text-decoration:none;font-size:10px}
 .shelf .box img{width:100%;aspect-ratio:1;object-fit:cover;background:#222}.shelf .box i{font-size:30px;text-align:center;padding:18px 0;font-style:normal}
 .shelf .box span{padding:3px 5px 0;line-height:1.25;height:2.5em;overflow:hidden}.shelf .box b{padding:2px 5px 5px;color:var(--gold)}
+/* 7 Oct: draggable note / ask bar / Library window; on phones the note stops above the ask bar */
+#todo h4,#askbar,.termbar{touch-action:none}#todo h4{cursor:grab}.termbar{cursor:move}
+@media (max-width:520px){#todo{max-height:calc(100svh - env(safe-area-inset-top) - 150px - 96px)}}
