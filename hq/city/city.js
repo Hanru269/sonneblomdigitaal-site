@@ -1322,7 +1322,14 @@ function todoNote(t) {
       return `<label class="${d ? "done" : ""}"><input type="checkbox" data-t="${esc(x.id)}" ${d ? "checked" : ""} ${x.done ? "disabled" : ""}><span>${esc(x.text)}<span class="who">${who[x.who] || ""}</span></span></label>`; }).join("");
   $("#todomin").onclick = () => { try { localStorage.setItem("todo-min", min ? "0" : "1"); } catch (e) {} todoNote(t); };
   el.querySelectorAll("input[data-t]").forEach(i => i.onchange = () => {
-    ticks[i.dataset.t] = i.checked; try { localStorage.setItem("todo-ticks", JSON.stringify(ticks)); } catch (e) {} todoNote(t); });
+    ticks[i.dataset.t] = i.checked; try { localStorage.setItem("todo-ticks", JSON.stringify(ticks)); } catch (e) {} todoSync(ticks); todoNote(t); });
+  if (!todoNote.sent) { todoNote.sent = 1; todoSync(ticks); }
+}
+// ticks go to the server too; hq/todo_sync.py removes ticked items every hour
+function todoSync(ticks) {
+  if (DEMO || GUEST || !PW) return;
+  fetch("https://chat.sonneblomdigitaal.co.za/api/hq-todo", { method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ pw: PW, ticks }) }).catch(() => {});
 }
 $("#askbar").onclick = () => DEMO ? focus("library") : openTerm();
 
@@ -1370,7 +1377,15 @@ function vaultSheet() {
   const all = [...(s.etsy?.sales || []).map(x => ({ ...x, channel: "Etsy" })), ...(s.gumroad?.sales || [])].sort((a, b) => b.ts.localeCompare(a.ts));
   return sheetHTML("The Vault", "All money in, across every shop", tot, "revenue all time (USD)",
     [["Today", usd(day)], ["Sales", sales], ...(DEMO ? [] : [["Rose (card)", "R" + num(roseZar)]]), ...B.filter(b => b.total && b.id !== "rose").map(b => [b.short, usd(b.total)])],
-    all.slice(0, 8).map(x => [`${x.channel} · ${x.product || x.title || ""}`, `${usd(x.amount)} · ${ago(x.ts)}`]), "Latest sales");
+    all.slice(0, 8).map(x => [`${x.channel} · ${x.product || x.title || ""}`, `${usd(x.amount)} · ${ago(x.ts)}`]), "Latest sales") + ideasHTML(s.ideas);
+}
+// Future business ideas parked in the Vault (hq-data/ideas.json)
+function ideasHTML(d) {
+  const it = (d && d.items || []).filter(x => x.status !== "dropped");
+  if (DEMO || GUEST || !it.length) return "";
+  const tag = { later: "💤 later", testing: "🧪 testing", live: "✅ live" };
+  return `<div class="list"><div style="color:var(--dim);font-size:12px"><span>💡 Future business ideas (${it.length})</span></div>` +
+    it.map(x => `<div><span><b>${esc(x.title)}</b><br><small style="color:var(--dim)">${esc(x.text || "")}</small></span><span>${tag[x.status] || esc(x.status || "")}</span></div>`).join("") + `</div>`;
 }
 
 function focus(id) {
@@ -1445,7 +1460,6 @@ function addrEventListeners() {
   $("#payrollbtn").onclick = () => { $("#staff").hidden = true; $("#payroll").hidden = !$("#payroll").hidden; };
   $("#staffbtn").onclick = () => { $("#payroll").hidden = true; $("#staff").hidden = !$("#staff").hidden; };
   $("#lockbtn").onclick = () => { set(KEY, null); location.reload(); };
-  $("#refresh").onclick = () => reload();
   $("#bananas").onclick = async () => {  // Go Bananas: the server re-collects every source (update.sh), then we reload the data
     const btn = $("#bananas"); if (btn.disabled) return; btn.disabled = true; btn.textContent = "🍌 Going…";
     try {
