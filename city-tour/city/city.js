@@ -49,7 +49,7 @@ function model(D) {
     ["Highest profit day", `${pnl(x.best_day)} · ${x.best_day_date || ""}`], ["Worst day", `${pnl(x.worst_day)} · ${x.worst_day_date || ""}`],
     ["Days traded", x.days_traded ?? "–"], ["Last trade", x.last_trade ? ago(x.last_trade) : "–"], ["Bot", x.running ? "🟢 running" : "⚪ stopped"]];
   const ks = bo.kalshi || {}, pm = bo.polymarket || {}, kb = bo.krypto || {};
-  const ls = s.longshot || {}; const lb = s.lsbot || {}; const kx = s.k10x || {}; const sb = s.solbot || {};
+  const ls = s.longshot || {}; const lb = s.lsbot || {}; const lr = s.lslive || {}; const kx = s.k10x || {}; const sb = s.solbot || {};
   const race = [{ name: "Polymarket", method: "momentum on favourites", value: lb.value, trades: lb.trades || 0, wins: lb.wins || 0 },
     { name: "Kalshi", method: "fair value (price + volatility)", value: kx.value, trades: kx.trades || 0, wins: kx.wins || 0 },
     { name: "Phantom SOL", method: "dip buying (mean reversion)", value: sb.value, trades: sb.trades || 0, wins: sb.wins || 0 }]
@@ -191,7 +191,7 @@ function model(D) {
       status: st("longshot"), today: 0, total: 0,
       tag: [usd(lb.value || 0) + " of $250" + (lb.mode === "paper" ? " (practice)" : ""), `${(lb.positions || []).length} open · ${lb.trades || 0} done`],
       board: { title: "POLYMARKET $25 → $250", main: usd(lb.value || 0), mainLabel: `${lb.style_name || "–"} style` + (lb.mode === "paper" ? " · practice money" : ""),
-        rows: [["Profit", `${pnlU(lb.value, 25)} (${pct(lb.value, 25)})`], ["Open trades", (lb.positions || []).length], ["Trades done", `${lb.trades || 0} (${lb.wins || 0} wins)`], ["Race place", place("Polymarket")]] },
+        rows: [["Profit", `${pnlU(lb.value, 25)} (${pct(lb.value, 25)})`], ["Open trades", (lb.positions || []).length], ["Trades done", `${lb.trades || 0} (${lb.wins || 0} wins)`], ["Race place", place("Polymarket")], ["REAL money", lr.value != null ? `${usd(lr.value)} (${pct(lr.value, lr.start_real || 19.53)}) · ${(lr.positions || []).length} open` : "–"]] },
       sheet: () => sheetHTML("Polymarket Exchange", "The Polymarket $25 → $250 bot. Style now: '" + (lb.style_name || "–") + "' (favourites 60-90c with rising prices, no sports/esports, sells at 97c or settlement, stop at -25%). " + (lb.mode === "paper" ? "Practice mode: real prices, simulated money." : "Live mode."),
         usd(lb.value || 0), "bot value (cash + open trades)",
         [["Profit", pnlU(lb.value, 25)], ["Profit %", pct(lb.value, 25)], ["Cash", usd(lb.cash || 0)], ["Trades done", `${lb.trades || 0} (${lb.wins || 0} wins)`], ["Status", lb.status || "–"], ["Race place", place("Polymarket")]]
