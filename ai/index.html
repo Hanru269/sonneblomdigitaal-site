@@ -1,0 +1,357 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Meet the AI influencers taking over your feed · AI Influencer Kit</title>
+<meta name="description" content="Granny Mae, Ollie and Mr Nobody: meet the characters, then build your own with the AI Influencer Kit. Plus done-for-you AI avatars and e-commerce automation.">
+<meta property="og:title" content="Meet the AI influencers taking over your feed">
+<meta property="og:description" content="Build your own wacky AI influencer: prompts, trend-hijack workflow, 30-day plan. Instant download.">
+<meta property="og:image" content="https://sonneblomdigitaal.co.za/ai/img/og.jpg">
+<meta property="og:url" content="https://sonneblomdigitaal.co.za/ai/">
+<meta name="theme-color" content="#14102a">
+<link rel="icon" href="../assets/sunflower.svg">
+<link rel="preload" as="image" href="img/granny_dance.jpg">
+<script>
+/* ===== EDIT HERE (everything the owner may change) ===== */
+const HANDLES = {
+  granny: "grannymae.kitchen",   // live
+  ollie:  "",                    // e.g. "ollie.scouse" (empty = "coming soon")
+  nobody: "",                    // e.g. "mr.nobody.fc"
+};
+const HIGGSFIELD_REFERRAL = "";  // paste the Higgsfield referral link here; empty = goes to higgsfield.ai
+const BUY = {                    // checkout links per button (data-buy="...")
+  kit:          "https://sonneblomdigitaal.gumroad.com/l/ai-influencer-kit",
+  kit_pro:      "https://sonneblomdigitaal.gumroad.com/l/ai-influencer-kit-pro",
+  avatar:       "mailto:hello@eaafix.com?subject=AI%20Avatar%20Setup%20($397)",
+  squad:        "mailto:hello@eaafix.com?subject=AI%20Avatar%20Squad%20($897)",
+  ecom_starter: "mailto:hello@eaafix.com?subject=AI%20E-commerce%20Automation%20-%20Starter%20($497)",
+  ecom_growth:  "mailto:hello@eaafix.com?subject=AI%20E-commerce%20Automation%20-%20Growth%20($1497)",
+  ecom_scale:   "mailto:hello@eaafix.com?subject=AI%20E-commerce%20Automation%20-%20Scale%20(custom)",
+  shc_full:     "https://sonneblomdigitaal.gumroad.com/l/zjjram",
+  shc_plans:    "../side-hustle-city/#pricing",
+};
+/* ===== end of edit area ===== */
+</script>
+<style>
+:root{--ink:#14102a;--ink2:#221a45;--pink:#ff2b8a;--vio:#6a3bff;--yel:#ffd23f;--mint:#2dffb3;--sky:#3ad6ff;--txt:#fff;--dim:#c9c0f0}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;background:var(--ink);overflow-x:hidden}
+body{margin:0;color:var(--txt);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--ink);overflow-x:hidden}
+a{color:inherit}
+.wrap{max-width:1080px;margin:0 auto;padding:0 18px}
+.bar{position:sticky;top:0;z-index:20;background:rgba(20,16,42,.86);backdrop-filter:blur(10px);border-bottom:1px solid #2c2360}
+.bar .wrap{display:flex;align-items:center;justify-content:space-between;height:52px}
+.logo{white-space:nowrap;font-weight:900;letter-spacing:-.5px;text-decoration:none}.logo b{color:var(--yel)}
+.bar nav{white-space:nowrap}.bar nav a{font-size:13px;font-weight:700;text-decoration:none;color:var(--dim);margin-left:12px}
+.bar .cta{background:var(--yel);color:var(--ink);padding:7px 12px;border-radius:99px}
+h1,h2,h3{font-family:"Arial Black","Helvetica Neue",Impact,system-ui,sans-serif;letter-spacing:-.02em;margin:0}
+h1{font-size:clamp(34px,9vw,68px);line-height:.98}
+h2{font-size:clamp(28px,7vw,48px);line-height:1}
+h3{font-size:20px;line-height:1.15}
+.hl{background:linear-gradient(90deg,var(--pink),var(--yel));-webkit-background-clip:text;background-clip:text;color:transparent}
+.kick{display:inline-block;font-weight:900;font-size:12px;letter-spacing:2px;text-transform:uppercase;background:var(--pink);padding:5px 10px;border-radius:99px;margin-bottom:12px}
+.kick.y{background:var(--yel);color:var(--ink)}.kick.m{background:var(--mint);color:var(--ink)}.kick.s{background:var(--sky);color:var(--ink)}
+.lead{color:var(--dim);font-size:18px;margin:12px 0 0;max-width:640px}
+section{padding:54px 0}
+/* hero */
+.hero{padding:30px 0 40px;background:radial-gradient(1100px 500px at 15% -10%,#5b1d8a 0,transparent 60%),radial-gradient(900px 500px at 100% 10%,#1b3d8f 0,transparent 55%)}
+.squad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:24px}
+.av{position:relative;border-radius:22px;overflow:hidden;aspect-ratio:9/16;background:var(--ink2);border:3px solid var(--yel);box-shadow:0 10px 30px rgba(0,0,0,.4)}
+.av:nth-child(1){transform:rotate(-2deg)}.av:nth-child(3){transform:rotate(2deg)}
+.av:nth-child(2){border-color:var(--sky)}.av:nth-child(3){border-color:var(--mint)}
+.av video,.av img,.av svg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.av .tag{position:absolute;left:8px;right:8px;bottom:8px;background:rgba(20,16,42,.82);border-radius:14px;padding:8px 9px;backdrop-filter:blur(6px)}
+.av .tag b{display:block;font-size:15px;line-height:1.1}.av .tag span{display:block;font-size:11px;color:var(--dim);line-height:1.25;margin-top:2px}
+.av .tag a{display:inline-block;margin-top:6px;font-size:12px;font-weight:800;background:var(--pink);padding:5px 9px;border-radius:99px;text-decoration:none}
+.av .tag a.soon{background:#3b326e;color:var(--dim);white-space:nowrap}
+.av .live{position:absolute;top:8px;left:8px;font-size:10px;font-weight:900;background:var(--pink);padding:3px 7px;border-radius:99px;letter-spacing:1px}
+.heroCta{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;text-align:center;font-weight:900;text-decoration:none;padding:15px 20px;border-radius:16px;background:var(--yel);color:var(--ink);font-size:16px;border:0;cursor:pointer;transition:transform .12s}
+.btn:active{transform:scale(.97)}
+.btn.pk{background:var(--pink);color:#fff}.btn.gh{background:transparent;border:2px solid #4a3d8f;color:#fff}.btn.mt{background:var(--mint)}
+.btn.full{display:flex;width:100%}
+.btn small{font-weight:700;opacity:.8}
+.marq{overflow:hidden;white-space:nowrap;background:var(--yel);color:var(--ink);font-weight:900;font-size:15px;padding:9px 0;transform:rotate(-1deg);margin:6px 0 0}
+.marq span{display:inline-block;animation:mq 28s linear infinite}
+@keyframes mq{to{transform:translateX(-50%)}}
+@media (prefers-reduced-motion:reduce){.marq span{animation:none}}
+/* kit */
+.kit{background:linear-gradient(180deg,var(--ink),#1d1240)}
+.kitGrid{display:grid;gap:22px;margin-top:26px}
+.inside{list-style:none;padding:0;margin:0;display:grid;gap:8px}
+.inside li{background:var(--ink2);border:1px solid #33296b;border-radius:14px;padding:10px 12px 10px 42px;position:relative;font-size:15px}
+.inside li::before{content:attr(data-i);position:absolute;left:11px;top:9px;font-size:18px}
+.prices{display:grid;gap:14px}
+.price{background:var(--ink2);border:2px solid #3b2f7a;border-radius:22px;padding:20px;position:relative}
+.price.pop{border-color:var(--yel);background:linear-gradient(160deg,#3a1a6e,#221a45)}
+.price .badge{position:absolute;top:-12px;right:16px;background:var(--yel);color:var(--ink);font-weight:900;font-size:12px;padding:4px 10px;border-radius:99px}
+.amt{font:900 44px/1 "Arial Black",system-ui;margin:8px 0 2px}.amt s{font-size:20px;color:#8f84c4;margin-left:8px;font-weight:700}
+.amt small{font-size:15px;font-weight:700;color:var(--dim)}
+.price p{color:var(--dim);font-size:14px;margin:6px 0 14px}
+.fine{font-size:12.5px;color:#9a90c9;margin-top:12px}
+.ref{margin-top:22px;border:2px dashed #4a3d8f;border-radius:18px;padding:14px 16px;display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.ref b{font-size:15px}.ref span{display:block;font-size:13px;color:var(--dim)}
+.ref .lbl{font-size:10px;font-weight:900;letter-spacing:1.5px;text-transform:uppercase;color:var(--yel)}
+.story{margin-top:26px;background:#fff;color:var(--ink);border-radius:22px;padding:20px}
+.story h3{color:var(--vio)}.story p{margin:8px 0 0;font-size:15px}
+/* ads */
+.ad{border-radius:28px;padding:26px 20px;margin:0 0 22px;position:relative;overflow:hidden}
+.ad h2{margin-top:2px}.ad .lead{color:inherit;opacity:.88}
+.ad.avatar{background:linear-gradient(135deg,#ff2b8a,#ff7a3d);color:#fff}
+.ad.ecom{background:linear-gradient(135deg,#00c2ff,#6a3bff);color:#fff}
+.ad.shc{background:linear-gradient(160deg,#0f3d2e,#14102a 70%);border:2px solid var(--mint)}
+.tiers{display:grid;gap:12px;margin-top:20px}
+.tier{background:rgba(20,16,42,.9);color:#fff;border-radius:20px;padding:18px;position:relative}
+.tier.best{outline:3px solid var(--yel)}
+.tier .badge{position:absolute;top:-11px;right:14px;background:var(--yel);color:var(--ink);font-weight:900;font-size:11px;padding:4px 9px;border-radius:99px}
+.tier ul{margin:8px 0 14px;padding-left:18px;color:var(--dim);font-size:14px}
+.tier .amt{font-size:36px}
+.adImg{display:flex;gap:10px;margin-top:18px}
+.adImg img{flex:1;min-width:0;border-radius:16px;aspect-ratio:3/4;object-fit:cover;border:3px solid rgba(255,255,255,.7)}
+.feat{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:16px}
+.feat div{background:rgba(255,255,255,.14);border-radius:14px;padding:10px;font-size:14px;font-weight:700}
+.feat div span{display:block;font-size:12px;font-weight:500;opacity:.85}
+.themes{display:grid;grid-template-columns:1.25fr 1fr;gap:10px;margin-top:18px}
+.themes figure{margin:0;position:relative;border-radius:18px;overflow:hidden;border:2px solid #2b6b55}
+.themes img{width:100%;height:100%;object-fit:cover;display:block;aspect-ratio:3/4}
+.themes figcaption{position:absolute;left:8px;bottom:8px;background:rgba(20,16,42,.85);font-size:12px;font-weight:800;padding:4px 9px;border-radius:99px}
+.themes figure:first-child figcaption{background:var(--yel);color:var(--ink)}
+.shcPrices{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:16px}
+.shcPrices a{background:var(--ink2);border:1px solid #2b6b55;border-radius:14px;padding:10px 8px;text-decoration:none;text-align:center}
+.shcPrices b{display:block;font-size:18px;color:var(--mint)}.shcPrices span{font-size:12px;color:var(--dim)}
+.faq details{background:var(--ink2);border-radius:14px;padding:12px 14px;margin-bottom:8px}
+.faq summary{font-weight:800;cursor:pointer}.faq p{color:var(--dim);margin:8px 0 0;font-size:15px}
+footer{padding:30px 0 50px;color:#8f84c4;font-size:13px;text-align:center}
+footer a{color:var(--dim)}
+.stick{position:fixed;left:12px;right:12px;bottom:12px;z-index:30;display:none}
+.stick .btn{width:100%;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+@media (max-width:719px){.stick.on{display:block}}
+@media (min-width:720px){
+  .squad{gap:18px;max-width:780px}
+  .av .tag b{font-size:18px}.av .tag span{font-size:13px}
+  .kitGrid{grid-template-columns:1.1fr 1fr;align-items:start}
+  .tiers{grid-template-columns:repeat(2,1fr)}.tiers.three{grid-template-columns:repeat(3,1fr)}
+  .ad{padding:40px}
+  .shcWrap{display:grid;grid-template-columns:1fr 1fr;gap:28px;align-items:center}
+}
+@media (max-width:560px){.av .tag{left:5px;right:5px;bottom:5px;padding:6px 7px;border-radius:12px}.av .tag span{display:none}.av .tag b{font-size:13.5px}.av .tag a{font-size:11px;padding:4px 8px;margin-top:4px}.bar nav a.n{display:none}}
+</style>
+</head>
+<body>
+<div class="bar"><div class="wrap">
+  <a class="logo" href="#top">AI <b>Influencer</b> Kit</a>
+  <nav><a class="n" href="#services">Services</a><a class="n" href="#city">City</a><a class="cta" href="#kit">Get the kit</a></nav>
+</div></div>
+
+<header class="hero" id="top"><div class="wrap">
+  <span class="kick">Follow the chaos</span>
+  <h1>Meet the <span class="hl">AI influencers</span> taking over your feed</h1>
+  <p class="lead">A dancing granny, a cocky Scouse lad with a blue mohawk, and a man nobody can see. Follow them, then build your own.</p>
+
+  <div class="squad">
+    <div class="av" id="av-granny">
+      <video src="img/granny_dance.mp4" poster="img/granny_dance.jpg" autoplay muted loop playsinline preload="metadata" aria-label="Granny Mae dancing in her kitchen"></video>
+      <span class="live">▶ NEW</span>
+      <div class="tag"><b>Granny Mae</b><span>79, kitchen dancer, tomato queen</span><a data-handle="granny" href="#">Follow</a></div>
+    </div>
+    <div class="av" id="av-ollie">
+      <img src="img/ollie.jpg" alt="Ollie, blue mohawk-mullet and brown suit" loading="eager">
+      <div class="tag"><b>Ollie</b><span>Liverpool's fittest (allegedly)</span><a data-handle="ollie" href="#">Follow</a></div>
+    </div>
+    <div class="av" id="av-nobody">
+      <svg viewBox="0 0 180 320" preserveAspectRatio="xMidYMid slice" aria-label="Mr Nobody: floating football jersey, glasses and boxers">
+        <defs><linearGradient id="nb" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1b2a5e"/><stop offset="1" stop-color="#0c0820"/></linearGradient>
+        <radialGradient id="sp" cx=".5" cy=".42" r=".5"><stop offset="0" stop-color="#3ad6ff" stop-opacity=".35"/><stop offset="1" stop-color="#3ad6ff" stop-opacity="0"/></radialGradient></defs>
+        <rect width="180" height="320" fill="url(#nb)"/><circle cx="90" cy="130" r="95" fill="url(#sp)"/>
+        <g class="float">
+          <rect x="62" y="58" width="24" height="15" rx="4" fill="none" stroke="#0a0a0a" stroke-width="5"/><rect x="94" y="58" width="24" height="15" rx="4" fill="none" stroke="#0a0a0a" stroke-width="5"/><path d="M86 65h8" stroke="#0a0a0a" stroke-width="4"/>
+          <path d="M50 108 L74 94 Q90 104 106 94 L130 108 L148 148 L130 157 L126 138 L126 206 L54 206 L54 138 L50 157 L32 148 Z" fill="#75aadb"/>
+          <path d="M76 95V206M90 100V206M104 95V206" stroke="#fff" stroke-width="7"/>
+          <text x="90" y="160" font-family="Arial Black,Arial" font-size="30" fill="#14102a" text-anchor="middle">10</text>
+          <path d="M56 212h68l5 32h-31l-8-12-8 12H51z" fill="#1f1f1f"/><rect x="56" y="212" width="68" height="7" fill="#ff2b8a"/>
+        </g>
+      </svg>
+      <span class="live" style="background:#2dffb3;color:#14102a">SOON</span>
+      <div class="tag"><b>Mr Nobody</b><span>You can't see him. You can see his kit.</span><a data-handle="nobody" href="#">Follow</a></div>
+    </div>
+  </div>
+
+  <div class="heroCta">
+    <a class="btn pk" href="#kit">Build your own AI influencer →</a>
+    <a class="btn gh" href="#services">Done-for-you services</a>
+  </div>
+</div></header>
+
+<div class="marq" aria-hidden="true"><span>💃 GRANNY'S NOT DONE YET · 💙 ANOTHER DAY BEING THIS FIT · 👓 ALL-IN, STILL CELEBRATING · 🎬 TREND HIJACKS · 🧠 PROMPTS THAT WORK · 💃 GRANNY'S NOT DONE YET · 💙 ANOTHER DAY BEING THIS FIT · 👓 ALL-IN, STILL CELEBRATING · 🎬 TREND HIJACKS · 🧠 PROMPTS THAT WORK · </span></div>
+
+<section class="kit" id="kit"><div class="wrap">
+  <span class="kick y">Instant download</span>
+  <h2>The <span class="hl">AI Influencer Kit</span></h2>
+  <p class="lead">The exact system behind these three: create a wacky character, drop it into trending reels, and post every day without ever filming yourself.</p>
+
+  <div class="kitGrid">
+    <ul class="inside">
+      <li data-i="🧬">The Wacky Character Formula: 5 dials that make people stop scrolling</li>
+      <li data-i="🎭">24 over-the-top character archetypes with copy-paste prompts (Higgsfield AI Influencer, Soul, Seedream, Nano Banana)</li>
+      <li data-i="🎬">Trend-hijack workflow: Higgsfield Genjutsu motion transfer <b>and</b> the cheap open-source route (Wan 2.2 Animate on fal.ai, code included)</li>
+      <li data-i="✍️">Hooks, captions, bio templates and the free comment-keyword DM trick</li>
+      <li data-i="📅">30-day posting plan</li>
+      <li data-i="🧮">Credit and cost calculator: what a reel really costs</li>
+      <li data-i="✅">Instagram setup checklist, including Meta's AI label done right</li>
+      <li data-i="📖">The story: how we built Granny Mae, Ollie and Mr Nobody</li>
+    </ul>
+
+    <div class="prices">
+      <div class="price">
+        <h3>Kit</h3>
+        <div class="amt">$27 <s>$49</s></div>
+        <p>PDF guide + Notion-style copy. Everything above.</p>
+        <a class="btn full" data-buy="kit" href="#">Get the Kit · $27</a>
+      </div>
+      <div class="price pop">
+        <span class="badge">BEST VALUE</span>
+        <h3>Kit PRO</h3>
+        <div class="amt">$67 <s>$97</s></div>
+        <p>Everything in the Kit <b>+ PRO Vault</b>: 54 archetypes, 100 hooks, scene &amp; pose prompt bank, character bible, media kit + brand pitch, reply bank, 90-day calendar and an editable cost calculator.</p>
+        <a class="btn pk full" data-buy="kit_pro" href="#">Get Kit PRO · $67</a>
+      </div>
+      <p class="fine">Launch prices. Instant download via Gumroad (card, PayPal, Apple/Google Pay). 14-day refund. No follower or income numbers are promised: results depend on your content.<br>Rather have us build it? <a href="#avatar">AI Avatar Setup from $397 →</a></p>
+    </div>
+  </div>
+
+  <div class="ref">
+    <div><span class="lbl">referral link</span><b>The video tool we use: Higgsfield</b><span>AI Influencer studio + Genjutsu motion transfer.</span></div>
+    <a class="btn gh" id="refLink" href="https://higgsfield.ai" target="_blank" rel="noopener sponsored">Try Higgsfield →</a>
+  </div>
+
+  <div class="story">
+    <h3>How we built 3 AI influencers in one day</h3>
+    <p>We stopped making polite, beige content and built characters people can't ignore. Each one got one master image as its DNA, then we put it into a dance that was <b>already trending</b>. Granny Mae's first reel used a 15-second kitchen dance trend: her face, bun and cardigan held for the whole clip, and it cost <b>0 credits</b> on the free generation. The full click-by-click story is in the kit.</p>
+  </div>
+</div></section>
+
+<section id="services"><div class="wrap">
+  <div class="ad avatar" id="avatar">
+    <span class="kick y">Done for you</span>
+    <h2>AI Avatar Setup</h2>
+    <p class="lead">We build your AI influencer and the first posts, the same way we built Granny Mae and Ollie. You just log in and press post.</p>
+    <div class="adImg"><img src="img/granny2.jpg" alt="" loading="lazy"><img src="img/ollie_full.jpg" alt="" loading="lazy" style="background:#fff"><img src="img/ollie_alt.jpg" alt="" loading="lazy"></div>
+    <div class="tiers">
+      <div class="tier">
+        <h3>1 Avatar</h3>
+        <div class="amt">$397 <s>$497</s></div>
+        <ul><li>Character concept + master image</li><li>10-image consistency pack</li><li>5 trend-hijack reels, ready to post</li><li>Name, bio, 15 captions, setup sheet</li><li>About 7 days</li></ul>
+        <a class="btn full" data-buy="avatar" href="#">Start my avatar</a>
+      </div>
+      <div class="tier best">
+        <span class="badge">BEST VALUE · $299 EACH</span>
+        <h3>Avatar Squad (3)</h3>
+        <div class="amt">$897 <s>$1,297</s></div>
+        <ul><li>3 characters that collab and roast each other</li><li>15 reels (5 each) + 45 captions</li><li>30-day posting plan</li><li>About 10 days</li></ul>
+        <a class="btn pk full" data-buy="squad" href="#">Build my squad</a>
+      </div>
+    </div>
+    <p class="fine" style="color:#ffe9f3">50% deposit to start, 50% after you've seen the preview. Video generation credits included.</p>
+  </div>
+
+  <div class="ad ecom" id="ecom">
+    <span class="kick y">Done for you</span>
+    <h2>AI Automation for E-commerce</h2>
+    <p class="lead">Your shop sells and markets itself while you sleep. We build AI sales and marketing automations for Shopify, Etsy, WooCommerce or Gumroad, then keep them running.</p>
+    <div class="feat">
+      <div>🛒 Abandoned cart<span>AI-written emails/DMs that win back sales</span></div>
+      <div>📸 Content engine<span>products → daily posts &amp; reels</span></div>
+      <div>✍️ Product copy + SEO<span>your whole catalogue rewritten</span></div>
+      <div>💬 Shop chatbot<span>answers buyers 24/7</span></div>
+      <div>📈 Sales dashboard<span>alerts on your phone</span></div>
+      <div>🧠 Weekly AI report<span>what to push next</span></div>
+    </div>
+    <div class="tiers three">
+      <div class="tier">
+        <h3>Starter</h3>
+        <div class="amt">$497 <small>setup</small></div>
+        <ul><li>1 sales + 1 marketing automation</li><li>Optional care plan $97/mo</li></ul>
+        <a class="btn full" data-buy="ecom_starter" href="#">Start Starter</a>
+      </div>
+      <div class="tier best">
+        <span class="badge">MOST POPULAR</span>
+        <h3>Growth</h3>
+        <div class="amt">$1,497 <small>setup</small></div>
+        <ul><li>6 automations: email + DM flows, content engine, SEO copy, chatbot, dashboard, weekly report</li><li>We run it: $297/mo (optional)</li></ul>
+        <a class="btn pk full" data-buy="ecom_growth" href="#">Start Growth</a>
+      </div>
+      <div class="tier">
+        <h3>Scale</h3>
+        <div class="amt">$3,500+</div>
+        <ul><li>Multi-store, custom AI agents, ads automation</li><li>Scoped on a free call</li></ul>
+        <a class="btn gh full" data-buy="ecom_scale" href="#">Talk to us</a>
+      </div>
+    </div>
+    <p class="fine" style="color:#e6f6ff">Setup: 50% deposit to start, 50% on delivery. Monthly plans start after launch and you can cancel anytime. Human approval stays on anything that touches money or customers.</p>
+  </div>
+
+  <div class="ad shc" id="city">
+    <div class="shcWrap">
+      <div>
+        <span class="kick m">Your virtual HQ</span>
+        <h2>Side Hustle <span style="color:var(--mint)">City</span></h2>
+        <p class="lead" style="color:var(--dim)">Every shop, page and bot you run becomes a glowing building in your own 3D city. Sales, views and followers update on the billboards. It's how we keep track of these influencers too.</p>
+        <p class="lead" style="color:#fff;font-weight:700;font-size:16px">NEW: the <span style="color:var(--yel)">Cartoon Town theme</span>. Your empire as a sunny cartoon town, with a town hall, a main street and a billboard for every hustle.</p>
+        <div class="shcPrices">
+          <a data-buy="shc_plans" href="#"><b>$49.99</b><span>Hosted / month</span></a>
+          <a data-buy="shc_full" href="#"><b>$499.99</b><span>Full system, once</span></a>
+          <a data-buy="shc_plans" href="#"><b>$399</b><span>Done for you<br>+ $19.99/mo</span></a>
+        </div>
+        <div class="heroCta">
+          <a class="btn mt" href="../side-hustle-city/">See Side Hustle City →</a>
+          <a class="btn gh" href="../city-tour/city/">Walk the live demo</a>
+        </div>
+      </div>
+      <div class="themes">
+        <figure><img src="img/cartoon_town.jpg" alt="Side Hustle City, Cartoon Town theme" loading="lazy"><figcaption>Cartoon Town · NEW</figcaption></figure>
+        <figure><img src="img/retro_town.jpg" alt="Side Hustle City, Retro Town theme" loading="lazy"><figcaption>Retro Town</figcaption></figure>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section class="faq"><div class="wrap">
+  <h2 style="margin-bottom:16px">Questions</h2>
+  <details><summary>Do I need to be on camera?</summary><p>No. Your character does everything. You pick trends, generate, and post.</p></details>
+  <details><summary>What tools do I need and what do they cost?</summary><p>Higgsfield (from about $15/month) or pay-as-you-go fal.ai (cents per second of video). Stills are close to free. The kit has a full cost table, so you'll know the price of every reel before you make it.</p></details>
+  <details><summary>Is this allowed on Instagram?</summary><p>Yes, if you play by the rules: turn on Meta's AI label, don't fake expertise (no AI doctors), and keep it Instagram-safe. The checklist covers it.</p></details>
+  <details><summary>How do I get the files?</summary><p>Gumroad emails you the download right after payment. The Kit is a PDF + Notion-style markdown. PRO adds the Vault PDF and two spreadsheets (CSV).</p></details>
+  <details><summary>Questions about a done-for-you build?</summary><p>Email <a href="mailto:hello@eaafix.com">hello@eaafix.com</a>. We reply within 24 hours.</p></details>
+</div></section>
+
+<footer><div class="wrap">
+  AI Influencer Kit · by Sonneblom Digitaal · <a href="../side-hustle-city/">Side Hustle City</a> · <a href="mailto:hello@eaafix.com">hello@eaafix.com</a> · <a href="../privacy/">Privacy</a><br>
+  Characters on this page are digital creations. Prices in USD. Links marked "referral link" may earn us a commission.
+</div></footer>
+
+<div class="stick" id="stick"><a class="btn pk" href="#kit">Get the AI Influencer Kit · from $27</a></div>
+
+<script>
+// checkout links
+document.querySelectorAll("[data-buy]").forEach(a => {
+  const u = BUY[a.dataset.buy]; if (!u) return;
+  a.href = u;
+  if (/^https?:/.test(u) && !u.includes("sonneblomdigitaal.co.za")) { a.target = "_blank"; a.rel = "noopener"; }
+});
+// handles (empty = coming soon)
+document.querySelectorAll("[data-handle]").forEach(a => {
+  const h = (HANDLES[a.dataset.handle] || "").replace(/^@/, "");
+  if (h) { a.href = "https://www.instagram.com/" + h + "/"; a.textContent = "Follow"; a.title = "@" + h; a.parentNode.querySelector("b").insertAdjacentHTML("afterend", "<span>@" + h + "</span>"); a.target = "_blank"; a.rel = "noopener"; }
+  else { a.textContent = "Coming soon"; a.classList.add("soon"); a.removeAttribute("href"); }
+});
+// referral
+if (HIGGSFIELD_REFERRAL) document.getElementById("refLink").href = HIGGSFIELD_REFERRAL;
+// Mr Nobody: drop img/nobody.jpg in this folder and it replaces the silhouette automatically
+(() => { const i = new Image(); i.onload = () => { const box = document.getElementById("av-nobody"); box.querySelector("svg").replaceWith(Object.assign(i, { alt: "Mr Nobody" })); const s = box.querySelector(".live"); if (s && !HANDLES.nobody) s.remove(); }; i.src = "img/nobody.jpg"; })();
+// sticky buy button on phones after the hero
+const st = document.getElementById("stick"), kit = document.getElementById("kit");
+addEventListener("scroll", () => { const r = kit.getBoundingClientRect(); st.classList.toggle("on", scrollY > 500 && (r.top > innerHeight || r.bottom < 0)); }, { passive: true });
+</script>
+</body>
+</html>
