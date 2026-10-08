@@ -1970,6 +1970,10 @@ function themePicker() {
     <div class="g">${THEMES.map(k => `<button class="sk${k.id === THEME ? " on" : ""}" data-th="${k.id}"><div class="sw" style="background:linear-gradient(120deg,${k.swatch.join(",")})"></div>
       <span class="nm">${esc(k.name)}</span></button>`).join("")}</div>`;
   el.querySelectorAll("[data-th]").forEach(b => b.onclick = () => { THEME = b.dataset.th; set("city-theme", THEME); el.hidden = true; reload(); });
+  if (THEME !== "neon") return;  // colour skins (owner wants them back, 2026-10-08) re-tint the classic neon city
+  el.insertAdjacentHTML("beforeend", `<h4>🌈 Colour skins</h4><div class="g">${SKINS.map(k => `<button class="sk${k.id === SKIN.id ? " on" : ""}" data-sk="${k.id}"><div class="sw" style="background:linear-gradient(120deg,${k.swatch.join(",")})"></div>
+      <span class="nm">${esc(k.name)}</span></button>`).join("")}</div>`);
+  el.querySelectorAll("[data-sk]").forEach(b => b.onclick = () => { set("city-skin", b.dataset.sk); applySkin(b.dataset.sk); });
 }
 
 // ---------- City skins ----------
@@ -2042,7 +2046,7 @@ function applySkin(id) {
   });
   renderer.domElement.style.filter = k.filter || ""; document.body.dataset.skin = k.id;
   set("city-skin", SKIN.id);
-  if (!$("#skins").hidden) skinPicker();
+  if (!$("#skins").hidden) (DEMO ? skinPicker() : themePicker());
 }
 function skinPicker() {
   const el = $("#skins"), own = id => !OWNED || OWNED.includes(id) || id === "neon";
