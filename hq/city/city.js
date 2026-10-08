@@ -69,6 +69,7 @@ function model(D) {
   const place = n => { const i = race.findIndex(r => r.name === n); return i < 0 ? "–" : ["🥇 1st", "🥈 2nd", "🥉 3rd"][i] || (i + 1) + "th"; };  // $25 -> $250 attempt (Polymarket long shots, owner places bets)
   const fb = s.facebook || {}, ro = s.rose || {}, ig = s.instagram || {}, rs = s.rose_social || {}, md = s.media || {};
   const rd = s.rose_diary || {}, ct = s.contra || {}, ox = s.outreach || {};
+  const ia = (s.influencers || {}).accounts || [];
   const pi = s.pinterest || {}, gh = s.github || {}, sh = s.showroom || {}, rn = s.rnd || {}, av = s.avatars || {};
   const shF = sh.funnel || {};
   const shSt = sh.stages || [], shDone = shSt.filter(x => x.done).length, shNext = shSt.find(x => !x.done);
@@ -93,7 +94,7 @@ function model(D) {
   const postsToday = (fb.posts || []).filter(p => isToday(p.ts)).length + (ig.media || []).filter(p => isToday(p.ts)).length;
 
   const B = [
-    { id: "etsy", name: "Etsy Megastore", short: "ETSY", icon: "🛍️", color: 0xff8a3d, pos: [-58, 60], w: 14, d: 10, h: 11, kind: "market", face: [0, 1],
+    { id: "etsy", name: "Etsy Megastore", short: "ETSY", icon: "🛍️", color: 0xff8a3d, pos: [98, -16], w: 13, d: 9, h: 12, kind: "factory", face: [0, 1],
       status: st("etsy"), today: eDay, total: eTot,
       tag: [`${num(L.length)} listings`, eDay ? usd(eDay) + " today" : `${num(views)} views`],
       board: { title: "ETSY MEGASTORE", main: num(views), mainLabel: "listing views (all time)",
@@ -103,7 +104,7 @@ function model(D) {
          ["Printify products", pf.products ?? "–"], ["Printify orders", pf.orders ?? 0], ["Shop visits", m.etsy_visits ?? "–"], ["Ads clicks", m.etsy_ads_clicks ?? "–"]],
         topViewed.map(x => [x.title, `${x.views} views`]), "Most viewed listings", "https://www.etsy.com/your/shops/me/dashboard") },
 
-    { id: "fb", name: "Meta Skyscraper", short: "META", icon: "📡", color: 0x3b82f6, pos: [-62, 0], w: 11, d: 11, h: 46, kind: "mega", face: [1, 0],
+    { id: "fb", name: "Meta Skyscraper", short: "META", icon: "📡", color: 0x3b82f6, pos: [-136, 0], w: 11, d: 11, h: 46, kind: "mega", face: [1, 0],
       status: worst(st("facebook"), st("instagram"), st("rose_social")), today: 0, total: 0,
       tag: [`${num(md.views ?? 0)} views`, `${num(md.followers ?? 0)} followers`],
       board: { title: "META SKYSCRAPER", main: num(md.followers ?? 0), mainLabel: "followers (Rose + SHC + Sonneblom)",
@@ -116,7 +117,17 @@ function model(D) {
          ["Sonneblom 7d views", num(last7("page_media_view"))], ["Posts today", postsToday], ["Ad spend", "R" + num(Math.round(adsSpend))], ["Ad clicks", num((rs.ad_clicks || 0) + (fb.ads?.clicks || 0))], ["Ads live", adsActive]],
         (ig.media || []).slice(0, 6).map(x => [x.text || x.type, `${x.views} views`]), "Latest Instagram posts", "https://business.facebook.com/latest/home") },
 
-    { id: "rose", name: "Rose Tower", short: "ROSE", icon: "🌹", color: 0xff3d9a, pos: [-62, -28], w: 8, d: 8, h: 36, kind: "spire", face: [1, 0],
+    { id: "ig", name: "Instagram Studio", short: "INSTAGRAM", icon: "📸", color: 0xe1306c, pos: [-110, 14], w: 8, d: 8, h: 20, kind: "glass", face: [1, 0],
+      status: st("instagram"), today: 0, total: 0,
+      tag: [`${num(sum(ia, a => a.followers))} followers`, `${num(sum(ia, a => a.views_24h))} views 24h`],
+      board: { title: "INSTAGRAM", main: num(sum(ia, a => a.followers)), mainLabel: `followers · ${ia.filter(a => a.followers != null).length} accounts`,
+        rows: ia.filter(a => a.followers != null).slice(0, 5).map(a => [`${a.emoji || ""} ${a.name}`, `${num(a.followers)} · ${num(a.views_24h)} views 24h`]) },
+      sheet: () => sheetHTML("Instagram Studio", "Every Instagram account in one studio: reels, followers and views", sum(ia, a => a.followers), "followers across all accounts",
+        [["Views 24h", num(sum(ia, a => a.views_24h))], ["Views 7d", num(sum(ia, a => a.views_7d))], ["Likes", num(sum(ia, a => a.likes))], ["Comments", num(sum(ia, a => a.comments))],
+         ...ia.map(a => [`${a.emoji || ""} ${a.name}${a.username ? " @" + a.username : ""}`, a.error ? a.error : `${num(a.followers)} followers · ${num(a.posts)} posts`])],
+        ia.filter(a => a.top).map(a => [`${a.name}: ${a.top.text || "top post"}`, `${num(a.top.views)} views`]), "Top post per account", "https://www.instagram.com/") },
+
+    { id: "rose", name: "Rose Tower", short: "ROSE", icon: "🌹", color: 0xff3d9a, pos: [-142, -22], w: 8, d: 8, h: 36, kind: "spire", face: [1, 0],
       status: worst(st("rose"), sv("companion"), sv("rose-web")), today: rd.money_today_usd || 0, total: rd.money_usd || 0, zar: roseZar,
       tag: [`${num(rd.followers)} followers`, `${plus(rd.gained_24h)} today`],
       board: { title: "ROSE · MY DAY", main: num(rd.followers), mainLabel: "followers (Facebook + Instagram)",
@@ -131,7 +142,7 @@ function model(D) {
         `<i>Dear diary 💕 ${rd.gained_7d > 0 ? `${num(rd.gained_7d)} new followers this week` : "a quiet week for followers"}, ${num(rd.likes_7d)} likes and ${num(rd.comments_7d)} comments. ` +
         `${rd.messages_today ? `${num(rd.messages_today)} messages from my guys today` : "No messages yet today"}${rd.money_usd ? `, and ${usd(rd.money_usd)} made so far` : ", still waiting for my first sale"} 🌹</i>`) },
 
-    { id: "contra", name: "Contra Studio", short: "CONTRA", icon: "💼", color: 0x00e5ff, pos: [35, 60], w: 7, d: 7, h: 26, kind: "glass", face: [0, 1],
+    { id: "contra", name: "Contra Studio", short: "CONTRA", icon: "💼", color: 0x00e5ff, pos: [-26, 18], w: 7, d: 7, h: 26, kind: "glass", face: [1, 0],
       status: "ok", today: 0, total: ct.earned_usd || 0,
       tag: [`${num(ct.busy)} jobs busy`, `${num(ct.done)} done`],
       board: { title: "CONTRA STUDIO", main: num(ct.sent), mainLabel: "proposals / jobs sent",
@@ -140,7 +151,7 @@ function model(D) {
         [["Jobs busy", num(ct.busy)], ["Jobs done", num(ct.done)], ["Projects linked", num(ct.projects)], ["Earned", usd(ct.earned_usd)], ["Profile views", ct.views ? num(ct.views) : "–"]], [],
         "", "https://contra.com/opportunities", `Contra has no API, so these come from a Go Bananas sweep${ct.at ? ` (${esc(ct.at)})` : ""}. Tell Claude when a job starts or finishes.`) },
 
-    { id: "zoho", name: "Zoho Mail Outreach", short: "OUTREACH", icon: "✉️", color: 0xffe14d, pos: [-62, 40], w: 9, d: 7, h: 11, kind: "mail", face: [1, 0],
+    { id: "zoho", name: "Zoho Mail Outreach", short: "OUTREACH", icon: "✉️", color: 0xffe14d, pos: [26, 18], w: 9, d: 7, h: 11, kind: "mail", face: [-1, 0],
       status: st("outreach"), today: 0, total: ox.paid_eur || 0,
       tag: [`${num(ox.sent_today)} sent today`, `${num(ox.replied)} replies`],
       board: { title: "EAA OUTREACH", main: num(ox.sent_total), mainLabel: "emails sent (eaafix.com)",
@@ -150,7 +161,7 @@ function model(D) {
          ["Interested", num(ox.interested)], ["Reports sent", num(ox.reports)], ["Quotes", num(ox.quoted)], ["Won", num(ox.won)], ["Paid", "€" + num(ox.paid_eur || 0)],
          ["Bounced", num(ox.bounced)], ["Opted out", num(ox.opted_out)]], [], "", "https://mail.zoho.com", "Sender runs weekdays 09:00; replies and bounces are checked every 20 minutes.") },
 
-    { id: "gumroad", name: "Gumroad Arcade", short: "GUMROAD", icon: "🎨", color: 0x2ee6c5, pos: [-36, 60], w: 11, d: 9, h: 9, kind: "market", face: [0, 1],
+    { id: "gumroad", name: "Gumroad Arcade", short: "GUMROAD", icon: "🎨", color: 0x2ee6c5, pos: [113, -16], w: 11, d: 9, h: 10, kind: "factory", face: [0, 1],
       status: st("gumroad"), today: gDay, total: gTot,
       tag: [`${num(gS.length)} sale${gS.length === 1 ? "" : "s"}`, usd(gTot)],
       board: { title: "GUMROAD ARCADE", main: usd(gTot), mainLabel: "revenue (all time)",
@@ -159,7 +170,7 @@ function model(D) {
         [["Sales", gS.length], ["Today", usd(gDay)], ["Products", G.length], ["Live", G.filter(x => x.published).length], ["Page views", m.gumroad_views ?? "–"]],
         gS.slice(-6).reverse().map(x => [x.product, `${usd(x.amount)} · ${ago(x.ts)}`]), "Sales", "https://gumroad.com/dashboard") },
 
-    { id: "kdp", name: "Amazon KDP Books", short: "KDP", icon: "📦", color: 0xffb020, pos: [-17, 60], w: 9, d: 7, h: 7, kind: "market", face: [0, 1],
+    { id: "kdp", name: "Amazon KDP Books", short: "KDP", icon: "📦", color: 0xffb020, pos: [128, -16], w: 11, d: 9, h: 10, kind: "factory", face: [0, 1],
       status: "ok", today: 0, total: m.kdp_royalty || 0,
       tag: [`${m.kdp_books ?? 0} books live`, `${m.kdp_drafts ?? 0} drafts`],
       board: { title: "AMAZON KDP", main: String(m.kdp_books ?? 0), mainLabel: "paperbacks published",
@@ -168,7 +179,7 @@ function model(D) {
         [["Drafts", m.kdp_drafts ?? 0], ["Sales", m.kdp_sales ?? 0], ["Royalties", usd(m.kdp_royalty || 0)], ["Print-ready on disk", 25]], [],
         "", "https://kdp.amazon.com/en_US/bookshelf", `KDP has no API, so these numbers are entered by hand (${esc(m.kdp_at || "")}). Tell Claude in the Library when they change.`) },
 
-    { id: "lab", name: "API Lab", short: "LAB", icon: "🧪", color: 0xa78bfa, pos: [56, 60], w: 6, d: 6, h: 12, kind: "dome", face: [0, 1],
+    { id: "lab", name: "API Lab", short: "LAB", icon: "🧪", color: 0xa78bfa, pos: [143, -16], w: 11, d: 9, h: 10, kind: "factory", face: [0, 1],
       status: worst(st("apify"), st("x402"), sv("x402-agentedge")), today: 0, total: 0,
       tag: [`${num(runs)} runs`, `${(ap.actors || []).length} actors`],
       board: { title: "API LAB", main: num(runs), mainLabel: "Apify runs (all time)",
@@ -177,7 +188,7 @@ function model(D) {
         [["Actors", (ap.actors || []).length], ["Users", apUsers], ["x402 balance", "$" + (x4.balance_usdc ?? 0)], ["x402 paid calls", x4.external_tx_since_oct2 ?? 0], ["x402 server", svLabel("x402-agentedge")]],
         [...(ap.actors || [])].sort((a, b) => b.runs - a.runs).slice(0, 6).map(a => [a.title, `${a.runs} runs`]), "Busiest actors", "https://console.apify.com/actors") },
 
-    { id: "krypto", name: "Krypto Mint", short: "KRYPTO", icon: "🪙", color: 0x9945ff, pos: [-58, -64], w: 6, d: 6, h: 16, kind: "coin", face: [0, 1],
+    { id: "krypto", name: "Krypto Mint", short: "KRYPTO", icon: "🪙", color: 0x9945ff, pos: [-27, -154], w: 7, d: 7, h: 22, kind: "coin", face: [0, 1],
       status: st("krypto"), today: 0, total: 0,
       tag: sb.value != null ? [usd(sb.value) + " of $250 (practice)", `${(sb.lots || []).length} open · ${sb.trades || 0} done`] : [usd(kr.usd || 0) + " wallet", kr.armed_scripts?.length ? "bot trading" : "bot off"],
       board: sb.value != null ? { title: "PHANTOM $25 → $250", main: usd(sb.value), mainLabel: "SOL dip bot · practice money",
@@ -188,7 +199,7 @@ function model(D) {
          ["SOL", (kr.sol ?? 0).toFixed(4)], ["Tokens (open)", usd(kr.tokens_usd || 0)], ["Rand", "R" + num(Math.round(kr.zar || 0))], ["Trading script", kr.armed_scripts?.length ? kr.armed_scripts.join(", ") : "off"], ["Bot app", kr.app_running ? "🟢 running" : "🔴 stopped"], ...botSheet(kb).slice(0, 9)],
         (kr.tokens || []).map(t => [t.symbol, usd(t.usd)]), "Open tokens", kr.address ? "https://solscan.io/account/" + kr.address : "", "Balance read from the public Solana chain on every HQ refresh.") },
 
-    { id: "kalshi", name: "Kalshi Casino", short: "KALSHI", icon: "🎲", color: 0x00d395, pos: [23, -64], w: 5, d: 5, h: 13, kind: "coin", face: [0, 1],
+    { id: "kalshi", name: "Kalshi Casino", short: "KALSHI", icon: "🎲", color: 0x00d395, pos: [27, -154], w: 7, d: 7, h: 18, kind: "coin", face: [0, 1],
       status: st("bots"), today: 0, total: 0,
       tag: kx.value != null ? [usd(kx.value) + " of $250 (practice)", `${(kx.positions || []).length} open · ${kx.trades || 0} done`] : [pnl(ks.today) + " today", "best day " + pnl(ks.best_day)],
       board: kx.value != null ? { title: "KALSHI $25 → $250", main: usd(kx.value), mainLabel: "fair-value bot · practice money",
@@ -202,7 +213,7 @@ function model(D) {
         : sheetHTML("Kalshi Casino", "BTC/ETH 15-minute contracts · numbers from Kalshi's own settlements", pnl(ks.lifetime), "lifetime profit",
         botSheet(ks).concat([["Balance", usd(ks.balance || 0)]]), [], "", "https://kalshi.com/portfolio", "Read-only: the bot itself is switched off.") },
 
-    { id: "poly", name: "Polymarket Exchange", short: "POLYMARKET", icon: "📈", color: 0x2e5cff, pos: [-34, -64], w: 5, d: 5, h: 15, kind: "coin", face: [0, 1],
+    { id: "poly", name: "Polymarket Exchange", short: "POLYMARKET", icon: "📈", color: 0x2e5cff, pos: [-9, -154], w: 7, d: 7, h: 21, kind: "coin", face: [0, 1],
       status: st("longshot"), today: 0, total: polyReal,
       tag: [usd(lb.value || 0) + " of $250" + (lb.mode === "paper" ? " (practice)" : ""), `${(lb.positions || []).length} open · ${lb.trades || 0} done`],
       board: { title: "POLYMARKET $25 → $250", main: usd(lb.value || 0), mainLabel: `${lb.style_name || "–"} style` + (lb.mode === "paper" ? " · practice money" : ""),
@@ -213,7 +224,7 @@ function model(D) {
           .concat((lb.positions || []).map(p => [`${p.q} · ${p.outcome}`, `${usd(p.stake)} @ ${Math.round(p.entry * 100)}c → now ${Math.round((p.mark ?? p.entry) * 100)}c`])),
         (lb.log || []).slice(0, 8).map(l => [l.msg, (l.ts || "").slice(5, 16).replace("T", " ")]), "Latest bot moves", "https://polymarket.com", "The old 5-minute Up/Down bot stays switched off.") },
 
-    { id: "longshot", name: "Long Shot Tower", short: "BOT RACE", icon: "🏁", color: 0xff3b6b, pos: [-23, -64], w: 5, d: 5, h: 20, kind: "coin", face: [0, 1],
+    { id: "longshot", name: "Long Shot Tower", short: "BOT RACE", icon: "🏁", color: 0xff3b6b, pos: [9, -154], w: 7, d: 7, h: 28, kind: "coin", face: [0, 1],
       status: "ok", today: 0, total: 0,
       tag: race.length ? [`🥇 ${race[0].name} ${pct(race[0].value, 25)}`, `${race.length} bots · $25 → $250`] : ["no bots", ""],
       board: { title: "BOT RACE · $25 → $250", main: race.length ? race[0].name : "–", mainLabel: "leading" + (race.length ? ` · ${pnlU(race[0].value, 25)} (${pct(race[0].value, 25)})` : ""),
@@ -224,7 +235,7 @@ function model(D) {
         race.map(r => [`${r.name}: ${r.method}`, `${usd(r.value)} · ${r.trades} trades (${r.wins} wins)`]), "Leaderboard (value · trades)", "",
         "Profit is measured from each bot's $25 start. Tap the Polymarket, Kalshi or Krypto building for that bot's open trades.") },
 
-    { id: "pinterest", name: "Pinterest Studio", short: "PINTEREST", icon: "📌", color: 0xe60023, pos: [-62, 22], w: 7, d: 7, h: 14, kind: "pin", face: [1, 0],
+    { id: "pinterest", name: "Pinterest Studio", short: "PINTEREST", icon: "📌", color: 0xe60023, pos: [-110, -14], w: 7, d: 7, h: 14, kind: "pin", face: [1, 0],
       status: pi.error ? "stale" : pi.last_date && pi.last_date <= new Date(Date.now() + 2 * 864e5).toISOString().slice(0, 10) ? "stale" : "ok", today: 0, total: 0,
       tag: [`${num(pi.upcoming)} pins queued`, `${num(pi.clicks)} clicks`],
       board: { title: "PINTEREST", main: num(pi.scheduled), mainLabel: "pins scheduled (CSV uploads)",
@@ -234,7 +245,7 @@ function model(D) {
         "", "https://za.pinterest.com/SonneblomDigitaal/", `Pinterest has no API for us, so this counts the pins in our upload files. Impressions/clicks are typed in on Go Bananas${pi.at ? ` (${esc(pi.at)})` : ""}.`) },
 
     // Warehouses (owner 2026-10-07): every product we sell, stored and viewable by shelf
-    { id: "whdig", name: "Digital Warehouse", short: "DIGITAL", icon: "🗂️", color: 0x38bdf8, pos: [62, -20], w: 14, d: 10, h: 8, kind: "warehouse", face: [-1, 0],
+    { id: "whdig", name: "Digital Warehouse", short: "DIGITAL", icon: "🗂️", color: 0x38bdf8, pos: [108, 22], w: 14, d: 10, h: 8, kind: "warehouse", face: [0, -1],
       status: "ok", today: 0, total: 0,
       tag: [`${num(L.filter(x => !x.physical).length + G.length)} products`, "printables · add-ons · books"],
       board: { title: "DIGITAL WAREHOUSE", main: num(L.filter(x => !x.physical).length + G.length), mainLabel: "digital products in stock",
@@ -242,7 +253,7 @@ function model(D) {
       sheet: () => sheetHTML("Digital Warehouse", "Every digital product we sell: printables, bundles, Blender add-ons, services. Tap a box to open it.", L.filter(x => !x.physical).length + G.length, "products",
         [["Etsy downloads", L.filter(x => !x.physical).length], ["Gumroad", G.length], ["KDP books", m.kdp_books ?? "–"]], [], "") +
         shelfHTML("Gumroad", G) + shelfHTML("Etsy downloads", L.filter(x => !x.physical)) },
-    { id: "whpod", name: "Print Warehouse", short: "PRINT", icon: "📦", color: 0xf59e0b, pos: [62, 10], w: 14, d: 10, h: 8, kind: "warehouse", face: [-1, 0],
+    { id: "whpod", name: "Print Warehouse", short: "PRINT", icon: "📦", color: 0xf59e0b, pos: [148, 22], w: 14, d: 10, h: 8, kind: "warehouse", face: [0, -1],
       status: "ok", today: 0, total: 0,
       tag: [`${num(L.filter(x => x.physical).length)} products`, "printed on demand"],
       board: { title: "PRINT WAREHOUSE", main: num(L.filter(x => x.physical).length), mainLabel: "print-on-demand products",
@@ -250,7 +261,7 @@ function model(D) {
       sheet: () => sheetHTML("Print Warehouse", "Tees, mugs, posters and gifts, printed to order by Printify and sold on Etsy.", L.filter(x => x.physical).length, "products",
         [["Printify products", pf.products ?? "–"], ["Orders", pf.orders ?? 0]], [], "") + shelfHTML("Etsy gifts", L.filter(x => x.physical)) },
 
-    { id: "github", name: "GitHub Foundry", short: "GITHUB", icon: "🐙", color: 0x8b949e, pos: [58, -64], w: 8, d: 8, h: 18, kind: "git", face: [0, 1],
+    { id: "github", name: "GitHub Foundry", short: "GITHUB", icon: "🐙", color: 0x8b949e, pos: [158, -16], w: 11, d: 9, h: 10, kind: "factory", face: [0, 1],
       status: gh.error ? "stale" : "ok", today: 0, total: 0,
       tag: [`${num(gh.commits_24h)} commits today`, `${num(gh.repos)} repos`],
       board: { title: "GITHUB", main: num(gh.commits_24h), mainLabel: "commits pushed (24h)",
@@ -259,7 +270,7 @@ function model(D) {
         [["Commits this week", num(gh.commits_7d)], ["Repos", num(gh.repos)], ["Public", num(gh.public)], ["Stars", num(gh.stars)]],
         (gh.recent || []).map(r => [r.name + (r.private ? " 🔒" : ""), ago(r.pushed)]), "Latest pushes", "https://github.com/" + (gh.login || "RoseCompanion")) },
 
-    { id: "rnd", name: "R&D Centre", short: "R&D", icon: "🔬", color: 0x22ff88, pos: [35, -64], w: 9, d: 7, h: 12, kind: "rnd", face: [0, 1],
+    { id: "rnd", name: "R&D Centre", short: "R&D", icon: "🔬", color: 0x22ff88, pos: [-26, -20], w: 9, d: 7, h: 12, kind: "rnd", face: [1, 0],
       status: rn.error ? "stale" : "ok", today: 0, total: 0,
       tag: [`${(rn.flags || []).length} alerts`, "report " + (rn.written || "–").slice(5)],
       board: { title: "R&D CENTRE", main: String((rn.flags || []).length), mainLabel: "bottleneck alerts right now",
@@ -271,7 +282,7 @@ function model(D) {
         ${(rn.items || []).map(x => `<div class="note"><b>${esc(x.name)}</b> · <i>${esc(x.score)}</i><br>${esc(x.numbers)}<br>🚧 ${esc(x.bottleneck)}<br>✅ ${esc(x.fix)}</div>`).join("")}` },
 
     { id: "showroom", name: shOpen ? "Side Hustle City" : "Showroom (under construction)", short: shOpen ? "SHC" : "SHOWROOM", icon: shOpen ? "🏙️" : "🏗️",
-      color: 0xffb020, pos: [17, 60], w: 9, d: 8, h: 16, face: [0, 1], kind: shOpen ? "store" : "construction",
+      color: 0xffb020, pos: [26, -20], w: 9, d: 8, h: 16, face: [-1, 0], kind: shOpen ? "store" : "construction",
       status: "ok", today: 0, total: (shF.page || {}).revenue_usd || sh.revenue_usd || 0, built: shSt.length ? shDone / shSt.length : 0,
       tag: shOpen ? ["OPEN · selling", `${num((shF.page || {}).paid || 0)} sales`] : [`${Math.round(100 * (shSt.length ? shDone / shSt.length : 0))}% built`, shNext ? "next: " + shNext.name.split(" ")[0] : "open"],
       board: shOpen ? { title: "SIDE HUSTLE CITY", main: usd((shF.page || {}).revenue_usd || 0), mainLabel: "sold · store is open",
@@ -289,14 +300,14 @@ function model(D) {
         shSt.map(x => [(x.done ? "✅ " : "🚧 ") + x.name, x.note || ""]), "Build steps", "",
         "We sell the dashboard, not a money dream: \"I use this to see my side hustles better.\"")) + funnelHTML(shF) },
 
-    ...(DEMO ? [] : [{ id: "army", name: "AI Influencer Army", short: "AI ARMY", icon: "🤖", color: 0xff4fd8, pos: [-62, -47], w: 9, d: 8, h: 22, kind: "army", face: [1, 0],
+    ...(DEMO ? [] : [{ id: "army", name: "AI Influencer Army", short: "AI ARMY", icon: "🤖", color: 0xff4fd8, pos: [-142, 22], w: 9, d: 8, h: 22, kind: "army", face: [1, 0],
       status: av.error ? "stale" : "ok", today: 0, total: 0, crew: (av.avatars || []).map(a => a.status),
       tag: [`${(av.avatars || []).filter(a => a.status === "live").length}/${(av.avatars || []).length} live`, `${num(av.credits?.left)} credits`],
       board: { title: "AI INFLUENCER ARMY", main: num(av.credits?.left), mainLabel: `Higgsfield credits left · ${av.credits?.plan || ""}`,
         rows: (av.avatars || []).slice(0, 5).map(a => [a.emoji + " " + a.short, a.status]) },
       sheet: () => armyHTML(av) }]),
 
-    { id: "library", name: "The Library", short: "LIBRARY", icon: "📚", color: 0xe8a87c, pos: [0, -66], w: 20, d: 12, h: 12, kind: "library",
+    { id: "library", name: "The Library", short: "LIBRARY", icon: "📚", color: 0xe8a87c, pos: [0, -26], w: 20, d: 12, h: 12, kind: "library",
       status: sv("hq-portal"), today: 0, total: 0,
       tag: ["Claude", "tap to talk"],
       board: { title: "THE LIBRARY", main: "CLAUDE", mainLabel: "tap the Library to talk",
@@ -487,10 +498,10 @@ function initScene() {
 
   scene = new THREE.Scene();
   scene.background = new THREE.Color(0x0a0420);
-  scene.fog = new THREE.FogExp2(0x1a0b3a, 0.0042);
-  camera = new THREE.PerspectiveCamera(MOBILE ? 58 : 48, innerWidth / innerHeight, 0.5, 900);
+  scene.fog = new THREE.FogExp2(0x1a0b3a, 0.0021);
+  camera = new THREE.PerspectiveCamera(MOBILE ? 58 : 48, innerWidth / innerHeight, 0.5, 1600);
   controls = new OrbitControls(camera, renderer.domElement);
-  Object.assign(controls, { enableDamping: true, dampingFactor: 0.08, minDistance: 6, maxDistance: 380, maxPolarAngle: 1.47,
+  Object.assign(controls, { enableDamping: true, dampingFactor: 0.08, minDistance: 6, maxDistance: 620, maxPolarAngle: 1.47,
     screenSpacePanning: false, zoomSpeed: 1.1, rotateSpeed: 0.7 });
   controls.touches = { ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.DOLLY_PAN };
   home(true);
@@ -508,144 +519,147 @@ function initScene() {
   addrEventListeners();
 }
 
-// ---------- Office park in the middle of a ring road: cars, lamps, rain ----------
-const PARK = 78;                       // office park half-size: our buildings live inside it
-const STREETS = [84];                  // one ring road round the park (both signs), 10 wide; no outer city blocks
-const EXT = 100;                       // city edge
-const VAULT = [0, 6];                  // the Vault in the middle of the market square
-const POOL = [-5, 5, -54, -16];        // reflecting pool x0, x1, z0, z1 (in front of the Library)
-const PLAZA = [-22, 22, -6, 20];       // paved square round the Vault in the city park
+// ---------- Suburbs layout (owner 2026-10-08): every quarter on its own block, big parks between, Media up on a hill ----------
+// Downtown (Library, Vault, studios) in the middle; Media Hill west; Industrial Park east; Trading Town north; housing suburb south.
+// Quarters you are not looking at fade into a coloured fog light and brighten as you fly over to them (fadeDistricts).
+const RW = 5;                          // half road width
+const DIST = [                         // c = centre, h = half-size inside the ring road (hill: plateau radius, foot = hill), y = ground height
+  { id: "down", name: "DOWNTOWN", color: 0xffd166, c: [0, 0], h: 41, y: 0 },
+  { id: "media", name: "MEDIA HILL", color: 0x3b82f6, c: [-138, 0], h: 36, y: 12, hill: 64 },
+  { id: "trade", name: "TRADING TOWN", color: 0x9945ff, c: [0, -150], h: 33, y: 0 },
+  { id: "ind", name: "INDUSTRIAL PARK", color: 0xff8a3d, c: [128, 0], h: 41, y: 0 },
+  { id: "subs", name: "THE SUBURBS", color: 0x22ff88, c: [0, 150], h: 37, y: 0 },
+];
+const EXT = 215;                       // city edge (grass ends, fog takes over)
+const VAULT = [0, 6];                  // the Vault in the middle of Downtown
+const POOL = [-4, 4, -17, -9];         // reflecting pool in front of the Library
+const PLAZA = [-14, 14, -6, 18];       // paved square round the Vault
 const NEON = [0xff2bd6, 0x00f0ff, 0xfff200, 0xff3b6b, 0x8b5cf6, 0x22ff88, 0xff8a00];
 const rnd = (a, b) => a + Math.random() * (b - a);
 const pick = a => a[Math.floor(Math.random() * a.length)];
-const towers = [];                     // outer city towers {x,z,w,d,h} (street-mode collisions)
+const towers = [];
+const HILL = DIST[1];
+function hillY(x, z) {  // ground height (only Media Hill rises: a flat plateau with a sloped skirt)
+  const r = Math.hypot(x - HILL.c[0], z - HILL.c[1]);
+  return r <= HILL.h ? HILL.y : r >= HILL.hill ? 0 : HILL.y * (HILL.hill - r) / (HILL.hill - HILL.h);
+}
+const ringPts = D => { const [x, z] = D.c, r = D.h + RW; return [[x - r, z - r], [x + r, z - r], [x + r, z + r], [x - r, z + r]]; };
+let ROADS = [];
+function roadList() {  // every road as a polyline: the ring round each block + avenues joining them to Downtown
+  const [dn, md, tr, ind, sb] = DIST, r = dn.h + RW;
+  return [{ pts: ringPts(dn), loop: true }, { pts: ringPts(tr), loop: true }, { pts: ringPts(ind), loop: true }, { pts: ringPts(sb), loop: true },
+    { pts: [[0, -r], [0, tr.c[1] + tr.h + RW]] }, { pts: [[0, r], [0, sb.c[1] - sb.h - RW]] },
+    { pts: [[r, 0], [ind.c[0] - ind.h - RW, 0]] }, { pts: [[-r, 0], [md.c[0] + md.hill, 0]] }];
+}
+const segsOf = R => R.pts.map((p, i) => [p, R.pts[(i + 1) % R.pts.length]]).slice(0, R.loop ? R.pts.length : R.pts.length - 1);
+function segDist(x, z, [[x0, z0], [x1, z1]]) {
+  const dx = x1 - x0, dz = z1 - z0, L2 = dx * dx + dz * dz, t = Math.max(0, Math.min(1, ((x - x0) * dx + (z - z0) * dz) / L2));
+  return Math.hypot(x - x0 - t * dx, z - z0 - t * dz);
+}
+const roadDist = (x, z) => ROADS.reduce((m, R) => Math.min(m, ...segsOf(R).map(s => segDist(x, z, s))), 1e9);
 
 function ground() {
-  towers.length = 0;
-  const lines = STREETS.flatMap(v => [-v, v]).sort((a, b) => a - b);
+  towers.length = 0; ROADS = roadList();
   const d = new THREE.Object3D(), col = new THREE.Color();
-  // wet asphalt everywhere
-  const asphalt = new THREE.Mesh(new THREE.PlaneGeometry(EXT * 2 + 260, EXT * 2 + 260), new THREE.MeshStandardMaterial({ color: 0x0b0716, roughness: 0.28, metalness: 0.6 }));
-  asphalt.rotation.x = -Math.PI / 2; scene.add(asphalt);
-  // the office park: grass with a glowing kerb
-  const grass = new THREE.Mesh(new THREE.BoxGeometry(PARK * 2, 0.3, PARK * 2), new THREE.MeshStandardMaterial({ color: 0x1d6b3c, emissive: 0x06301a, roughness: 0.95 }));
-  grass.position.y = 0.15; scene.add(grass);
-  const kerb = neonEdges(new THREE.BoxGeometry(PARK * 2 + 0.4, 0.32, PARK * 2 + 0.4), 0x22ff88); kerb.position.y = 0.16; scene.add(kerb);
-
-  // city blocks (sidewalk slabs) with towers; the 4 blocks facing the park are "Times Square"
-  const slabs = [], screens = [];
-  for (let i = 0; i < lines.length - 1; i++) for (let j = 0; j < lines.length - 1; j++) {
-    const x0 = lines[i] + 5, x1 = lines[i + 1] - 5, z0 = lines[j] + 5, z1 = lines[j + 1] - 5;
-    const cx = (x0 + x1) / 2, cz = (z0 + z1) / 2, W = x1 - x0, Dp = z1 - z0;
-    if (Math.abs(cx) < 1 && Math.abs(cz) < 1) continue;  // the park
-    slabs.push([cx, cz, W, Dp]);
-    const square = (Math.abs(cx) < 1 || Math.abs(cz) < 1) && Math.max(Math.abs(cx), Math.abs(cz)) < 90;
-    const far = Math.max(Math.abs(cx), Math.abs(cz));
-    if (square) {  // a row of towers whose park-facing walls carry big screens
-      const alongX = Math.abs(cx) < 1, len = alongX ? W : Dp, n = MOBILE ? 5 : 6, step = len / n;
-      const face = alongX ? -Math.sign(cz) : -Math.sign(cx);   // direction towards the park
-      for (let k = 0; k < n; k++) {
-        const s = -len / 2 + step * (k + 0.5), w = step - 2.4, dd = (alongX ? Dp : W) - 6, h = rnd(26, 52);
-        const x = alongX ? s : cx, z = alongX ? cz : s;
-        towers.push({ x, z, w: alongX ? w : dd, d: alongX ? dd : w, h, square: true });
-        const sw = w * 0.86, sh = Math.min(sw * 0.62, h - 10), y = h - sh / 2 - rnd(2, 6);
-        const off = dd / 2 + 0.25;
-        screens.push({ x: alongX ? x : x + face * off, z: alongX ? z + face * off : z, y, w: sw, h: sh, ry: alongX ? (face > 0 ? 0 : Math.PI) : (face > 0 ? Math.PI / 2 : -Math.PI / 2) });
-      }
-    } else {  // 2x2 lots of cyberpunk towers, taller further out
-      for (const [fx, fz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
-        if (Math.random() < 0.12) continue;  // the odd empty lot
-        const lw = W / 2, ld = Dp / 2, w = rnd(lw * 0.55, lw - 2.5), dd = rnd(ld * 0.55, ld - 2.5);
-        const axis = Math.abs(cx) < 1 || Math.abs(cz) < 1;   // blocks in line with the park stay lower so the view stays open
-        const h = axis ? rnd(18, 42) : (far < 120 ? rnd(30, 75) : rnd(45, 125)) * (Math.random() < 0.1 ? 1.4 : 1);
-        towers.push({ x: cx + fx * lw / 2, z: cz + fz * ld / 2, w, d: dd, h });
-      }
-    }
-  }
-  const slab = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 0.3, 1), new THREE.MeshStandardMaterial({ color: 0x1b1530, roughness: 0.7 }), slabs.length);
-  slabs.forEach(([x, z, w, dd], i) => { d.position.set(x, 0.15, z); d.scale.set(w, 1, dd); d.rotation.set(0, 0, 0); d.updateMatrix(); slab.setMatrixAt(i, d.matrix); });
-  scene.add(slab);
-
-  // towers: window-textured boxes (3 colour moods) + neon strips on corners and a band near the roof
-  const mats = ["#c084fc", "#38bdf8", "#f472b6"].map((c, i) => { const t = windowTex(c, 0.42, i + 7); t.repeat.set(3, 8);
-    return new THREE.MeshStandardMaterial({ color: 0x150d33, map: t, emissive: 0xffffff, emissiveMap: t, emissiveIntensity: 0.85, roughness: 0.35, metalness: 0.4 }); });
-  const box = new THREE.BoxGeometry(1, 1, 1);
-  mats.forEach((mat, k) => {
-    const mine = towers.filter((_, i) => i % 3 === k), inst = new THREE.InstancedMesh(box, mat, mine.length);
-    mine.forEach((t, i) => { d.position.set(t.x, t.h / 2 + 0.3, t.z); d.scale.set(t.w, t.h, t.d); d.updateMatrix(); inst.setMatrixAt(i, d.matrix); });
-    scene.add(inst);
+  const flat = (w, h, mat, x, y, z, ry = 0) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), mat); m.rotation.set(-Math.PI / 2, 0, ry); m.position.set(x, y, z); scene.add(m); return m; };
+  // night asphalt to the horizon, the city's lawns on top
+  flat(2400, 2400, new THREE.MeshStandardMaterial({ color: 0x0b0716, roughness: 0.28, metalness: 0.6 }), 0, 0, 0);
+  const grassM = new THREE.MeshStandardMaterial({ color: 0x1d6b3c, emissive: 0x06301a, roughness: 0.95 });
+  const lawn = new THREE.Mesh(new THREE.BoxGeometry(EXT * 2, 0.3, EXT * 2), grassM); lawn.position.y = 0.15; scene.add(lawn);
+  const kerb = neonEdges(new THREE.BoxGeometry(EXT * 2 + 0.4, 0.32, EXT * 2 + 0.4), 0x22ff88); kerb.position.y = 0.16; scene.add(kerb);
+  // block pads inside the ring roads (the hill gets its own mound)
+  const padM = new THREE.MeshStandardMaterial({ color: 0x1b1530, roughness: 0.7 });
+  DIST.forEach(D => {
+    if (D.hill) return;
+    const s = D.h * 2, pad = flat(s, s, D.id === "subs" ? new THREE.MeshStandardMaterial({ color: 0x23744a, emissive: 0x07361d, roughness: 0.95 }) : padM, D.c[0], 0.31, D.c[1]);
+    const e = neonEdges(new THREE.BoxGeometry(s, 0.01, s), D.color); e.position.set(D.c[0], 0.33, D.c[1]); scene.add(e);
   });
-  const strips = [];
-  towers.forEach(t => {
-    const c = pick(NEON);
-    if (!t.square || Math.random() < 0.5) for (const [sx, sz] of [[-1, -1], [1, 1], [1, -1], [-1, 1]].slice(0, Math.random() < 0.5 ? 2 : 4))
-      strips.push([t.x + sx * t.w / 2, t.h / 2 + 0.3, t.z + sz * t.d / 2, 0.22, t.h, 0.22, c]);
-    strips.push([t.x, t.h - rnd(1, 4), t.z, t.w + 0.3, 0.35, t.d + 0.3, pick(NEON)]);
-    if (Math.random() < 0.35) strips.push([t.x, t.h * rnd(0.3, 0.7), t.z, t.w + 0.3, 0.25, t.d + 0.3, c]);
-    if (!t.square && t.h > 60 && Math.random() < 0.5) strips.push([t.x, t.h + 4, t.z, 0.25, 8, 0.25, 0xff3b6b]);  // antenna
-  });
-  const neon = new THREE.InstancedMesh(box, new THREE.MeshBasicMaterial({ color: 0xffffff, toneMapped: false }), strips.length);
-  strips.forEach(([x, y, z, w, h, dd, c], i) => { d.position.set(x, y, z); d.scale.set(w, h, dd); d.updateMatrix(); neon.setMatrixAt(i, d.matrix); neon.setColorAt(i, col.set(c)); });
-  scene.add(neon);
-  towers.forEach(t => solids.push({ x: t.x, z: t.z, r: Math.min(t.w, t.d) / 2 + 0.8, h: t.h }));
-
-  // road markings: dashed centre lines + zebra crossings round the park
-  const dashes = [];
-  for (const c of lines) for (let s = -EXT; s < EXT; s += 6) {
-    if (lines.some(l => Math.abs(s + 1.5 - l) < 6)) continue;  // keep intersections clear
-    dashes.push([s + 1.5, c, 0], [c, s + 1.5, 1]);
-  }
-  for (const c of [-STREETS[0], STREETS[0]]) for (const s of [0]) for (let k = -4; k <= 4; k += 1.1) dashes.push([s + k * 0 + 0, c + k, 2], [c + k, s, 3]);
-  const mark = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 0.02, 1), new THREE.MeshBasicMaterial({ color: 0xffffff }), dashes.length);
-  dashes.forEach(([x, z, t], i) => {
-    d.position.set(x, 0.02, z); d.rotation.set(0, 0, 0);
-    if (t === 0) d.scale.set(3, 1, 0.18); else if (t === 1) d.scale.set(0.18, 1, 3); else if (t === 2) d.scale.set(3.4, 1, 0.5); else d.scale.set(0.5, 1, 3.4);
-    d.updateMatrix(); mark.setMatrixAt(i, d.matrix); mark.setColorAt(i, col.set(t < 2 ? 0xffd34d : 0xe8e8ff));
-  });
+  // Media Hill: grassy mound with a flat top, a lit rim and a ramp road up from the west avenue
+  const [hx, hz] = HILL.c, rise = HILL.hill - HILL.h;
+  const mound = new THREE.Mesh(new THREE.CylinderGeometry(HILL.h, HILL.hill, HILL.y, 72, 4), new THREE.MeshStandardMaterial({ color: 0x1f7a44, emissive: 0x07361d, roughness: 0.95 }));
+  mound.position.set(hx, HILL.y / 2 + 0.3, hz); scene.add(mound);
+  const top = new THREE.Mesh(new THREE.CircleGeometry(HILL.h - 6, 64), padM); top.rotation.x = -Math.PI / 2; top.position.set(hx, HILL.y + 0.32, hz); scene.add(top);
+  const rim = new THREE.Mesh(new THREE.TorusGeometry(HILL.h, 0.18, 6, 96), new THREE.MeshBasicMaterial({ color: HILL.color, toneMapped: false })); rim.rotation.x = Math.PI / 2; rim.position.set(hx, HILL.y + 0.35, hz); scene.add(rim);
+  const roadM = new THREE.MeshStandardMaterial({ color: 0x14101f, roughness: 0.4, metalness: 0.5 });
+  const rampLen = Math.hypot(rise, HILL.y), ramp = new THREE.Mesh(new THREE.BoxGeometry(rampLen + 1, 0.4, RW * 2), roadM);
+  ramp.position.set(hx + HILL.h + rise / 2, HILL.y / 2 + 0.45, hz); ramp.rotation.z = -Math.atan2(HILL.y, rise); scene.add(ramp);
+  flat(10, RW * 2, roadM, hx + HILL.h - 4, HILL.y + 0.34, hz);   // drive onto the plateau
+  // roads: asphalt strips, yellow dashed centre lines, lamps on both kerbs
+  const dashes = [], L = [], gap = MOBILE ? 24 : 16;
+  ROADS.forEach(R => segsOf(R).forEach(([[x0, z0], [x1, z1]]) => {
+    const len = Math.hypot(x1 - x0, z1 - z0), ux = (x1 - x0) / len, uz = (z1 - z0) / len, ry = Math.atan2(ux, uz);
+    const m = flat(RW * 2, len + RW * 2, roadM, (x0 + x1) / 2, 0.34, (z0 + z1) / 2); m.rotation.z = ry;
+    for (let s = RW + 3; s < len - RW - 3; s += 6) dashes.push([x0 + ux * s, z0 + uz * s, ry]);
+    for (let s = RW + 6; s < len - RW - 4; s += gap) for (const side of [-1, 1]) L.push([x0 + ux * s - uz * side * (RW + 0.4), z0 + uz * s + ux * side * (RW + 0.4), ry + (side > 0 ? Math.PI / 2 : -Math.PI / 2)]);
+  }));
+  const mark = new THREE.InstancedMesh(new THREE.BoxGeometry(0.18, 0.02, 3), new THREE.MeshBasicMaterial({ color: 0xffd34d }), dashes.length);
+  dashes.forEach(([x, z, ry], i) => { d.position.set(x, 0.36, z); d.rotation.set(0, ry, 0); d.updateMatrix(); mark.setMatrixAt(i, d.matrix); });
   scene.add(mark);
-
-  // street lamps on both kerbs: post, arm, glowing head (cyan / magenta / warm)
-  const L = [], gap = MOBILE ? 24 : 16;
-  for (const c of lines) for (let s = -EXT + 8; s < EXT; s += gap) {
-    if (lines.some(l => Math.abs(s - l) < 7)) continue;
-    for (const side of [-1, 1]) { L.push([s, c + side * 5.4, 0, side]); L.push([c + side * 5.4, s, 1, side]); }
-  }
   const post = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.09, 0.13, 5.2, 6), new THREE.MeshStandardMaterial({ color: 0x2b2550, metalness: 0.7, roughness: 0.4 }), L.length);
   const arm = new THREE.InstancedMesh(new THREE.BoxGeometry(0.1, 0.1, 1.8), new THREE.MeshStandardMaterial({ color: 0x2b2550 }), L.length);
   const head = new THREE.InstancedMesh(new THREE.BoxGeometry(0.5, 0.14, 0.9), new THREE.MeshBasicMaterial({ color: 0xffffff, toneMapped: false }), L.length);
   const lampCols = [0x00f0ff, 0xff2bd6, 0xffe2a8];
-  L.forEach(([x, z, ax, side], i) => {
-    const ry = ax === 0 ? (side > 0 ? Math.PI : 0) : (side > 0 ? -Math.PI / 2 : Math.PI / 2);
-    d.rotation.set(0, 0, 0); d.scale.set(1, 1, 1); d.position.set(x, 2.6, z); d.updateMatrix(); post.setMatrixAt(i, d.matrix);
-    d.rotation.set(0, ry, 0); d.position.set(x, 5.1, z); d.translateZ(0.9); d.updateMatrix(); arm.setMatrixAt(i, d.matrix);
-    d.translateZ(0.7); d.position.y = 5.0; d.updateMatrix(); head.setMatrixAt(i, d.matrix); head.setColorAt(i, col.set(lampCols[i % 3]));
+  L.forEach(([x, z, ry], i) => {
+    d.rotation.set(0, 0, 0); d.position.set(x, 2.9, z); d.updateMatrix(); post.setMatrixAt(i, d.matrix);
+    d.rotation.set(0, ry, 0); d.position.set(x, 5.4, z); d.translateZ(0.9); d.updateMatrix(); arm.setMatrixAt(i, d.matrix);
+    d.translateZ(0.7); d.position.y = 5.3; d.updateMatrix(); head.setMatrixAt(i, d.matrix); head.setColorAt(i, col.set(lampCols[i % 3]));
   });
   scene.add(post, arm, head);
-
-  cars(lines); skyCars(); rain();
-
+  suburbs(); cars(); skyCars(); rain();
   // smoggy stars
   const sp = new Float32Array(500 * 3);
-  for (let i = 0; i < 500; i++) { const a = Math.random() * 6.28, e = Math.random() * 1.2 + 0.25, R = 520; sp.set([Math.cos(a) * Math.cos(e) * R, Math.sin(e) * R, Math.sin(a) * Math.cos(e) * R], i * 3); }
+  for (let i = 0; i < 500; i++) { const a = Math.random() * 6.28, e = Math.random() * 1.2 + 0.25, R = 900; sp.set([Math.cos(a) * Math.cos(e) * R, Math.sin(e) * R, Math.sin(a) * Math.cos(e) * R], i * 3); }
   const sg = new THREE.BufferGeometry(); sg.setAttribute("position", new THREE.BufferAttribute(sp, 3));
-  scene.add(new THREE.Points(sg, new THREE.PointsMaterial({ color: 0xd8ccff, size: 1.2, fog: false })));
+  scene.add(new THREE.Points(sg, new THREE.PointsMaterial({ color: 0xd8ccff, size: 1.6, fog: false })));
 }
 
-// detailed cars: body, glass cabin, 4 wheels, headlights, red light bar and neon underglow; two lanes per street
-function cars(lines) {
+// the housing suburb: rows of little neon-trimmed houses with pyramid roofs, lit windows and garden trees
+function suburbs() {
+  const S = DIST[4], d = new THREE.Object3D(), col = new THREE.Color(), H = [];
+  for (let i = 0; i < 6; i++) for (let j = 0; j < 4; j++) {
+    const x = S.c[0] - S.h + 6.5 + i * (S.h * 2 - 13) / 5, z = S.c[1] - S.h + 7 + j * (S.h * 2 - 14) / 3;
+    if (Math.abs(x - S.c[0]) < 6) continue;   // the avenue's view straight down the middle stays open
+    H.push([x + rnd(-0.6, 0.6), z, j % 2 ? Math.PI : 0, rnd(0.85, 1.15)]);
+  }
+  const body = new THREE.InstancedMesh(new THREE.BoxGeometry(6, 3.4, 5), new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0x150a30, roughness: 0.8 }), H.length);
+  const roof = new THREE.InstancedMesh(new THREE.ConeGeometry(4.9, 2.6, 4).rotateY(Math.PI / 4), new THREE.MeshStandardMaterial({ color: 0x2a1f4a, emissive: 0x3b1d6e, emissiveIntensity: 0.5, flatShading: true }), H.length);
+  const win = new THREE.InstancedMesh(new THREE.BoxGeometry(4.2, 1.1, 5.1), new THREE.MeshBasicMaterial({ color: 0xffe2a8, toneMapped: false }), H.length);
+  const door = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1.9, 0.1), new THREE.MeshBasicMaterial({ color: 0xffffff, toneMapped: false }), H.length);
+  const walls = [0xf6c2c2, 0xbfe0ff, 0xfff1a8, 0xc9f2c7, 0xe3cdf7, 0xffd8a8];
+  H.forEach(([x, z, ry, sc], i) => {
+    d.rotation.set(0, ry, 0); d.scale.setScalar(sc);
+    d.position.set(x, 0.3 + 1.7 * sc, z); d.updateMatrix(); body.setMatrixAt(i, d.matrix); body.setColorAt(i, col.set(walls[i % walls.length]).multiplyScalar(0.55));
+    d.position.y = 0.3 + 3.4 * sc + 1.3 * sc; d.updateMatrix(); roof.setMatrixAt(i, d.matrix);
+    d.scale.set(sc, sc * (Math.random() < 0.7 ? 1 : 0.01), sc); d.position.y = 0.3 + 2.0 * sc; d.updateMatrix(); win.setMatrixAt(i, d.matrix);
+    d.scale.setScalar(sc); d.position.set(x, 0.3 + 0.95 * sc, z); d.translateZ(2.55); d.updateMatrix(); door.setMatrixAt(i, d.matrix); door.setColorAt(i, col.set(NEON[i % NEON.length]));
+    solids.push({ x, z, r: 3.5, h: 6 });
+  });
+  scene.add(body, roof, win, door);
+}
+
+// cars on every road: body, glass cabin, 4 wheels, headlights, red light bar and neon underglow; one lane each way
+function cars() {
   const lanes = [];
-  for (const c of lines) for (const [ax, off, dir] of [[0, -2.4, 1], [0, 2.4, -1], [1, -2.4, -1], [1, 2.4, 1]]) lanes.push({ ax, c: c + off, dir, v: rnd(9, 17) });
-  const N = MOBILE ? 72 : 150, list = [];
-  for (let i = 0; i < N; i++) { const ln = lanes[i % lanes.length]; list.push({ ln, s: rnd(-EXT, EXT), v: ln.v * rnd(0.9, 1.1) }); }
-  const part = (geo, mat, count) => { const m = new THREE.InstancedMesh(geo, mat, count); scene.add(m); return m; };
+  ROADS.forEach(R => [[-2.4, 1], [2.4, -1]].forEach(([off, dir]) => {   // keep right: lane offset to the right of travel
+    let P = R.pts.map(p => p.slice());
+    if (R.loop) { const [cx, cz] = [P.reduce((a, p) => a + p[0], 0) / P.length, P.reduce((a, p) => a + p[1], 0) / P.length];
+      P = P.map(([x, z]) => [cx + (x - cx) * (1 + off / Math.abs(x - cx)), cz + (z - cz) * (1 + off / Math.abs(z - cz))]); }
+    else { const [[x0, z0], [x1, z1]] = P, l = Math.hypot(x1 - x0, z1 - z0), nx = -(z1 - z0) / l, nz = (x1 - x0) / l; P = P.map(([x, z]) => [x + nx * off, z + nz * off]); }
+    if (dir < 0) P.reverse();
+    const segs = (R.loop ? P.map((p, i) => [p, P[(i + 1) % P.length]]) : [[P[0], P[1]]]).map(([a, b]) => ({ a, b, len: Math.hypot(b[0] - a[0], b[1] - a[1]) }));
+    lanes.push({ segs, len: segs.reduce((t, s) => t + s.len, 0), v: rnd(9, 17) });
+  }));
+  const total = lanes.reduce((t, l) => t + l.len, 0), N = MOBILE ? 64 : 130, list = [];
+  lanes.forEach(ln => { const n = Math.max(1, Math.round(N * ln.len / total)); for (let i = 0; i < n; i++) list.push({ ln, s: Math.random() * ln.len, v: ln.v * rnd(0.9, 1.1) }); });
+  const n = list.length, part = (geo, mat, count) => { const m = new THREE.InstancedMesh(geo, mat, count); scene.add(m); return m; };
   const bodyCols = [0x1e1b4b, 0xfafafa, 0x111111, 0xb91c1c, 0x0ea5e9, 0xfacc15, 0x6d28d9, 0x9ca3af, 0x064e3b];
-  const body = part(new THREE.BoxGeometry(1.9, 0.55, 4.3), new THREE.MeshStandardMaterial({ color: 0xffffff, metalness: 0.75, roughness: 0.28 }), N);
-  const nose = part(new THREE.BoxGeometry(1.86, 0.3, 1.1), new THREE.MeshStandardMaterial({ color: 0xffffff, metalness: 0.75, roughness: 0.28 }), N);
-  const cabin = part(new THREE.BoxGeometry(1.6, 0.5, 2.1), new THREE.MeshStandardMaterial({ color: 0x0a0f1f, metalness: 0.9, roughness: 0.1, emissive: 0x1b2a55, emissiveIntensity: 0.6 }), N);
-  const wheel = part(new THREE.CylinderGeometry(0.36, 0.36, 0.3, 12).rotateZ(Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0x0a0a0a, roughness: 0.9 }), N * 4);
-  const hl = part(new THREE.BoxGeometry(0.45, 0.14, 0.06), new THREE.MeshBasicMaterial({ color: 0xf2f7ff, toneMapped: false }), N * 2);
-  const tl = part(new THREE.BoxGeometry(1.7, 0.1, 0.06), new THREE.MeshBasicMaterial({ color: 0xff1a3c, toneMapped: false }), N);
-  const glow = part(new THREE.PlaneGeometry(2.3, 4.6).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.55, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false }), N);
+  const body = part(new THREE.BoxGeometry(1.9, 0.55, 4.3), new THREE.MeshStandardMaterial({ color: 0xffffff, metalness: 0.75, roughness: 0.28 }), n);
+  const nose = part(new THREE.BoxGeometry(1.86, 0.3, 1.1), new THREE.MeshStandardMaterial({ color: 0xffffff, metalness: 0.75, roughness: 0.28 }), n);
+  const cabin = part(new THREE.BoxGeometry(1.6, 0.5, 2.1), new THREE.MeshStandardMaterial({ color: 0x0a0f1f, metalness: 0.9, roughness: 0.1, emissive: 0x1b2a55, emissiveIntensity: 0.6 }), n);
+  const wheel = part(new THREE.CylinderGeometry(0.36, 0.36, 0.3, 12).rotateZ(Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0x0a0a0a, roughness: 0.9 }), n * 4);
+  const hl = part(new THREE.BoxGeometry(0.45, 0.14, 0.06), new THREE.MeshBasicMaterial({ color: 0xf2f7ff, toneMapped: false }), n * 2);
+  const tl = part(new THREE.BoxGeometry(1.7, 0.1, 0.06), new THREE.MeshBasicMaterial({ color: 0xff1a3c, toneMapped: false }), n);
+  const glow = part(new THREE.PlaneGeometry(2.3, 4.6).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.55, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false }), n);
   const col = new THREE.Color();
   list.forEach((c, i) => { body.setColorAt(i, col.set(bodyCols[i % bodyCols.length])); nose.setColorAt(i, col); glow.setColorAt(i, col.set(NEON[i % NEON.length])); });
   const loc = (x, y, z) => new THREE.Matrix4().makeTranslation(x, y, z);
@@ -655,10 +669,10 @@ function cars(lines) {
   const set = (inst, i, local) => inst.setMatrixAt(i, tmp.multiplyMatrices(m, local));
   anim.push(dt => {
     list.forEach((c, i) => {
-      const ln = c.ln; c.s += c.v * ln.dir * dt;
-      if (c.s > EXT) c.s = -EXT; else if (c.s < -EXT) c.s = EXT;
-      if (ln.ax === 0) { pos.set(c.s, 0, ln.c); q.setFromAxisAngle(up, ln.dir > 0 ? Math.PI / 2 : -Math.PI / 2); }
-      else { pos.set(ln.c, 0, c.s); q.setFromAxisAngle(up, ln.dir > 0 ? 0 : Math.PI); }
+      const ln = c.ln; c.s = (c.s + c.v * dt) % ln.len;
+      let s = c.s, k = 0; while (k < ln.segs.length - 1 && s > ln.segs[k].len) s -= ln.segs[k++].len;
+      const g = ln.segs[k], t = Math.min(1, s / g.len), dx = g.b[0] - g.a[0], dz = g.b[1] - g.a[1];
+      pos.set(g.a[0] + dx * t, 0.34, g.a[1] + dz * t); q.setFromAxisAngle(up, Math.atan2(dx, dz));
       m.compose(pos, q, one);
       set(body, i, P.body); set(nose, i, P.nose); set(cabin, i, P.cabin); set(tl, i, P.tl); set(glow, i, P.glow);
       P.w.forEach((w, k) => set(wheel, i * 4 + k, w)); P.hl.forEach((h, k) => set(hl, i * 2 + k, h));
@@ -667,10 +681,10 @@ function cars(lines) {
   });
 }
 
-// flying cars cruising above the streets with blinking lights
+// flying cars circling the city at different heights, with blinking lights
 function skyCars() {
   const N = MOBILE ? 10 : 22, list = [];
-  for (let i = 0; i < N; i++) list.push({ ax: i % 2, c: pick(STREETS) * pick([-1, 1]) + rnd(-3, 3), y: rnd(30, 85), s: rnd(-EXT, EXT), v: rnd(22, 40) * pick([-1, 1]), ph: Math.random() * 6 });
+  for (let i = 0; i < N; i++) list.push({ r: rnd(50, 200), a: Math.random() * 6.28, y: rnd(30, 85), v: rnd(22, 40) * pick([-1, 1]), ph: Math.random() * 6 });
   const hull = new THREE.InstancedMesh(new THREE.CapsuleGeometry(0.9, 3.2, 4, 10).rotateX(Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0x9aa4c4, metalness: 0.85, roughness: 0.25 }), N);
   const ring = new THREE.InstancedMesh(new THREE.TorusGeometry(1.25, 0.12, 6, 20).rotateX(Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0xffffff, toneMapped: false }), N);
   const blink = new THREE.InstancedMesh(new THREE.SphereGeometry(0.22, 6, 4), new THREE.MeshBasicMaterial({ color: 0xff2040, toneMapped: false }), N);
@@ -679,10 +693,9 @@ function skyCars() {
   const d = new THREE.Object3D();
   anim.push((dt, t) => {
     list.forEach((c, i) => {
-      c.s += c.v * dt; if (c.s > EXT + 40) c.s = -EXT - 40; else if (c.s < -EXT - 40) c.s = EXT + 40;
-      const y = c.y + Math.sin(t * 0.8 + c.ph) * 1.2;
-      if (c.ax === 0) { d.position.set(c.s, y, c.c); d.rotation.set(0, c.v > 0 ? Math.PI / 2 : -Math.PI / 2, Math.sin(t + c.ph) * 0.05); }
-      else { d.position.set(c.c, y, c.s); d.rotation.set(0, c.v > 0 ? 0 : Math.PI, Math.sin(t + c.ph) * 0.05); }
+      c.a += c.v / c.r * dt;
+      d.position.set(Math.cos(c.a) * c.r, c.y + Math.sin(t * 0.8 + c.ph) * 1.2, Math.sin(c.a) * c.r);
+      d.rotation.set(0, -c.a + (c.v > 0 ? 0 : Math.PI), Math.sin(t + c.ph) * 0.05);
       d.scale.setScalar(1); d.updateMatrix(); hull.setMatrixAt(i, d.matrix); ring.setMatrixAt(i, d.matrix);
       d.translateY(1); d.scale.setScalar((t * 2 + c.ph) % 1 < 0.15 ? 1.4 : 0.01); d.updateMatrix(); blink.setMatrixAt(i, d.matrix);
     });
@@ -763,7 +776,7 @@ function faceDir(b) {
 }
 
 function building(b) {
-  const g = new THREE.Group(); g.position.set(b.pos[0], 0, b.pos[1]); g.userData.b = b;
+  const g = new THREE.Group(); g.position.set(b.pos[0], WLD ? 0 : hillY(b.pos[0], b.pos[1]), b.pos[1]); g.userData.b = b;
   const c = b.color, lit = b.status === "down" ? 0.08 : 0.6;
   const plinth = new THREE.Mesh(new THREE.CylinderGeometry(b.w * 0.95, b.w, 0.6, 6), new THREE.MeshStandardMaterial({ color: 0x24125e, emissive: c, emissiveIntensity: 0.25 }));
   plinth.position.y = 0.3; g.add(plinth);
@@ -860,6 +873,29 @@ function building(b) {
       for (const y of [y0 + 0.5, y1 - 0.5]) { const n = new THREE.Mesh(node, br.material); n.position.set(sx * 2, y, 0); graph.add(n); }
     });
     g.add(graph); anim.push(dt => graph.rotation.y += dt * 0.5); top = b.h + 8.5;
+  } else if (b.kind === "factory") {  // factory (owner 2026-10-08): hall with a saw-tooth roof, glowing roll-up door, chimneys puffing neon smoke
+    const f = faceDir(b), m = new THREE.Group(); m.rotation.y = Math.atan2(f.x, f.z); g.add(m);
+    const h1 = b.h * 0.6; m.add(tower(b.w, h1, b.d, c, 61, lit * 0.6));
+    const tooth = new THREE.MeshStandardMaterial({ color: 0x2a2244, emissive: c, emissiveIntensity: 0.3, metalness: 0.4, roughness: 0.5 });
+    for (let i = 0; i < 3; i++) {
+      const z = -b.d / 2 + b.d / 6 + i * b.d / 3;
+      const pl = new THREE.Mesh(new THREE.BoxGeometry(b.w * 1.02, 0.2, b.d / 3 * 1.08), tooth); pl.rotation.x = 0.42; pl.position.set(0, h1 + 0.75, z); m.add(pl);
+      const gl = new THREE.Mesh(new THREE.PlaneGeometry(b.w * 0.96, 1.4), new THREE.MeshBasicMaterial({ color: c, toneMapped: false, transparent: true, opacity: 0.75, side: THREE.DoubleSide }));
+      gl.position.set(0, h1 + 0.75, z + b.d / 6 - 0.1); m.add(gl);
+    }
+    const door = new THREE.Mesh(new THREE.PlaneGeometry(b.w * 0.42, h1 * 0.62), new THREE.MeshStandardMaterial({ color: 0x1a1a2a, emissive: c, emissiveIntensity: 0.9 }));
+    door.position.set(-b.w * 0.18, h1 * 0.31, b.d / 2 + 0.05); m.add(door);
+    for (let k = 0; k < 4; k++) { const slat = new THREE.Mesh(new THREE.BoxGeometry(b.w * 0.42, 0.06, 0.05), new THREE.MeshBasicMaterial({ color: 0x05020f })); slat.position.set(-b.w * 0.18, h1 * (0.1 + k * 0.14), b.d / 2 + 0.08); m.add(slat); }
+    const stripe = new THREE.Mesh(new THREE.BoxGeometry(b.w + 0.3, 0.35, b.d + 0.3), new THREE.MeshBasicMaterial({ color: c, toneMapped: false })); stripe.position.y = h1 - 0.4; m.add(stripe);
+    const puffs = [];
+    [[b.w * 0.3, -b.d * 0.25, b.h * 1.45], [b.w * 0.12, -b.d * 0.3, b.h * 1.15]].forEach(([x, z, ch], ci) => {
+      const st = new THREE.Mesh(new THREE.CylinderGeometry(0.75, 0.95, ch, 16), new THREE.MeshStandardMaterial({ color: 0x2b2550, roughness: 0.6 })); st.position.set(x, ch / 2, z); m.add(st);
+      [0.35, 0.7].forEach(k => { const band = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.8, 0.3, 16), new THREE.MeshBasicMaterial({ color: c, toneMapped: false })); band.position.set(x, ch * k, z); m.add(band); });
+      for (let i = 0; i < 5; i++) { const p = new THREE.Mesh(new THREE.SphereGeometry(0.9, 10, 8), new THREE.MeshBasicMaterial({ color: new THREE.Color(c).lerp(new THREE.Color(0xd8ccff), 0.6), transparent: true, depthWrite: false }));
+        p.userData.smoke = true; m.add(p); puffs.push({ p, x, z, y0: ch + 0.6, k: i / 5 + ci * 0.1 }); }
+    });
+    anim.push((dt, t) => { const fd = g.userData.fade ?? 1; puffs.forEach(o => { o.k = (o.k + dt * 0.12) % 1; o.p.position.set(o.x + o.k * 2.5, o.y0 + o.k * 9, o.z - o.k * 1.5); o.p.scale.setScalar(0.6 + o.k * 1.8); o.p.material.opacity = 0.55 * (1 - o.k) * fd; }); });
+    top = h1 + 2;
   } else if (b.kind === "warehouse") {  // warehouse: long shed, saw-tooth roof, 3 lit roll-up doors, crates + pallets out front
     const f = faceDir(b), m = new THREE.Group(); m.rotation.y = Math.atan2(f.x, f.z); g.add(m);
     m.add(tower(b.w, b.h, b.d, c, 91, lit * 0.5));
@@ -975,24 +1011,24 @@ function building(b) {
   const postH = b.kind === "mega" ? 10 : b.h < 14 ? 3.5 : 6;
   [-bw / 3, bw / 3].forEach(x => { const p = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, postH), new THREE.MeshBasicMaterial({ color: 0x2a1670 })); p.position.set(x, -bh / 2 - postH / 2, 0); board.add(p); });
   const toward = faceDir(b);
-  const off = b.kind === "market" ? b.d / 2 + 5.5 : Math.max(b.w, b.d) * (b.kind === "mega" ? 0.75 : 0.95) + 2;
+  const off = b.kind === "market" || b.kind === "factory" ? b.d / 2 + 5.5 : Math.max(b.w, b.d) * (b.kind === "mega" ? 0.75 : 0.95) + 2;
   if (b.kind === "library" || WLD) { board.children.slice(-2).forEach(p => p.visible = false); board.position.set(0, top + bh / 2 + 0.6, 0); top += bh + 1; if (WLD) beacon.position.y = top + 0.8; }
   else board.position.set(toward.x * off, postH + bh / 2, toward.z * off);
-  if (b.kind === "market" && !WLD) { board.position.y += b.h * 0.55; board.children.slice(-2).forEach(p => { p.scale.y = (postH + b.h * 0.55) / postH; p.position.y = -bh / 2 - (postH + b.h * 0.55) / 2; }); }
+  if ((b.kind === "market" || b.kind === "factory") && !WLD) { board.position.y += b.h * 0.55; board.children.slice(-2).forEach(p => { p.scale.y = (postH + b.h * 0.55) / postH; p.position.y = -bh / 2 - (postH + b.h * 0.55) / 2; }); }
   board.lookAt(board.position.clone().add(g.position).add(toward));
   g.add(board); g.userData.board = board; g.userData.top = top;
   // floating tag
   const el = document.createElement("div"); el.className = "tag"; el.style.setProperty("--c", hex(c));
   el.innerHTML = `<b>${b.icon} ${esc(b.short)}</b><span class="${b.today > 0 ? "v" : "z"}">${esc(b.tag[0])}</span> · <span class="z">${esc(b.tag[1])}</span>`;
   el.onclick = () => focus(b.id);
-  const lab = new CSS2DObject(el); lab.position.y = top + 3.5; g.add(lab);
+  const lab = new CSS2DObject(el); lab.position.y = top + 3.5; g.add(lab); g.userData.tag = el;
   g.traverse(o => { if (o.isMesh) { o.userData.bid = b.id; picks.push(o); } });
   groups[b.id] = g; scene.add(g);
   // coins flow down the spoke to the vault when the building earned today
   if (b.today > 0) {
     const coins = [...Array(5)].map((_, i) => { const m = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.15, 16), new THREE.MeshBasicMaterial({ color: 0xffd166 }));
       m.rotation.z = Math.PI / 2; scene.add(m); return { m, k: i / 5 }; });
-    const V = new THREE.Vector3(VAULT[0], 0.8, VAULT[1]), from = new THREE.Vector3(b.pos[0], 0.8, b.pos[1]), to = from.clone().sub(V).setLength(10).add(V);
+    const V = new THREE.Vector3(VAULT[0], 0.8, VAULT[1]), from = new THREE.Vector3(b.pos[0], g.position.y + 0.8, b.pos[1]), to = from.clone().sub(V).setLength(10).add(V);
     anim.push(dt => coins.forEach(c => { c.k = (c.k + dt * 0.15) % 1; c.m.position.lerpVectors(from, to, c.k); c.m.rotation.y += dt * 4; }));
   }
 }
@@ -1001,7 +1037,7 @@ function building(b) {
 function flowBeam() {
   const A = groups.fb, Z = groups.etsy; if (!A || !Z) return;
   const f = M.flow || {}, on = f.ads > 0;
-  const from = A.position.clone().setY(A.userData.top + 1), to = Z.position.clone().setY(Z.userData.top + 1);
+  const from = A.position.clone().setY(A.position.y + A.userData.top + 1), to = Z.position.clone().setY(Z.position.y + Z.userData.top + 1);
   const mid = from.clone().lerp(to, 0.5).setY(Math.max(from.y, to.y) + 16);
   const curve = new THREE.QuadraticBezierCurve3(from, mid, to);
   const geo = new THREE.TubeGeometry(curve, 96, 0.32, 10, false), uv = geo.attributes.uv, cols = [];
@@ -1054,7 +1090,7 @@ function moneyBeams() {
   gr.addColorStop(0, "rgba(255,255,255,0.1)"); gr.addColorStop(0.8, "rgba(255,255,255,0.1)"); gr.addColorStop(0.95, "#fff"); gr.addColorStop(1, "rgba(255,255,255,0.1)");
   cx.fillStyle = gr; cx.fillRect(0, 0, 128, 4);
   M.B.filter(b => MONEY.includes(b.id) && groups[b.id]).forEach((b, bi) => {
-    const A = groups[b.id], hot = b.today > 0, from = A.position.clone().setY(A.userData.top + 0.5);
+    const A = groups[b.id], hot = b.today > 0, from = A.position.clone().setY(A.position.y + A.userData.top + 0.5);
     const mid = from.clone().lerp(to, 0.5).setY(Math.max(from.y, to.y) + 6 + from.distanceTo(to) * 0.12);
     const curve = new THREE.QuadraticBezierCurve3(from, mid, to);
     const tex = new THREE.CanvasTexture(cv); tex.wrapS = THREE.RepeatWrapping; tex.repeat.set(Math.max(2, Math.round(curve.getLength() / 14)), 1);
@@ -1120,62 +1156,69 @@ function life() {
   solids.push({ x: VAULT[0], z: VAULT[1], r: 9.8, h: 13 });
   const d = new THREE.Object3D(), col = new THREE.Color();
   const walk = new THREE.MeshStandardMaterial({ color: 0x5b5470, roughness: 0.85 }), stone = new THREE.MeshStandardMaterial({ color: 0x3d3550, roughness: 0.7 });
-  // a planned park: two boulevards (media west, money east), a mall with a reflecting pool up to the Library, a market square round the Vault
   const paths = [], seg = (x0, z0, x1, z1, w = 5, color) => {
     const len = Math.hypot(x1 - x0, z1 - z0), u = new THREE.Vector2((x1 - x0) / len, (z1 - z0) / len);
     const m = new THREE.Mesh(new THREE.PlaneGeometry(w, len), walk); m.rotation.set(-Math.PI / 2, 0, Math.atan2(-u.x, -u.y));
-    m.position.set((x0 + x1) / 2, 0.31, (z0 + z1) / 2); scene.add(m);
-    if (color) { const l = new THREE.Mesh(new THREE.PlaneGeometry(0.18, len), new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.75 })); l.rotation.copy(m.rotation); l.position.copy(m.position); l.position.y = 0.32; scene.add(l); }
+    m.position.set((x0 + x1) / 2, 0.33, (z0 + z1) / 2); scene.add(m);
+    if (color) { const l = new THREE.Mesh(new THREE.PlaneGeometry(0.18, len), new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.75 })); l.rotation.copy(m.rotation); l.position.copy(m.position); l.position.y = 0.34; scene.add(l); }
     paths.push({ a: new THREE.Vector2(x0, z0), u, len, w });
   };
-  const BX = 44;
-  seg(-BX, -70, -BX, 70, 6, 0x3b82f6); seg(BX, -70, BX, 70, 6, 0x9945ff);                 // boulevards
-  seg(-BX, -70, BX, -70, 5); seg(-BX, 70, BX, 70, 5);                                        // north + south promenades
-  seg(-9, -56, -9, PLAZA[2], 4); seg(9, -56, 9, PLAZA[2], 4);                                // walks either side of the pool
-  seg(0, PLAZA[3], 0, PARK, 6, 0xffd166);                                                    // grand entrance from the south
-  seg(-BX, VAULT[1] + 8, PLAZA[0], VAULT[1] + 8, 5); seg(PLAZA[1], VAULT[1] + 8, BX, VAULT[1] + 8, 5);  // market street to both boulevards
-  seg(-PARK, 0, -BX, 0, 4); seg(BX, 0, PARK, 0, 4);                                          // side gates
-  seg(-PARK + 2, -48, -14, -48, 4, 0x9945ff); seg(14, -48, PARK - 2, -48, 4, 0x9945ff);                    // Bot Row walk
-  seg(-PARK + 2, 70, PARK - 2, 70, 7, 0xff8a3d);                                             // Shop Street
-  M.B.forEach(b => {
-    const size = Math.max(b.w, b.d) * 0.8;
-    solids.push({ x: b.pos[0], z: b.pos[1], r: size + 0.6, h: b.h + 12 });
-    if (b.face && b.face[0]) { const sx = Math.sign(b.pos[0]); seg(sx * BX, b.pos[1], b.pos[0] - sx * (size + 0.5), b.pos[1], 3.4, b.color); }  // media/warehouse spur from the boulevard to the door
-    else if (b.face && b.pos[1] > 40) seg(b.pos[0], b.pos[1] + size + 0.5, b.pos[0], 70, 3.4, b.color);   // Shop Street: door to the street
-    else if (b.face && b.pos[1] < -40) seg(b.pos[0], b.pos[1] + size + 0.5, b.pos[0], -48, 3.4, b.color);  // Bot Row: door to the bot walk
+  const [DN, , TR, IN] = DIST;
+  // Downtown: walks from the Vault plaza out to the ring road, either side of the pool up to the Library
+  seg(0, PLAZA[3], 0, DN.h, 5, 0xffd166); seg(-9, -20, -9, PLAZA[2], 3.4); seg(9, -20, 9, PLAZA[2], 3.4);
+  seg(PLAZA[0], 6, -DN.h, 6, 4, 0xffd166); seg(PLAZA[1], 6, DN.h, 6, 4, 0xffd166);
+  // Trading Town promenade and the Industrial Park's yard street
+  seg(TR.c[0] - TR.h + 2, TR.c[1] + 12, TR.c[0] + TR.h - 2, TR.c[1] + 12, 5, TR.color);
+  seg(IN.c[0] - IN.h + 2, IN.c[1] + 3, IN.c[0] + IN.h - 2, IN.c[1] + 3, 4, IN.color);
+  // the four big parks between the quarters: a loop walk round a pond, and a path in from Downtown's corner
+  const PARKS = [[-1, -1], [1, -1], [-1, 1], [1, 1]].map(([sx, sz]) => ({ x: sx * 118, z: sz * 112, r: 44, sx, sz }));
+  PARKS.forEach(P => {
+    const { x, z, r, sx, sz } = P;
+    seg(x - r, z - r, x + r, z - r, 4); seg(x + r, z - r, x + r, z + r, 4); seg(x + r, z + r, x - r, z + r, 4); seg(x - r, z + r, x - r, z - r, 4);
+    seg(sx * 54, sz * 54, x - sx * r, z - sz * r, 4, 0x22ff88); seg(x - sx * r, z, x - sx * 15, z, 3.4); seg(x, z - sz * r, x, z - sz * 15, 3.4);
+    const pond = new THREE.Mesh(new THREE.CircleGeometry(12, 48), new THREE.MeshStandardMaterial({ color: 0x0a2a55, emissive: 0x1e5aa8, emissiveIntensity: 0.35, metalness: 0.9, roughness: 0.05 }));
+    pond.rotation.x = -Math.PI / 2; pond.position.set(x, 0.34, z); scene.add(pond);
+    const edge = new THREE.Mesh(new THREE.TorusGeometry(12.2, 0.35, 6, 64), new THREE.MeshStandardMaterial({ color: 0xd9d2c4, emissive: 0x332a1a, emissiveIntensity: 0.3 })); edge.rotation.x = Math.PI / 2; edge.position.set(x, 0.4, z); scene.add(edge);
+    anim.push((dt, t) => pond.material.emissiveIntensity = 0.3 + Math.sin(t * 0.8 + x) * 0.06);
   });
-  // market square paving, reflecting pool, Library forecourt
-  const pave = new THREE.Mesh(new THREE.PlaneGeometry(PLAZA[1] - PLAZA[0], PLAZA[3] - PLAZA[2]), stone); pave.rotation.x = -Math.PI / 2; pave.position.set(0, 0.305, (PLAZA[2] + PLAZA[3]) / 2); scene.add(pave);
-  const pk = neonEdges(new THREE.BoxGeometry(PLAZA[1] - PLAZA[0], 0.01, PLAZA[3] - PLAZA[2]), 0xffd166); pk.position.set(0, 0.33, (PLAZA[2] + PLAZA[3]) / 2); scene.add(pk);
-  const fore = new THREE.Mesh(new THREE.PlaneGeometry(40, 12), stone); fore.rotation.x = -Math.PI / 2; fore.position.set(0, 0.305, -56); scene.add(fore);
+  // Vault plaza paving, reflecting pool, Library forecourt, paved squares in Trading Town + the factory yard
+  const paveAt = (w, h, x, z) => { const p = new THREE.Mesh(new THREE.PlaneGeometry(w, h), stone); p.rotation.x = -Math.PI / 2; p.position.set(x, 0.325, z); scene.add(p); };
+  paveAt(PLAZA[1] - PLAZA[0], PLAZA[3] - PLAZA[2], 0, (PLAZA[2] + PLAZA[3]) / 2);
+  const pk = neonEdges(new THREE.BoxGeometry(PLAZA[1] - PLAZA[0], 0.01, PLAZA[3] - PLAZA[2]), 0xffd166); pk.position.set(0, 0.34, (PLAZA[2] + PLAZA[3]) / 2); scene.add(pk);
+  paveAt(30, 6, 0, -17.5);
   const [px0, px1, pz0, pz1] = POOL;
   const rim = new THREE.Mesh(new THREE.BoxGeometry(px1 - px0 + 1.2, 0.5, pz1 - pz0 + 1.2), new THREE.MeshStandardMaterial({ color: 0xd9d2c4, emissive: 0x332a1a, emissiveIntensity: 0.3 })); rim.position.set((px0 + px1) / 2, 0.4, (pz0 + pz1) / 2); scene.add(rim);
   const water = new THREE.Mesh(new THREE.PlaneGeometry(px1 - px0, pz1 - pz0), new THREE.MeshStandardMaterial({ color: 0x0a2a55, emissive: 0x1e5aa8, emissiveIntensity: 0.35, metalness: 0.9, roughness: 0.05 }));
   water.rotation.x = -Math.PI / 2; water.position.set((px0 + px1) / 2, 0.66, (pz0 + pz1) / 2); scene.add(water);
   anim.push((dt, t) => water.material.emissiveIntensity = 0.3 + Math.sin(t * 0.8) * 0.06);
+  M.B.forEach(b => { const size = Math.max(b.w, b.d) * 0.8; solids.push({ x: b.pos[0], z: b.pos[1], r: size + 0.6, h: b.h + 12 }); });
   const nearPath = (x, z, pad) => paths.some(p => { const dx = x - p.a.x, dz = z - p.a.y, t = dx * p.u.x + dz * p.u.y; return t > -pad && t < p.len + pad && Math.abs(-dx * p.u.y + dz * p.u.x) < p.w / 2 + pad; });
   const nearSolid = (x, z, pad) => solids.some(s => Math.hypot(x - s.x, z - s.z) < s.r + pad);
   const inRect = (x, z, [x0, x1, z0, z1], pad) => x > x0 - pad && x < x1 + pad && z > z0 - pad && z < z1 + pad;
-  const open = (x, z, pad) => !nearSolid(x, z, pad) && !nearPath(x, z, pad) && !inRect(x, z, PLAZA, pad) && !inRect(x, z, POOL, pad + 3) && !inRect(x, z, [-20, 20, -62, -50], pad);
+  const paved = (x, z, pad) => [TR, IN].some(D => Math.abs(x - D.c[0]) < D.h + pad && Math.abs(z - D.c[1]) < D.h + pad);
+  const hillR = (x, z) => Math.hypot(x - HILL.c[0], z - HILL.c[1]);
+  const open = (x, z, pad) => Math.abs(x) < EXT - 3 && Math.abs(z) < EXT - 3 && !nearSolid(x, z, pad) && !nearPath(x, z, pad) && roadDist(x, z) > RW + 1 + pad
+    && !paved(x, z, pad) && !inRect(x, z, PLAZA, pad) && !inRect(x, z, POOL, pad + 3) && !inRect(x, z, [-16, 16, -34, -14], pad)
+    && hillR(x, z) > HILL.h + 3 && PARKS.every(P => Math.hypot(x - P.x, z - P.z) > 13 + pad);
 
-  // trees: formal rows along the pool and the boulevards, loose groves elsewhere (kept sparse so the buildings read clearly)
+  // trees: rows along the avenues, loose groves in the parks and on the hillside
   const spots = [];
-  for (let z = -54; z <= -18; z += 6) for (const x of [-14, 14]) spots.push([x, z, 1.1]);
-  for (let z = -66; z <= 66; z += 9) for (const x of [-BX - 4.5, -BX + 4.5, BX - 4.5, BX + 4.5]) if (open(x, z, 0.5)) spots.push([x, z, 0.95]);
-  for (let i = 0, n = MOBILE ? 40 : 70; spots.length < n + 70 && i < 4000; i++) {
-    const x = (Math.random() * 2 - 1) * (PARK - 3), z = (Math.random() * 2 - 1) * (PARK - 3);
-    if (open(x, z, 3)) spots.push([x, z, 0.8 + Math.random() * 0.6]);
+  ROADS.filter(R => !R.loop).forEach(R => { const [[x0, z0], [x1, z1]] = R.pts, len = Math.hypot(x1 - x0, z1 - z0), ux = (x1 - x0) / len, uz = (z1 - z0) / len;
+    for (let s = 12; s < len - 10; s += 9) for (const side of [-1, 1]) { const x = x0 + ux * s - uz * side * 9, z = z0 + uz * s + ux * side * 9; if (open(x, z, 0.5)) spots.push([x, z, 0.95]); } });
+  for (let i = 0, n = MOBILE ? 170 : 320; spots.length < n && i < 12000; i++) {
+    const x = (Math.random() * 2 - 1) * (EXT - 4), z = (Math.random() * 2 - 1) * (EXT - 4);
+    if (open(x, z, 3)) spots.push([x, z, 0.8 + Math.random() * 0.7]);
   }
   const trunk = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.14, 0.2, 1.2, 6), new THREE.MeshStandardMaterial({ color: 0x4a2c5a }), spots.length);
   const leaf = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1.35, 1), new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0x08240f, roughness: 0.7, flatShading: true }), spots.length);
   const palette = [0x22c55e, 0x16a34a, 0x4ade80, 0xf9a8d4, 0x15803d, 0x86efac, 0x22c55e];
   spots.forEach(([x, z, sc], i) => {
-    d.position.set(x, 0.6 * sc + 0.3, z); d.scale.setScalar(sc); d.rotation.set(0, 0, 0); d.updateMatrix(); trunk.setMatrixAt(i, d.matrix);
-    d.position.y = 2.5 * sc + 0.3; d.updateMatrix(); leaf.setMatrixAt(i, d.matrix);
+    const y = hillY(x, z) + 0.3;
+    d.position.set(x, 0.6 * sc + y, z); d.scale.setScalar(sc * 1.25); d.rotation.set(0, 0, 0); d.updateMatrix(); trunk.setMatrixAt(i, d.matrix);
+    d.position.y = 2.9 * sc + y; d.updateMatrix(); leaf.setMatrixAt(i, d.matrix);
     leaf.setColorAt(i, col.set(palette[i % palette.length]).multiplyScalar(0.55 + Math.random() * 0.3));
   });
   scene.add(trunk, leaf);
-  // DEMO videos: hide trees within r of a walk line so street shots are never blocked
   if (DEMO) window.__clearPath = (x0, z0, x1, z1, r) => {
     const a = new THREE.Vector3(x0, 0, z0), b = new THREE.Vector3(x1, 0, z1), line = new THREE.Line3(a, b), q = new THREE.Vector3(), c = new THREE.Vector3(), zero = new THREE.Matrix4().makeScale(0, 0, 0);
     spots.forEach(([x, z], i) => { line.closestPointToPoint(q.set(x, 0, z), true, c); if (c.distanceTo(q) < r) { trunk.setMatrixAt(i, zero); leaf.setMatrixAt(i, zero); } });
@@ -1186,7 +1229,7 @@ function life() {
   const lamps = [], benches = [];
   paths.forEach(p => { for (let t = 4; t < p.len - 2; t += 10) for (const side of [-1, 1]) {
     const off = side * (p.w / 2 + 0.6), x = p.a.x + p.u.x * t - p.u.y * off, z = p.a.y + p.u.y * t + p.u.x * off;
-    if (!nearSolid(x, z, 0.5)) { lamps.push([x, z]); if (p.w >= 5 && (t / 10 | 0) % 2) benches.push([x + p.u.x * 3, z + p.u.y * 3, Math.atan2(p.u.x, p.u.y)]); }
+    if (!nearSolid(x, z, 0.5) && roadDist(x, z) > RW + 0.5) { lamps.push([x, z]); if (p.w >= 4 && (t / 10 | 0) % 2) benches.push([x + p.u.x * 3, z + p.u.y * 3, Math.atan2(p.u.x, p.u.y)]); }
   } });
   const post = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.08, 0.1, 3.4, 6), new THREE.MeshStandardMaterial({ color: 0x3b2a7a }), lamps.length);
   const bulb = new THREE.InstancedMesh(new THREE.SphereGeometry(0.28, 8, 6), new THREE.MeshBasicMaterial({ color: 0xfff0c8 }), lamps.length);
@@ -1196,22 +1239,17 @@ function life() {
   benches.forEach(([x, z, r], i) => { d.position.set(x, 0.55, z); d.rotation.set(0, r, 0); d.updateMatrix(); bench.setMatrixAt(i, d.matrix); });
   d.rotation.set(0, 0, 0); scene.add(bench);
 
-  // flower beds in the open lawns, hedges round the park with gates where the paths come in
+  // flower beds in the open lawns
   const fl = [];
-  for (let i = 0; fl.length < (MOBILE ? 350 : 700) && i < 20000; i++) {
-    const cx = (Math.random() * 2 - 1) * (PARK - 4), cz = (Math.random() * 2 - 1) * (PARK - 4);
+  for (let i = 0; fl.length < (MOBILE ? 600 : 1300) && i < 30000; i++) {
+    const cx = (Math.random() * 2 - 1) * (EXT - 4), cz = (Math.random() * 2 - 1) * (EXT - 4);
     if (!open(cx, cz, 2.5)) continue;
-    const c = pick([0xff4fa3, 0xffd34d, 0xffffff, 0xb57bff, 0xff7a45, 0x7dd3fc]);
-    for (let k = 0; k < 14; k++) fl.push([cx + rnd(-1.6, 1.6), cz + rnd(-1.6, 1.6), c]);
+    const c = pick([0xff4fa3, 0xffd34d, 0xffffff, 0xb57bff, 0xff7a45, 0x7dd3fc]), y = hillY(cx, cz);
+    for (let k = 0; k < 14; k++) fl.push([cx + rnd(-1.6, 1.6), cz + rnd(-1.6, 1.6), c, y]);
   }
   const flower = new THREE.InstancedMesh(new THREE.SphereGeometry(0.16, 6, 4), new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0x331133, emissiveIntensity: 0.6 }), fl.length);
-  fl.forEach(([x, z, c], i) => { d.position.set(x, 0.42, z); d.scale.setScalar(rnd(0.8, 1.4)); d.updateMatrix(); flower.setMatrixAt(i, d.matrix); flower.setColorAt(i, col.set(c)); });
+  fl.forEach(([x, z, c, y], i) => { d.position.set(x, 0.42 + y, z); d.scale.setScalar(rnd(0.8, 1.4)); d.updateMatrix(); flower.setMatrixAt(i, d.matrix); flower.setColorAt(i, col.set(c)); });
   d.scale.setScalar(1); scene.add(flower);
-  const hedges = [];
-  for (let s = -PARK + 2; s <= PARK - 2; s += 2) for (const e of [-PARK + 1.2, PARK - 1.2]) for (const [x, z] of [[s, e], [e, s]]) if (!nearPath(x, z, 1.5)) hedges.push([x, z]);
-  const hedge = new THREE.InstancedMesh(new THREE.BoxGeometry(2.05, 1.1, 1.3), new THREE.MeshStandardMaterial({ color: 0x14532d, emissive: 0x052e16, roughness: 0.9 }), hedges.length);
-  hedges.forEach(([x, z], i) => { d.rotation.set(0, Math.abs(z) > PARK - 2 ? 0 : Math.PI / 2, 0); d.position.set(x, 0.85, z); d.updateMatrix(); hedge.setMatrixAt(i, d.matrix); });
-  d.rotation.set(0, 0, 0); scene.add(hedge);
 
   // people strolling along the paths; some walk dogs
   const NP = MOBILE ? 55 : 90, people = [];
@@ -1257,7 +1295,7 @@ function life() {
   const NB = 22, wing = new THREE.BufferGeometry();
   wing.setAttribute("position", new THREE.Float32BufferAttribute([0, 0, 0.25, -1, 0.4, 0, 0, 0, -0.2, 0, 0, 0.25, 1, 0.4, 0, 0, 0, -0.2], 3));
   const birds = new THREE.InstancedMesh(wing, new THREE.MeshBasicMaterial({ color: 0xe9e2ff, side: THREE.DoubleSide }), NB);
-  const flock = [...Array(NB)].map((_, i) => ({ r: 30 + Math.random() * 60, a: Math.random() * 6.28, y: 38 + Math.random() * 30, v: (0.08 + Math.random() * 0.08) * (i % 3 ? 1 : -1), ph: Math.random() * 6 }));
+  const flock = [...Array(NB)].map((_, i) => ({ r: 40 + Math.random() * 160, a: Math.random() * 6.28, y: 38 + Math.random() * 30, v: (0.08 + Math.random() * 0.08) * (i % 3 ? 1 : -1), ph: Math.random() * 6 }));
   scene.add(birds);
   anim.push((dt, t) => { flock.forEach((f, i) => { f.a += f.v * dt;
     d.position.set(Math.cos(f.a) * f.r, f.y + Math.sin(t + f.ph) * 2, Math.sin(f.a) * f.r); d.rotation.set(0, -f.a + (f.v > 0 ? 0 : Math.PI), 0);
@@ -1512,10 +1550,12 @@ function hud() {
   const att = (s.pulse || {}).attention || {};
   const why = b => [...(att[b.id] || []), ...(b.status === "down" ? ["Something here is down"] : [])];
   const chip = (id, label, color, w) => `<button class="chip${w.length ? " need" : ""}" data-id="${id}" title="${esc(w.join(" · "))}" style="border-color:${color}88;color:${color}">${w.length ? `<i class="blip"></i>` : ""}${esc(label)}</button>`;
-  const names = { vault: "Vault", etsy: "Etsy", fb: "Meta", whdig: "Digital WH", whpod: "Print WH", rose: "Rose", contra: "Contra", zoho: "Outreach", gumroad: "Gumroad", kdp: "KDP", lab: "API Lab",
+  const names = { vault: "Vault", etsy: "Etsy", fb: "Meta", ig: "Instagram", whdig: "Digital WH", whpod: "Print WH", rose: "Rose", contra: "Contra", zoho: "Outreach", gumroad: "Gumroad", kdp: "KDP", lab: "API Lab",
     krypto: "Krypto", kalshi: "Kalshi", poly: "Polymarket", longshot: "Long Shot", pinterest: "Pinterest", github: "GitHub", rnd: "R&D", showroom: "SHC", army: "AI Army", library: "Library" };
   const list = [chip("vault", "Vault", "#ffd166", att.vault || [])].concat(B.map(b => chip(b.id, names[b.id] || b.short, hex(b.color), why(b))));
-  $("#chips").innerHTML = list.join("");
+  const dn = { down: "Downtown", media: "Media Hill", trade: "Trading Town", ind: "Industrial", subs: "Suburbs" };
+  $("#chips").innerHTML = (WLD ? [] : DIST.map(D => `<button class="chip dchip" data-dist="${D.id}" style="border-color:${hex(D.color)}88;color:${hex(D.color)}">📍 ${dn[D.id]}</button>`)).concat(list).join("");
+  document.querySelectorAll("[data-dist]").forEach(x => x.onclick = () => goDistrict(x.dataset.dist));
   M.need = id => id === "vault" ? att.vault || [] : why(B.find(x => x.id === id) || {});
   liveStrip(s.pulse);
   creditsBubble(s.credits); if ($("#infbtn")) $("#infbtn").onclick = openInf;
@@ -1566,8 +1606,8 @@ function focus(id) {
     const tv = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)), th = tv * camera.aspect;
     const dist = Math.min(340, Math.max(H / (2 * tv * visV), wide / (2 * th * visH)) * 1.08 + Math.max(b.w, b.d) / 2);
     const dir = faceDir(b).applyAxisAngle(new THREE.Vector3(0, 1, 0), 0.5);   // ~30° off the front so the billboard doesn't hide the doors
-    const c = new THREE.Vector3(b.pos[0], H / 2, b.pos[1]);
-    const pos = c.clone().add(dir.clone().multiplyScalar(dist)); pos.y = H / 2 + dist * 0.36;  // a little above, to see over the neighbours
+    const c = new THREE.Vector3(b.pos[0], g.position.y + H / 2, b.pos[1]);
+    const pos = c.clone().add(dir.clone().multiplyScalar(dist)); pos.y = c.y + dist * 0.36;  // a little above, to see over the neighbours
     const look = c.clone(); look.y -= (0.5 - cyF) * 2 * dist * tv;
     look.add(new THREE.Vector3().crossVectors(dir.clone().negate(), new THREE.Vector3(0, 1, 0)).normalize().multiplyScalar((0.5 - cxF) * 2 * dist * th));
     fly(look, pos);
@@ -1596,7 +1636,7 @@ function fly(target, pos) {
 }
 function home(instant) {
   showStaffTags(null);
-  const t = new THREE.Vector3(0, 4, -4), p = MOBILE && innerWidth < innerHeight ? new THREE.Vector3(0, 215, 190) : new THREE.Vector3(0, 125, 135);  // above a street, looking into the park
+  const t = new THREE.Vector3(0, 4, -8), p = MOBILE && innerWidth < innerHeight ? new THREE.Vector3(0, 330, 330) : new THREE.Vector3(0, 205, 235);  // high over the Suburbs, the whole city in view
   if (mode !== "orbit") setMode("orbit", true);
   if (instant) { controls.target.copy(t); camera.position.copy(p); } else fly(t, p);
 }
@@ -1817,19 +1857,58 @@ $("#officebtn").onclick = openOffice;
 
 // ---------- boot ----------
 // District signs (owner 2026-10-07): Media block west, Warehouses east, Shop Street south, Bot Row north, City Park in the middle
-function districts() {
-  const D_ = [["MEDIA BLOCK", 0x3b82f6, -62, -54, [-72, -50, -36, 48]], ["WAREHOUSES", 0x38bdf8, 62, -36, [50, 74, -30, 20]],
-    ["SHOP STREET", 0xff8a3d, 0, 76, [-70, 70, 52, 74]], ["BOT ROW", 0x9945ff, -40, -76, [-66, -18, -72, -44]], ["BOT ROW", 0x9945ff, 40, -76, [18, 66, -72, -44]],
-    ["CITY PARK", 0x22ff88, 0, 24, null]];
-  D_.forEach(([t, c, x, z, r]) => {
-    const cv = document.createElement("canvas"); cv.width = 1024; cv.height = 160; const g = cv.getContext("2d");
-    g.font = "800 92px Sora, sans-serif"; g.textAlign = "center"; g.textBaseline = "middle";
-    g.shadowColor = "#" + c.toString(16).padStart(6, "0"); g.shadowBlur = 28; g.fillStyle = "#fff"; g.fillText(t, 512, 84);
-    const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace;
-    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false, toneMapped: false }));
-    sp.scale.set(26, 4.1, 1); sp.position.set(x, t === "CITY PARK" ? 3 : 15, z); scene.add(sp);
-    if (r) { const [x0, x1, z0, z1] = r, e = neonEdges(new THREE.BoxGeometry(x1 - x0, 0.01, z1 - z0), c); e.position.set((x0 + x1) / 2, 0.34, (z0 + z1) / 2); scene.add(e); }
+function districts() {  // each quarter: a coloured fog light over it, a glow on the ground and a name tag you can tap to fly there
+  const glowTex = (w, h, draw) => { const cv = document.createElement("canvas"); cv.width = w; cv.height = h; draw(cv.getContext("2d")); const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; return t; };
+  const col = glowTex(4, 128, g => { const gr = g.createLinearGradient(0, 0, 0, 128); gr.addColorStop(0, "rgba(255,255,255,0)"); gr.addColorStop(0.6, "rgba(255,255,255,0.3)"); gr.addColorStop(1, "#fff"); g.fillStyle = gr; g.fillRect(0, 0, 4, 128); });
+  const disc = glowTex(128, 128, g => { const gr = g.createRadialGradient(64, 64, 0, 64, 64, 64); gr.addColorStop(0, "rgba(255,255,255,0.9)"); gr.addColorStop(0.6, "rgba(255,255,255,0.35)"); gr.addColorStop(1, "rgba(255,255,255,0)"); g.fillStyle = gr; g.fillRect(0, 0, 128, 128); });
+  const add = (map, o) => new THREE.MeshBasicMaterial({ map, transparent: true, opacity: o, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, toneMapped: false, fog: false });
+  DIST.forEach(D => {
+    const R = D.h + 6, y = D.y;
+    D.haze = new THREE.Mesh(new THREE.CylinderGeometry(R, R * 1.08, 46, 48, 1, true), add(col, 0.2)); D.haze.material.color.set(D.color);
+    D.haze.position.set(D.c[0], y + 23.3, D.c[1]); scene.add(D.haze);
+    D.glow = new THREE.Mesh(new THREE.PlaneGeometry(R * 2.8, R * 2.8), add(disc, 0.4)); D.glow.material.color.set(D.color);
+    D.glow.rotation.x = -Math.PI / 2; D.glow.position.set(D.c[0], y + 0.5, D.c[1]); scene.add(D.glow);
+    const el = document.createElement("div"); el.className = "dtag"; el.style.setProperty("--c", hex(D.color)); el.innerHTML = `<b>${D.name}</b>`;
+    el.onclick = () => goDistrict(D.id);
+    const lab = new CSS2DObject(el); lab.position.set(D.c[0], y + 2, D.c[1] + (D.hill ? D.hill - 6 : D.h + 12)); scene.add(lab);
+    D.el = el; D.k = -1;
   });
+}
+const FADE = [];
+const distOf = (x, z) => DIST.reduce((a, D) => Math.hypot(x - D.c[0], z - D.c[1]) < Math.hypot(x - a.c[0], z - a.c[1]) ? D : a);
+function fadeSetup() {  // after everything is built: remember each building's materials so its quarter can fade it
+  FADE.length = 0; DIST.forEach(D => D.k = -1);
+  const owner = new Map();
+  M.B.forEach(b => {
+    const g = groups[b.id]; if (!g) return;
+    const D = distOf(b.pos[0], b.pos[1]), mats = [];
+    g.traverse(o => { if (!o.material || o.userData.smoke || Array.isArray(o.material)) return;
+      if (owner.has(o.material) && owner.get(o.material) !== D) o.material = o.material.clone();  // shared with another quarter: give this one its own
+      owner.set(o.material, D); mats.push([o.material, o.material.opacity, o.material.transparent, o.material.depthWrite]); });
+    FADE.push({ D, g, mats: [...new Map(mats.map(x => [x[0], x])).values()], el: g.userData.tag, k: -1 });
+  });
+  anim.push(fadeDistricts);
+}
+function fadeDistricts() {  // quarters far from where you're looking sink into their fog light; they brighten as you fly over
+  const t = controls.target;
+  DIST.forEach(D => {
+    const far = Math.max(0, Math.max(Math.abs(t.x - D.c[0]), Math.abs(t.z - D.c[1])) - D.h - 6), k = Math.round((1 - smooth(0, 70, far)) * 20) / 20;
+    if (k === D.k) return; D.k = k;
+    D.haze.material.opacity = 0.04 + 0.26 * (1 - k); D.glow.material.opacity = 0.18 + 0.4 * (1 - k);
+    D.el.classList.toggle("here", k > 0.5);
+  });
+  FADE.forEach(F => {
+    const k = F.D.k; if (k === F.k) return; F.k = k;
+    const f = 0.09 + 0.91 * k; F.g.userData.fade = f;
+    F.mats.forEach(([m, o, tr, dw]) => { const want = tr || f < 0.99; if (m.transparent !== want) { m.transparent = want; m.needsUpdate = true; } m.opacity = o * f; m.depthWrite = f < 0.99 ? false : dw; });
+    if (F.el) F.el.style.opacity = 0.22 + 0.78 * k;
+  });
+}
+function goDistrict(id) {
+  const D = DIST.find(x => x.id === id); if (!D) return;
+  $("#sheet").hidden = true; closeTerm(); $("#hint").style.opacity = 0; showStaffTags(null);
+  const s = innerWidth < innerHeight ? 1.75 : 1;
+  fly(new THREE.Vector3(D.c[0], D.y + 4, D.c[1] - 4), new THREE.Vector3(D.c[0], D.y + 58 * s, D.c[1] + 80 * s));
 }
 
 // ---------- THEMES / WORLDS (owner 2026-10-08) ----------
@@ -2319,7 +2398,7 @@ function build() {
   M.B.forEach(building);
   if (WLD) { WLD.decor(); bake(WS.dec); if (WLD.ink) ink(WS.dec, WLD.ink * 0.8); }
   else districts();
-  flowBeam(); moneyBeams(); workBeams(); WLD ? worldLife() : life(); staffFigures(); hud();
+  flowBeam(); moneyBeams(); workBeams(); WLD ? worldLife() : life(); staffFigures(); if (!WLD) fadeSetup(); hud();
   if (!WLD) applySkin(SKIN.id);
   window.__lots = () => M.B.map(b => ({ id: b.id, x: +b.pos[0].toFixed(1), z: +b.pos[1].toFixed(1), w: b.w, d: b.d }));
 }
@@ -2931,21 +3010,21 @@ function themePicker() {
 // instead, sat/light scale saturation/lightness, gray mixes toward grey.
 const SKINS = [
   { id: "neon", name: "Neon Night", price: 0, swatch: ["#0a0420", "#ff2bd6", "#00f0ff"],
-    bg: 0x0a0420, fog: 0x1a0b3a, fogD: 0.0042, hemi: [0x9c7bff, 0x10052a, 0.9], sun: [0xc9b8ff, 0.8], bloom: 0.6, exposure: 1.05, weather: { kind: "rain" } },
+    bg: 0x0a0420, fog: 0x1a0b3a, fogD: 0.0021, hemi: [0x9c7bff, 0x10052a, 0.9], sun: [0xc9b8ff, 0.8], bloom: 0.6, exposure: 1.05, weather: { kind: "rain" } },
   { id: "golden", name: "Golden Hour", price: 1, swatch: ["#ff8a3d", "#ffd166", "#7a2e5a"],
-    bg: 0xf08a4b, fog: 0xf2a65a, fogD: 0.0018, hemi: [0xffd6a0, 0x5a2a3a, 1.25], sun: [0xffb36b, 1.6], bloom: 0.35, exposure: 1.1,
+    bg: 0xf08a4b, fog: 0xf2a65a, fogD: 0.0009, hemi: [0xffd6a0, 0x5a2a3a, 1.25], sun: [0xffb36b, 1.6], bloom: 0.35, exposure: 1.1,
     tint: { hue: 0.07, hueMix: 0.45, sat: 1.05, light: 1.05 }, weather: { kind: "none" } },
   { id: "arctic", name: "Arctic Snow", price: 1, swatch: ["#cfe6ff", "#ffffff", "#5fb8ff"],
-    bg: 0xbcd6f2, fog: 0xd8e8fa, fogD: 0.002, hemi: [0xffffff, 0x8aa6c8, 1.5], sun: [0xffffff, 1.2], bloom: 0.25, exposure: 1.0,
+    bg: 0xbcd6f2, fog: 0xd8e8fa, fogD: 0.001, hemi: [0xffffff, 0x8aa6c8, 1.5], sun: [0xffffff, 1.2], bloom: 0.25, exposure: 1.0,
     tint: { hue: 0.57, hueMix: 0.6, sat: 0.55, light: 1.25 }, ground: { asphalt: 0xe9f1fa, grass: 0xf4f8ff }, weather: { kind: "snow", color: 0xffffff, speed: 0.12, len: 0.25, opacity: 0.9 } },
   { id: "matrix", name: "Matrix", price: 1, swatch: ["#000000", "#22ff66", "#0a3d1a"],
-    bg: 0x000300, fog: 0x001a06, fogD: 0.0048, hemi: [0x3dff7a, 0x000000, 0.7], sun: [0x7dffa0, 0.5], bloom: 0.85, exposure: 1.0,
+    bg: 0x000300, fog: 0x001a06, fogD: 0.0024, hemi: [0x3dff7a, 0x000000, 0.7], sun: [0x7dffa0, 0.5], bloom: 0.85, exposure: 1.0,
     tint: { hue: 0.36, hueMix: 1, sat: 1.1 }, ground: { asphalt: 0x000000, grass: 0x031a08 }, weather: { kind: "rain", color: 0x22ff66, speed: 0.6, len: 2.2, opacity: 0.55 } },
   { id: "vapor", name: "Vaporwave", price: 1, swatch: ["#2b1055", "#ff71ce", "#01cdfe"],
-    bg: 0x2b1055, fog: 0x7a2c8f, fogD: 0.0026, hemi: [0xff71ce, 0x01cdfe, 1.0], sun: [0xfffb96, 0.9], bloom: 0.7, exposure: 1.1,
+    bg: 0x2b1055, fog: 0x7a2c8f, fogD: 0.0013, hemi: [0xff71ce, 0x01cdfe, 1.0], sun: [0xfffb96, 0.9], bloom: 0.7, exposure: 1.1,
     tint: { hue: 0.88, hue2: 0.52, hueMix: 0.85, sat: 1.15, light: 1.08 }, ground: { asphalt: 0x1a0638, grass: 0x3a1a6a }, weather: { kind: "none" } },
   { id: "day", name: "Sunny Day", price: 1, swatch: ["#7cc8ff", "#ffffff", "#4caf50"],
-    bg: 0x8fd0ff, fog: 0xbfe4ff, fogD: 0.0011, hemi: [0xffffff, 0x6b8f5a, 1.6], sun: [0xfff3d6, 2.0], bloom: 0.12, exposure: 1.0,
+    bg: 0x8fd0ff, fog: 0xbfe4ff, fogD: 0.00055, hemi: [0xffffff, 0x6b8f5a, 1.6], sun: [0xfff3d6, 2.0], bloom: 0.12, exposure: 1.0,
     tint: { sat: 0.85, light: 1.1 }, ground: { asphalt: 0x3a3f4a, grass: 0x4caf50 }, weather: { kind: "none" } },
 ];
 const OWNED = window.CITY_SKINS_OWNED || null;  // kit buyers: list of unlocked skin ids (null = all, as in our own city and the demo preview)
