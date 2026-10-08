@@ -59,10 +59,11 @@ function model(D) {
     ["Days traded", x.days_traded ?? "–"], ["Last trade", x.last_trade ? ago(x.last_trade) : "–"], ["Bot", x.running ? "🟢 running" : "⚪ stopped"]];
   const ks = bo.kalshi || {}, pm = bo.polymarket || {}, kb = bo.krypto || {};
   const ls = s.longshot || {}; const lb = s.lsbot || {}; const lr = s.lslive || {}; const polyReal = lr.value != null ? +(lr.value - (lr.start_real || lr.start || 19.53)).toFixed(2) : 0; const kx = s.k10x || {}; const sb = s.solbot || {};
-  const race = [{ name: "Polymarket", method: "momentum on favourites", value: lb.value, trades: lb.trades || 0, wins: lb.wins || 0 },
+  const race = [{ name: "Polymarket LIVE", method: "same style, REAL money", value: lr.value, start: lr.start_real || lr.start || 19.53, trades: lr.trades || 0, wins: lr.wins || 0, live: true },
+    { name: "Polymarket", method: "momentum on favourites", value: lb.value, trades: lb.trades || 0, wins: lb.wins || 0 },
     { name: "Kalshi", method: "fair value (price + volatility)", value: kx.value, trades: kx.trades || 0, wins: kx.wins || 0 },
     { name: "Phantom SOL", method: "dip buying (mean reversion)", value: sb.value, trades: sb.trades || 0, wins: sb.wins || 0 }]
-    .filter(x => x.value != null).sort((a, b) => b.value - a.value);
+    .filter(x => x.value != null).map(x => ({ start: 25, ...x })).sort((a, b) => (b.value - b.start) / b.start - (a.value - a.start) / a.start);
   const leader = race.length ? race[0].name : "–";
   const pnlU = (v, st) => ((v || 0) - st < 0 ? "-$" : "+$") + Math.abs((v || 0) - st).toFixed(2);
   const pct = (v, st) => ((v || 0) >= st ? "+" : "") + ((((v || 0) - st) / st) * 100).toFixed(1) + "%";
@@ -93,8 +94,24 @@ function model(D) {
   const topViewed = [...L].sort((a, b) => b.views - a.views).slice(0, 6);
   const postsToday = (fb.posts || []).filter(p => isToday(p.ts)).length + (ig.media || []).filter(p => isToday(p.ts)).length;
 
+  // Media billboard: the new faces (every influencer but Rose) and the ventures being tested; Factory Output rows; bot homes
+  const faces = ia.length ? ia.filter(a => a.id !== "rose" && !a.error) : (av.avatars || []).slice(0, 4).map(a => ({ name: a.short || a.name, emoji: a.emoji, username: a.status }));
+  const ideasL = (s.ideas || {}).items || [], ventures = (ideasL.filter(x => ["testing", "live"].includes(x.status)).length ? ideasL.filter(x => ["testing", "live"].includes(x.status)) : ideasL.filter(x => x.status !== "dropped")).slice(0, 5);
+  const output = [["🛍️ Etsy", `${num(L.length)} listings`, `${num(eS.length)} orders`, usd(eTot)], ["🎨 Gumroad", `${num(G.length)} products`, `${num(gS.length)} sales`, usd(gTot)],
+    ["📦 KDP", `${m.kdp_books ?? 0} books`, `${m.kdp_sales ?? 0} sales`, usd(m.kdp_royalty || 0)], ["🧪 API Lab", `${(ap.actors || []).length} actors`, `${num(runs)} runs`, "$" + (x4.balance_usdc ?? 0)],
+    ["🐙 GitHub", `${num(gh.repos)} repos`, `${num(gh.commits_7d)} commits/wk`, ""], ["🏬 Warehouses", `${num(L.filter(x => !x.physical).length + G.length)} digital`, `${num(L.filter(x => x.physical).length)} printed`, ""]];
+  const team = (s.staff || {}).staff || [], mgrs = team.filter(x => x.role === "manager");
+  const tops = mgrs.map(mg => { const t = team.filter(x => x.boss === mg.id); return t.find(x => x.status === "working") || t[0]; }).filter(Boolean);
+  const homes = DEMO ? [] : [...mgrs, ...tops].map((x, i, a) => {
+    const an = i / a.length * Math.PI * 2 + 0.26, [cx, cz] = DIST[4].c, R = 27;
+    return { id: "home_" + x.id, name: `${x.name}'s home`, short: x.name, icon: x.emoji, color: parseInt((STC[x.status] || "#7d74a8").slice(1), 16), pos: [cx + Math.sin(an) * R, cz - Math.cos(an) * R],
+      w: 7, d: 6, h: 4, kind: "home", face: [-Math.sin(an), Math.cos(an)], home: true, neonOnly: true, noPay: true, staff: x,
+      status: x.status === "late" ? "stale" : "ok", today: 0, total: 0, tag: [x.title || (x.job || "").split(":")[0].slice(0, 28), x.status],
+      board: { title: x.name, main: x.status, mainLabel: x.title || "", rows: [] }, sheet: () => homeHTML(x, team) };
+  });
+
   const B = [
-    { id: "etsy", name: "Etsy Megastore", short: "ETSY", icon: "🛍️", color: 0xff8a3d, pos: [98, -16], w: 13, d: 9, h: 12, kind: "factory", face: [0, 1],
+    { id: "etsy", name: "Etsy Megastore", short: "ETSY", icon: "🛍️", color: 0xff8a3d, pos: [120, -16], w: 13, d: 9, h: 12, kind: "factory", face: [0, 1],
       status: st("etsy"), today: eDay, total: eTot,
       tag: [`${num(L.length)} listings`, eDay ? usd(eDay) + " today" : `${num(views)} views`],
       board: { title: "ETSY MEGASTORE", main: num(views), mainLabel: "listing views (all time)",
@@ -104,7 +121,7 @@ function model(D) {
          ["Printify products", pf.products ?? "–"], ["Printify orders", pf.orders ?? 0], ["Shop visits", m.etsy_visits ?? "–"], ["Ads clicks", m.etsy_ads_clicks ?? "–"]],
         topViewed.map(x => [x.title, `${x.views} views`]), "Most viewed listings", "https://www.etsy.com/your/shops/me/dashboard") },
 
-    { id: "fb", name: "Meta Skyscraper", short: "META", icon: "📡", color: 0x3b82f6, pos: [-136, 0], w: 11, d: 11, h: 46, kind: "mega", face: [1, 0],
+    { id: "fb", name: "Meta Skyscraper", short: "META", icon: "📡", color: 0x3b82f6, pos: [-152, -24], w: 11, d: 11, h: 46, kind: "mega", face: [1, 0],
       status: worst(st("facebook"), st("instagram"), st("rose_social")), today: 0, total: 0,
       tag: [`${num(md.views ?? 0)} views`, `${num(md.followers ?? 0)} followers`],
       board: { title: "META SKYSCRAPER", main: num(md.followers ?? 0), mainLabel: "followers (Rose + SHC + Sonneblom)",
@@ -117,7 +134,7 @@ function model(D) {
          ["Sonneblom 7d views", num(last7("page_media_view"))], ["Posts today", postsToday], ["Ad spend", "R" + num(Math.round(adsSpend))], ["Ad clicks", num((rs.ad_clicks || 0) + (fb.ads?.clicks || 0))], ["Ads live", adsActive]],
         (ig.media || []).slice(0, 6).map(x => [x.text || x.type, `${x.views} views`]), "Latest Instagram posts", "https://business.facebook.com/latest/home") },
 
-    { id: "ig", name: "Instagram Studio", short: "INSTAGRAM", icon: "📸", color: 0xe1306c, pos: [-110, 14], w: 8, d: 8, h: 20, kind: "glass", face: [1, 0],
+    { id: "ig", name: "Instagram Studio", short: "INSTAGRAM", icon: "📸", color: 0xe1306c, pos: [-130, 10], w: 8, d: 8, h: 20, kind: "glass", face: [1, 0],
       status: st("instagram"), today: 0, total: 0,
       tag: [`${num(sum(ia, a => a.followers))} followers`, `${num(sum(ia, a => a.views_24h))} views 24h`],
       board: { title: "INSTAGRAM", main: num(sum(ia, a => a.followers)), mainLabel: `followers · ${ia.filter(a => a.followers != null).length} accounts`,
@@ -127,7 +144,7 @@ function model(D) {
          ...ia.map(a => [`${a.emoji || ""} ${a.name}${a.username ? " @" + a.username : ""}`, a.error ? a.error : `${num(a.followers)} followers · ${num(a.posts)} posts`])],
         ia.filter(a => a.top).map(a => [`${a.name}: ${a.top.text || "top post"}`, `${num(a.top.views)} views`]), "Top post per account", "https://www.instagram.com/") },
 
-    { id: "rose", name: "Rose Tower", short: "ROSE", icon: "🌹", color: 0xff3d9a, pos: [-142, -22], w: 8, d: 8, h: 36, kind: "spire", face: [1, 0],
+    { id: "rose", name: "Rose Tower", short: "ROSE", icon: "🌹", color: 0xff3d9a, pos: [-162, 26], w: 8, d: 8, h: 36, kind: "spire", face: [1, 0],
       status: worst(st("rose"), sv("companion"), sv("rose-web")), today: rd.money_today_usd || 0, total: rd.money_usd || 0, zar: roseZar,
       tag: [`${num(rd.followers)} followers`, `${plus(rd.gained_24h)} today`],
       board: { title: "ROSE · MY DAY", main: num(rd.followers), mainLabel: "followers (Facebook + Instagram)",
@@ -161,7 +178,7 @@ function model(D) {
          ["Interested", num(ox.interested)], ["Reports sent", num(ox.reports)], ["Quotes", num(ox.quoted)], ["Won", num(ox.won)], ["Paid", "€" + num(ox.paid_eur || 0)],
          ["Bounced", num(ox.bounced)], ["Opted out", num(ox.opted_out)]], [], "", "https://mail.zoho.com", "Sender runs weekdays 09:00; replies and bounces are checked every 20 minutes.") },
 
-    { id: "gumroad", name: "Gumroad Arcade", short: "GUMROAD", icon: "🎨", color: 0x2ee6c5, pos: [113, -16], w: 11, d: 9, h: 10, kind: "factory", face: [0, 1],
+    { id: "gumroad", name: "Gumroad Arcade", short: "GUMROAD", icon: "🎨", color: 0x2ee6c5, pos: [135, -16], w: 11, d: 9, h: 10, kind: "factory", face: [0, 1],
       status: st("gumroad"), today: gDay, total: gTot,
       tag: [`${num(gS.length)} sale${gS.length === 1 ? "" : "s"}`, usd(gTot)],
       board: { title: "GUMROAD ARCADE", main: usd(gTot), mainLabel: "revenue (all time)",
@@ -170,7 +187,7 @@ function model(D) {
         [["Sales", gS.length], ["Today", usd(gDay)], ["Products", G.length], ["Live", G.filter(x => x.published).length], ["Page views", m.gumroad_views ?? "–"]],
         gS.slice(-6).reverse().map(x => [x.product, `${usd(x.amount)} · ${ago(x.ts)}`]), "Sales", "https://gumroad.com/dashboard") },
 
-    { id: "kdp", name: "Amazon KDP Books", short: "KDP", icon: "📦", color: 0xffb020, pos: [128, -16], w: 11, d: 9, h: 10, kind: "factory", face: [0, 1],
+    { id: "kdp", name: "Amazon KDP Books", short: "KDP", icon: "📦", color: 0xffb020, pos: [150, -16], w: 11, d: 9, h: 10, kind: "factory", face: [0, 1],
       status: "ok", today: 0, total: m.kdp_royalty || 0,
       tag: [`${m.kdp_books ?? 0} books live`, `${m.kdp_drafts ?? 0} drafts`],
       board: { title: "AMAZON KDP", main: String(m.kdp_books ?? 0), mainLabel: "paperbacks published",
@@ -179,7 +196,7 @@ function model(D) {
         [["Drafts", m.kdp_drafts ?? 0], ["Sales", m.kdp_sales ?? 0], ["Royalties", usd(m.kdp_royalty || 0)], ["Print-ready on disk", 25]], [],
         "", "https://kdp.amazon.com/en_US/bookshelf", `KDP has no API, so these numbers are entered by hand (${esc(m.kdp_at || "")}). Tell Claude in the Library when they change.`) },
 
-    { id: "lab", name: "API Lab", short: "LAB", icon: "🧪", color: 0xa78bfa, pos: [143, -16], w: 11, d: 9, h: 10, kind: "factory", face: [0, 1],
+    { id: "lab", name: "API Lab", short: "LAB", icon: "🧪", color: 0xa78bfa, pos: [165, -16], w: 11, d: 9, h: 10, kind: "factory", face: [0, 1],
       status: worst(st("apify"), st("x402"), sv("x402-agentedge")), today: 0, total: 0,
       tag: [`${num(runs)} runs`, `${(ap.actors || []).length} actors`],
       board: { title: "API LAB", main: num(runs), mainLabel: "Apify runs (all time)",
@@ -188,7 +205,7 @@ function model(D) {
         [["Actors", (ap.actors || []).length], ["Users", apUsers], ["x402 balance", "$" + (x4.balance_usdc ?? 0)], ["x402 paid calls", x4.external_tx_since_oct2 ?? 0], ["x402 server", svLabel("x402-agentedge")]],
         [...(ap.actors || [])].sort((a, b) => b.runs - a.runs).slice(0, 6).map(a => [a.title, `${a.runs} runs`]), "Busiest actors", "https://console.apify.com/actors") },
 
-    { id: "krypto", name: "Krypto Mint", short: "KRYPTO", icon: "🪙", color: 0x9945ff, pos: [-27, -154], w: 7, d: 7, h: 22, kind: "coin", face: [0, 1],
+    { id: "krypto", name: "Krypto Mint", short: "KRYPTO", icon: "🪙", color: 0x9945ff, pos: [-24, -150], w: 7, d: 7, h: 15, kind: "coin", face: [0, 1],
       status: st("krypto"), today: 0, total: 0,
       tag: sb.value != null ? [usd(sb.value) + " of $250 (practice)", `${(sb.lots || []).length} open · ${sb.trades || 0} done`] : [usd(kr.usd || 0) + " wallet", kr.armed_scripts?.length ? "bot trading" : "bot off"],
       board: sb.value != null ? { title: "PHANTOM $25 → $250", main: usd(sb.value), mainLabel: "SOL dip bot · practice money",
@@ -199,7 +216,7 @@ function model(D) {
          ["SOL", (kr.sol ?? 0).toFixed(4)], ["Tokens (open)", usd(kr.tokens_usd || 0)], ["Rand", "R" + num(Math.round(kr.zar || 0))], ["Trading script", kr.armed_scripts?.length ? kr.armed_scripts.join(", ") : "off"], ["Bot app", kr.app_running ? "🟢 running" : "🔴 stopped"], ...botSheet(kb).slice(0, 9)],
         (kr.tokens || []).map(t => [t.symbol, usd(t.usd)]), "Open tokens", kr.address ? "https://solscan.io/account/" + kr.address : "", "Balance read from the public Solana chain on every HQ refresh.") },
 
-    { id: "kalshi", name: "Kalshi Casino", short: "KALSHI", icon: "🎲", color: 0x00d395, pos: [27, -154], w: 7, d: 7, h: 18, kind: "coin", face: [0, 1],
+    { id: "kalshi", name: "Kalshi Casino", short: "KALSHI", icon: "🎲", color: 0x00d395, pos: [24, -150], w: 7, d: 7, h: 13, kind: "coin", face: [0, 1],
       status: st("bots"), today: 0, total: 0,
       tag: kx.value != null ? [usd(kx.value) + " of $250 (practice)", `${(kx.positions || []).length} open · ${kx.trades || 0} done`] : [pnl(ks.today) + " today", "best day " + pnl(ks.best_day)],
       board: kx.value != null ? { title: "KALSHI $25 → $250", main: usd(kx.value), mainLabel: "fair-value bot · practice money",
@@ -213,8 +230,8 @@ function model(D) {
         : sheetHTML("Kalshi Casino", "BTC/ETH 15-minute contracts · numbers from Kalshi's own settlements", pnl(ks.lifetime), "lifetime profit",
         botSheet(ks).concat([["Balance", usd(ks.balance || 0)]]), [], "", "https://kalshi.com/portfolio", "Read-only: the bot itself is switched off.") },
 
-    { id: "poly", name: "Polymarket Exchange", short: "POLYMARKET", icon: "📈", color: 0x2e5cff, pos: [-9, -154], w: 7, d: 7, h: 21, kind: "coin", face: [0, 1],
-      status: st("longshot"), today: 0, total: polyReal,
+    { id: "poly", name: "Polymarket Practice", short: "POLY PRACTICE", icon: "📈", color: 0x2e5cff, pos: [-8, -146], w: 7, d: 7, h: 14, kind: "coin", face: [0, 1],
+      status: st("longshot"), today: 0, total: 0,
       tag: [usd(lb.value || 0) + " of $250" + (lb.mode === "paper" ? " (practice)" : ""), `${(lb.positions || []).length} open · ${lb.trades || 0} done`],
       board: { title: "POLYMARKET $25 → $250", main: usd(lb.value || 0), mainLabel: `${lb.style_name || "–"} style` + (lb.mode === "paper" ? " · practice money" : ""),
         rows: [["Profit", `${pnlU(lb.value, 25)} (${pct(lb.value, 25)})`], ["Open trades", (lb.positions || []).length], ["Trades done", `${lb.trades || 0} (${lb.wins || 0} wins)`], ["Race place", place("Polymarket")], ["REAL money", lr.value != null ? `${usd(lr.value)} (${pct(lr.value, lr.start_real || 19.53)}) · ${(lr.positions || []).length} open` : "–"]] },
@@ -224,18 +241,29 @@ function model(D) {
           .concat((lb.positions || []).map(p => [`${p.q} · ${p.outcome}`, `${usd(p.stake)} @ ${Math.round(p.entry * 100)}c → now ${Math.round((p.mark ?? p.entry) * 100)}c`])),
         (lb.log || []).slice(0, 8).map(l => [l.msg, (l.ts || "").slice(5, 16).replace("T", " ")]), "Latest bot moves", "https://polymarket.com", "The old 5-minute Up/Down bot stays switched off.") },
 
-    { id: "longshot", name: "Long Shot Tower", short: "BOT RACE", icon: "🏁", color: 0xff3b6b, pos: [9, -154], w: 7, d: 7, h: 28, kind: "coin", face: [0, 1],
-      status: "ok", today: 0, total: 0,
-      tag: race.length ? [`🥇 ${race[0].name} ${pct(race[0].value, 25)}`, `${race.length} bots · $25 → $250`] : ["no bots", ""],
-      board: { title: "BOT RACE · $25 → $250", main: race.length ? race[0].name : "–", mainLabel: "leading" + (race.length ? ` · ${pnlU(race[0].value, 25)} (${pct(race[0].value, 25)})` : ""),
-        rows: race.map((r, i) => [`${["🥇", "🥈", "🥉"][i] || ""} ${r.name}`, `${pct(r.value, 25)} · ${pnlU(r.value, 25)}`]) },
-      sheet: () => sheetHTML("Long Shot Tower · Bot race", "Three practice bots, each started with $25 and racing to $250 with a different method. Real market prices, simulated money.",
-        race.length ? race[0].name : "–", "in the lead",
-        race.flatMap((r, i) => [[`${["🥇", "🥈", "🥉"][i] || ""} ${r.name}`, `${pct(r.value, 25)} · ${pnlU(r.value, 25)}`]]),
-        race.map(r => [`${r.name}: ${r.method}`, `${usd(r.value)} · ${r.trades} trades (${r.wins} wins)`]), "Leaderboard (value · trades)", "",
-        "Profit is measured from each bot's $25 start. Tap the Polymarket, Kalshi or Krypto building for that bot's open trades.") },
+    { id: "polylive", name: "Polymarket LIVE", short: "POLY LIVE", icon: "💵", color: 0x00e676, pos: [8, -146], w: 8, d: 8, h: 17, kind: "coin", face: [0, 1],
+      status: lr.status === "running" ? "ok" : lr.value != null ? "stale" : "unknown", today: 0, total: polyReal,
+      tag: lr.value != null ? [`${usd(lr.value)} REAL · ${pnlU(lr.value, lr.start_real || 19.53)}`, `${(lr.positions || []).length} open · ${lr.trades || 0} done`] : ["not started", ""],
+      board: { title: "POLYMARKET LIVE", main: usd(lr.value || 0), mainLabel: "REAL money · " + (lr.style_name || "–") + " style",
+        rows: [["Profit", `${pnlU(lr.value, lr.start_real || 19.53)} (${pct(lr.value, lr.start_real || 19.53)})`], ["Open trades", (lr.positions || []).length], ["Trades done", `${lr.trades || 0} (${lr.wins || 0} wins)`], ["Race place", place("Polymarket LIVE")]] },
+      sheet: () => sheetHTML("Polymarket LIVE", "The real-money Polymarket bot (same style as the practice bot). Its profit counts in the Vault; when it's up, a money beam flows to the Vault.",
+        usd(lr.value || 0), "bot value (cash + open trades)",
+        [["Started with", usd(lr.start_real || 19.53)], ["Profit", pnlU(lr.value, lr.start_real || 19.53)], ["Profit %", pct(lr.value, lr.start_real || 19.53)], ["Cash", usd(lr.cash || 0)], ["Trades done", `${lr.trades || 0} (${lr.wins || 0} wins)`], ["Status", lr.status || "–"], ["Race place", place("Polymarket LIVE")]]
+          .concat((lr.positions || []).map(p => [`${p.q} · ${p.outcome}`, `${usd(p.stake)} @ ${Math.round(p.entry * 100)}c → now ${Math.round((p.mark ?? p.entry) * 100)}c`])),
+        (lr.log || []).slice(0, 8).map(l => [l.msg, (l.ts || "").slice(5, 16).replace("T", " ")]), "Latest bot moves", "https://polymarket.com") },
 
-    { id: "pinterest", name: "Pinterest Studio", short: "PINTEREST", icon: "📌", color: 0xe60023, pos: [-110, -14], w: 7, d: 7, h: 14, kind: "pin", face: [1, 0],
+    { id: "longshot", name: "Bot Olympics", short: "BOT OLYMPICS", icon: "🏅", color: 0xffd166, pos: [0, -174], w: 38, d: 3, h: 21, lift: 22, kind: "bigboard", face: [0, 1], draw: g => drawOlympics(g, race),
+      status: "ok", today: 0, total: 0,
+      tag: race.length ? [`🥇 ${race[0].name} ${pct(race[0].value, race[0].start)}`, `${race.length} bots · race to $250`] : ["no bots", ""],
+      board: { title: "BOT RACE · $25 → $250", main: race.length ? race[0].name : "–", mainLabel: "leading" + (race.length ? ` · ${pnlU(race[0].value, race[0].start)} (${pct(race[0].value, race[0].start)})` : ""),
+        rows: race.map((r, i) => [`${["🥇", "🥈", "🥉"][i] || ""} ${r.name}`, `${pct(r.value, r.start)} · ${pnlU(r.value, r.start)}`]) },
+      sheet: () => sheetHTML("Bot Olympics", "Every trading bot racing to $250 with its own method. Ranked by profit % from its own start (the LIVE Polymarket bot started with real money; the rest are practice money on real prices).",
+        race.length ? race[0].name : "–", "in the lead",
+        race.flatMap((r, i) => [[`${["🥇", "🥈", "🥉"][i] || (i + 1) + "th"} ${r.name}`, `${pct(r.value, r.start)} · ${pnlU(r.value, r.start)}`]]),
+        race.map(r => [`${r.name}: ${r.method}`, `${usd(r.value)} · ${r.trades} trades (${r.wins} wins)`]), "Leaderboard (value · trades)", "",
+        "Tap a bot's building for its open trades.") },
+
+    { id: "pinterest", name: "Pinterest Studio", short: "PINTEREST", icon: "📌", color: 0xe60023, pos: [-130, -12], w: 7, d: 7, h: 14, kind: "pin", face: [1, 0],
       status: pi.error ? "stale" : pi.last_date && pi.last_date <= new Date(Date.now() + 2 * 864e5).toISOString().slice(0, 10) ? "stale" : "ok", today: 0, total: 0,
       tag: [`${num(pi.upcoming)} pins queued`, `${num(pi.clicks)} clicks`],
       board: { title: "PINTEREST", main: num(pi.scheduled), mainLabel: "pins scheduled (CSV uploads)",
@@ -245,7 +273,7 @@ function model(D) {
         "", "https://za.pinterest.com/SonneblomDigitaal/", `Pinterest has no API for us, so this counts the pins in our upload files. Impressions/clicks are typed in on Go Bananas${pi.at ? ` (${esc(pi.at)})` : ""}.`) },
 
     // Warehouses (owner 2026-10-07): every product we sell, stored and viewable by shelf
-    { id: "whdig", name: "Digital Warehouse", short: "DIGITAL", icon: "🗂️", color: 0x38bdf8, pos: [108, 22], w: 14, d: 10, h: 8, kind: "warehouse", face: [0, -1],
+    { id: "whdig", name: "Digital Warehouse", short: "DIGITAL", icon: "🗂️", color: 0x38bdf8, pos: [130, 22], w: 14, d: 10, h: 8, kind: "warehouse", face: [0, -1],
       status: "ok", today: 0, total: 0,
       tag: [`${num(L.filter(x => !x.physical).length + G.length)} products`, "printables · add-ons · books"],
       board: { title: "DIGITAL WAREHOUSE", main: num(L.filter(x => !x.physical).length + G.length), mainLabel: "digital products in stock",
@@ -253,7 +281,7 @@ function model(D) {
       sheet: () => sheetHTML("Digital Warehouse", "Every digital product we sell: printables, bundles, Blender add-ons, services. Tap a box to open it.", L.filter(x => !x.physical).length + G.length, "products",
         [["Etsy downloads", L.filter(x => !x.physical).length], ["Gumroad", G.length], ["KDP books", m.kdp_books ?? "–"]], [], "") +
         shelfHTML("Gumroad", G) + shelfHTML("Etsy downloads", L.filter(x => !x.physical)) },
-    { id: "whpod", name: "Print Warehouse", short: "PRINT", icon: "📦", color: 0xf59e0b, pos: [148, 22], w: 14, d: 10, h: 8, kind: "warehouse", face: [0, -1],
+    { id: "whpod", name: "Print Warehouse", short: "PRINT", icon: "📦", color: 0xf59e0b, pos: [170, 22], w: 14, d: 10, h: 8, kind: "warehouse", face: [0, -1],
       status: "ok", today: 0, total: 0,
       tag: [`${num(L.filter(x => x.physical).length)} products`, "printed on demand"],
       board: { title: "PRINT WAREHOUSE", main: num(L.filter(x => x.physical).length), mainLabel: "print-on-demand products",
@@ -261,7 +289,7 @@ function model(D) {
       sheet: () => sheetHTML("Print Warehouse", "Tees, mugs, posters and gifts, printed to order by Printify and sold on Etsy.", L.filter(x => x.physical).length, "products",
         [["Printify products", pf.products ?? "–"], ["Orders", pf.orders ?? 0]], [], "") + shelfHTML("Etsy gifts", L.filter(x => x.physical)) },
 
-    { id: "github", name: "GitHub Foundry", short: "GITHUB", icon: "🐙", color: 0x8b949e, pos: [158, -16], w: 11, d: 9, h: 10, kind: "factory", face: [0, 1],
+    { id: "github", name: "GitHub Foundry", short: "GITHUB", icon: "🐙", color: 0x8b949e, pos: [180, -16], w: 11, d: 9, h: 10, kind: "factory", face: [0, 1],
       status: gh.error ? "stale" : "ok", today: 0, total: 0,
       tag: [`${num(gh.commits_24h)} commits today`, `${num(gh.repos)} repos`],
       board: { title: "GITHUB", main: num(gh.commits_24h), mainLabel: "commits pushed (24h)",
@@ -300,12 +328,28 @@ function model(D) {
         shSt.map(x => [(x.done ? "✅ " : "🚧 ") + x.name, x.note || ""]), "Build steps", "",
         "We sell the dashboard, not a money dream: \"I use this to see my side hustles better.\"")) + funnelHTML(shF) },
 
-    ...(DEMO ? [] : [{ id: "army", name: "AI Influencer Army", short: "AI ARMY", icon: "🤖", color: 0xff4fd8, pos: [-142, 22], w: 9, d: 8, h: 22, kind: "army", face: [1, 0],
+    ...(DEMO ? [] : [{ id: "army", name: "AI Influencer Army", short: "AI ARMY", icon: "🤖", color: 0xff4fd8, pos: [-138, 26], w: 9, d: 8, h: 22, kind: "army", face: [1, 0],
       status: av.error ? "stale" : "ok", today: 0, total: 0, crew: (av.avatars || []).map(a => a.status),
       tag: [`${(av.avatars || []).filter(a => a.status === "live").length}/${(av.avatars || []).length} live`, `${num(av.credits?.left)} credits`],
       board: { title: "AI INFLUENCER ARMY", main: num(av.credits?.left), mainLabel: `Higgsfield credits left · ${av.credits?.plan || ""}`,
         rows: (av.avatars || []).slice(0, 5).map(a => [a.emoji + " " + a.short, a.status]) },
       sheet: () => armyHTML(av) }]),
+
+    // the big billboards (owner 2026-10-08): one giant screen per quarter instead of a board on every building
+    { id: "newfaces", name: "Media Billboard", short: "NEW FACES", icon: "✨", color: 0xff4fd8, pos: [-174, 0], w: 40, d: 3, h: 22, lift: 6, kind: "bigboard", face: [1, 0], neonOnly: true, noPay: true,
+      slides: [g => drawFaces(g, faces), g => drawVentures(g, ventures)], status: "ok", today: 0, total: 0,
+      tag: ["Introducing the new faces", `${faces.length} faces · ${ventures.length} ventures`],
+      board: { title: "NEW FACES", main: String(faces.length), mainLabel: "new faces", rows: [] },
+      sheet: () => sheetHTML("Media Billboard", "Our newest faces and ventures, shown on the big screen over Media Hill", faces.length, "new faces",
+        faces.map(a => [`${a.emoji || ""} ${a.name}`, a.followers != null ? `${num(a.followers)} followers${a.username ? " · @" + a.username : ""}` : a.username || ""]),
+        ventures.map(v => [v.title, v.status]), "New ventures") },
+    { id: "output", name: "Factory Output", short: "OUTPUT", icon: "🏭", color: 0xff8a3d, pos: [150, -40], w: 32, d: 3, h: 17, lift: 12, kind: "bigboard", face: [0, 1], neonOnly: true, noPay: true,
+      draw: g => drawOutput(g, output), status: "ok", today: 0, total: eTot + gTot,
+      tag: [`${num(L.length + G.length)} products made`, `${num(eS.length + gS.length)} sold`],
+      board: { title: "FACTORY OUTPUT", main: usd(eTot + gTot), mainLabel: "sold", rows: [] },
+      sheet: () => sheetHTML("Factory Output", "What every factory in the Industrial Park has made and sold", usd(eTot + gTot + (m.kdp_royalty || 0)), "sold all time",
+        output.map(r => [r[0], r.slice(1).filter(Boolean).join(" · ")]), [], "") },
+    ...homes,
 
     { id: "library", name: "The Library", short: "LIBRARY", icon: "📚", color: 0xe8a87c, pos: [0, -26], w: 20, d: 12, h: 12, kind: "library",
       status: sv("hq-portal"), today: 0, total: 0,
@@ -462,6 +506,88 @@ function boardTex(b) {
   const g = c.getContext("2d"); g.setTransform(2, 0, 0, 2, 0, 0); paintBoard(g, b);
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = renderer.capabilities.getMaxAnisotropy(); return t;
 }
+// ---------- big billboards (owner 2026-10-08): drawn on a 1024 x 576 canvas (2x for sharpness) ----------
+function bigFrame(g, col, title, sub) {
+  const W = 1024, H = 576, grd = g.createLinearGradient(0, 0, 0, H); grd.addColorStop(0, "#160a3c"); grd.addColorStop(1, "#05020f");
+  g.fillStyle = grd; g.fillRect(0, 0, W, H);
+  g.strokeStyle = col; g.lineWidth = 8; g.shadowColor = col; g.shadowBlur = 26; g.strokeRect(10, 10, W - 20, H - 20); g.shadowBlur = 0;
+  g.fillStyle = col; g.font = "800 46px Sora"; g.textBaseline = "alphabetic"; g.fillText(title, 40, 74, W - 80);
+  if (sub) { g.fillStyle = "#a99cd6"; g.font = "600 22px Inter"; g.fillText(sub, 42, 106, W - 84); }
+}
+function drawOlympics(g, race) {  // Olympic results board: one bot per row, medal, name, value, profit $ and %
+  bigFrame(g, "#ffd166", "🏅 BOT OLYMPICS", "Race to $250 · ranked by profit % from each bot's own start");
+  const cols = [40, 130, 560, 720, 870], y0 = 140, rh = Math.min(96, (576 - y0 - 30) / Math.max(1, race.length));
+  g.fillStyle = "#7d74a8"; g.font = "700 18px Inter"; ["", "BOT", "VALUE", "PROFIT", "%"].forEach((h, i) => g.fillText(h, cols[i], y0 - 8));
+  const medal = ["#ffd166", "#d9dde6", "#cd7f32"];
+  race.forEach((r, i) => {
+    const y = y0 + i * rh, up = r.value >= r.start, pc = (r.value - r.start) / r.start * 100;
+    if (i % 2 === 0) { g.fillStyle = "rgba(255,255,255,0.04)"; g.fillRect(24, y, 976, rh); }
+    g.strokeStyle = "rgba(169,156,214,0.35)"; g.lineWidth = 2; g.beginPath(); g.moveTo(24, y + rh); g.lineTo(1000, y + rh); g.stroke();
+    const cy = y + rh / 2;
+    g.fillStyle = medal[i] || "#3a2f66"; g.beginPath(); g.arc(cols[0] + 34, cy, rh * 0.32, 0, 7); g.fill();
+    g.fillStyle = i < 3 ? "#1a1033" : "#fff"; g.font = `800 ${Math.round(rh * 0.34)}px Sora`; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(String(i + 1), cols[0] + 34, cy + 1);
+    g.textAlign = "left"; g.fillStyle = "#fff"; g.font = `800 ${Math.round(rh * 0.36)}px Sora`; g.fillText(r.name.replace(" LIVE", ""), cols[1], cy - (r.live ? 4 : 0), 330);
+    if (r.live) { const w = g.measureText(r.name.replace(" LIVE", "")).width; g.fillStyle = "#ff3b6b"; g.font = "800 18px Inter"; g.fillText("● LIVE $", cols[1] + Math.min(330, w) + 12, cy - 4); }
+    g.fillStyle = "#a99cd6"; g.font = "600 17px Inter"; g.fillText(r.live ? "real money" : "practice money", cols[1], cy + rh * 0.3);
+    g.fillStyle = "#fff"; g.font = `700 ${Math.round(rh * 0.32)}px Sora`; g.fillText(usd(r.value), cols[2], cy);
+    g.fillStyle = up ? "#3dffa8" : "#ff4d6d"; g.fillText((up ? "+" : "-") + "$" + Math.abs(r.value - r.start).toFixed(2), cols[3], cy);
+    g.fillText((pc >= 0 ? "+" : "") + pc.toFixed(1) + "%", cols[4], cy);
+  });
+  g.textBaseline = "alphabetic";
+}
+function drawOutput(g, rows) {  // Factory Output: one row per factory
+  bigFrame(g, "#ff8a3d", "🏭 FACTORY OUTPUT", "What the Industrial Park has made and sold");
+  const y0 = 130, rh = (576 - y0 - 28) / rows.length, cols = [44, 330, 560, 800];
+  rows.forEach((r, i) => {
+    const y = y0 + i * rh, cy = y + rh / 2;
+    if (i % 2 === 0) { g.fillStyle = "rgba(255,255,255,0.04)"; g.fillRect(24, y, 976, rh); }
+    g.strokeStyle = "rgba(255,138,61,0.3)"; g.lineWidth = 2; g.beginPath(); g.moveTo(24, y + rh); g.lineTo(1000, y + rh); g.stroke();
+    g.textBaseline = "middle"; g.fillStyle = "#fff"; g.font = "800 30px Sora"; g.fillText(r[0], cols[0], cy, 270);
+    g.font = "600 26px Inter"; g.fillStyle = "#d8ccff"; g.fillText(r[1], cols[1], cy, 220); g.fillText(r[2], cols[2], cy, 230);
+    g.fillStyle = "#3dffa8"; g.font = "800 28px Sora"; g.fillText(r[3] || "", cols[3], cy, 190);
+  });
+  g.textBaseline = "alphabetic";
+}
+function drawFaces(g, faces) {  // "Introducing the new faces of SHC": one card per new influencer
+  bigFrame(g, "#ff4fd8", "INTRODUCING THE NEW FACES OF SHC", "Side Hustle City's newest creators");
+  const n = Math.max(1, faces.length), cw = Math.min(300, (944 - (n - 1) * 20) / n), x0 = (1024 - (n * cw + (n - 1) * 20)) / 2, cols = ["#ff4fd8", "#ffd166", "#38bdf8", "#3dffa8", "#ff8a3d"];
+  if (!faces.length) { g.fillStyle = "#fff"; g.font = "800 60px Sora"; g.textAlign = "center"; g.fillText("Coming soon…", 512, 340); g.textAlign = "left"; return; }
+  faces.forEach((f, i) => {
+    const x = x0 + i * (cw + 20), y = 140, h = 400, c = cols[i % cols.length];
+    g.fillStyle = "rgba(255,255,255,0.05)"; g.fillRect(x, y, cw, h); g.strokeStyle = c; g.lineWidth = 4; g.strokeRect(x, y, cw, h);
+    g.textAlign = "center"; g.textBaseline = "middle";
+    g.font = `${Math.round(cw * 0.42)}px serif`; g.fillText(f.emoji || "⭐", x + cw / 2, y + 120);
+    g.fillStyle = "#fff"; g.font = `800 ${Math.round(Math.min(40, cw * 0.15))}px Sora`; g.fillText(f.name, x + cw / 2, y + 250, cw - 20);
+    g.fillStyle = c; g.font = "600 22px Inter"; g.fillText(f.username ? "@" + f.username : "", x + cw / 2, y + 296, cw - 20);
+    if (f.followers != null) { g.fillStyle = "#a99cd6"; g.font = "700 24px Inter"; g.fillText(`${num(f.followers)} followers`, x + cw / 2, y + 344, cw - 20); }
+    g.textAlign = "left"; g.textBaseline = "alphabetic";
+  });
+}
+function drawVentures(g, list) {
+  bigFrame(g, "#ff4fd8", "NEW VENTURES", "What we're building and testing next");
+  list.forEach((v, i) => {
+    const y = 150 + i * 80;
+    g.fillStyle = v.status === "live" ? "#3dffa8" : v.status === "testing" ? "#ffd166" : "#7d74a8"; g.font = "800 20px Inter"; g.fillText(String(v.status || "").toUpperCase(), 44, y + 34);
+    g.fillStyle = "#fff"; g.font = "800 34px Sora"; g.fillText(v.title || "", 190, y + 26, 790);
+    g.fillStyle = "#a99cd6"; g.font = "500 20px Inter"; g.fillText(v.text || "", 190, y + 56, 790);
+  });
+}
+function bigTex(draw) {
+  const c = document.createElement("canvas"); c.width = 2048; c.height = 1152;
+  const g = c.getContext("2d"); g.setTransform(2, 0, 0, 2, 0, 0); draw(g);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = renderer.capabilities.getMaxAnisotropy();
+  t.redraw = d => { g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, 2048, 1152); g.setTransform(2, 0, 0, 2, 0, 0); d(g); t.needsUpdate = true; };
+  return t;
+}
+// a bot's home in the Suburbs: who they are, how they're doing, their last report and their team
+function homeHTML(x, team) {
+  const r = x.report || {}, crew = team.filter(y => y.boss === x.id), boss = team.find(y => y.id === x.boss);
+  return `<h2>${esc(x.emoji)} ${esc(x.name)}${x.title ? " · " + esc(x.title) : ""}</h2><div class="sub">${esc(x.job || "")}</div>
+    <div class="staffbox"><div class="lt">🏠 Lives here</div>${staffRow(x)}</div>
+    <div class="note">${x.profile?.cron ? `<b>Shift:</b> ${esc(x.profile.cron)}<br>` : ""}${boss ? `<b>Reports to:</b> ${esc(boss.emoji)} ${esc(boss.name)}<br>` : ""}${x.profile?.mission ? `<b>Mission:</b> ${esc(x.profile.mission)}` : ""}</div>
+    ${r.title ? `<div class="note"><b>Last report:</b> ${esc(r.title)} <i>${esc(r.ts || "")}</i>${(r.lines || []).slice(0, 8).map(l => "<br>• " + esc(l)).join("")}</div>` : ""}
+    ${crew.length ? `<div class="staffbox"><div class="lt">👥 Team</div>${crew.map(staffRow).join("")}</div>` : ""}`;
+}
 function paintBoard(g, b) {
   const W = 1024, H = 600, col = hex(b.color);
   const grd = g.createLinearGradient(0, 0, 0, H); grd.addColorStop(0, "#160a3c"); grd.addColorStop(1, "#07031a");
@@ -519,18 +645,18 @@ function initScene() {
   addrEventListeners();
 }
 
-// ---------- Suburbs layout (owner 2026-10-08): every quarter on its own block, big parks between, Media up on a hill ----------
-// Downtown (Library, Vault, studios) in the middle; Media Hill west; Industrial Park east; Trading Town north; housing suburb south.
+// ---------- Suburbs layout (owner 2026-10-08): every quarter on its own rounded block, curvy roads, big parks between, Media up on a hill ----------
+// Downtown (Library, Vault, studios) in the middle; Media Hill west; Industrial Park east; Trading Town north; the bots' homes south.
 // Quarters you are not looking at fade into a coloured fog light and brighten as you fly over to them (fadeDistricts).
 const RW = 5;                          // half road width
-const DIST = [                         // c = centre, h = half-size inside the ring road (hill: plateau radius, foot = hill), y = ground height
-  { id: "down", name: "DOWNTOWN", color: 0xffd166, c: [0, 0], h: 41, y: 0 },
-  { id: "media", name: "MEDIA HILL", color: 0x3b82f6, c: [-138, 0], h: 36, y: 12, hill: 64 },
-  { id: "trade", name: "TRADING TOWN", color: 0x9945ff, c: [0, -150], h: 33, y: 0 },
-  { id: "ind", name: "INDUSTRIAL PARK", color: 0xff8a3d, c: [128, 0], h: 41, y: 0 },
-  { id: "subs", name: "THE SUBURBS", color: 0x22ff88, c: [0, 150], h: 37, y: 0 },
+const DIST = [                         // c = centre, h = radius inside the ring road (hill: plateau radius, foot = hill), wb/ph = how wobbly the edge is
+  { id: "down", name: "DOWNTOWN", color: 0xffd166, c: [0, 0], h: 46, y: 0, wb: 0.06, ph: 0.3 },
+  { id: "media", name: "MEDIA HILL", color: 0x3b82f6, c: [-150, 0], h: 36, y: 12, hill: 64, view: [1, 0], look: 12 },
+  { id: "trade", name: "TRADING TOWN", color: 0x9945ff, c: [0, -152], h: 40, y: 0, wb: 0.08, ph: 1.2, look: 20 },
+  { id: "ind", name: "INDUSTRIAL PARK", color: 0xff8a3d, c: [150, 0], h: 54, y: 0, wb: 0.07, ph: 2.1, look: 10 },
+  { id: "subs", name: "THE SUBURBS", color: 0x22ff88, c: [0, 152], h: 44, y: 0, wb: 0.08, ph: 0.7 },
 ];
-const EXT = 215;                       // city edge (grass ends, fog takes over)
+const EXT = 240;                       // city edge (grass ends, fog takes over)
 const VAULT = [0, 6];                  // the Vault in the middle of Downtown
 const POOL = [-4, 4, -17, -9];         // reflecting pool in front of the Library
 const PLAZA = [-14, 14, -6, 18];       // paved square round the Vault
@@ -543,55 +669,97 @@ function hillY(x, z) {  // ground height (only Media Hill rises: a flat plateau 
   const r = Math.hypot(x - HILL.c[0], z - HILL.c[1]);
   return r <= HILL.h ? HILL.y : r >= HILL.hill ? 0 : HILL.y * (HILL.hill - r) / (HILL.hill - HILL.h);
 }
-const ringPts = D => { const [x, z] = D.c, r = D.h + RW; return [[x - r, z - r], [x + r, z - r], [x + r, z + r], [x - r, z + r]]; };
-let ROADS = [];
-function roadList() {  // every road as a polyline: the ring round each block + avenues joining them to Downtown
-  const [dn, md, tr, ind, sb] = DIST, r = dn.h + RW;
-  return [{ pts: ringPts(dn), loop: true }, { pts: ringPts(tr), loop: true }, { pts: ringPts(ind), loop: true }, { pts: ringPts(sb), loop: true },
-    { pts: [[0, -r], [0, tr.c[1] + tr.h + RW]] }, { pts: [[0, r], [0, sb.c[1] - sb.h - RW]] },
-    { pts: [[r, 0], [ind.c[0] - ind.h - RW, 0]] }, { pts: [[-r, 0], [md.c[0] + md.hill, 0]] }];
+const blobR = (D, a, extra = 0) => D.hill ? D.h + extra : (D.h + extra) * (1 + D.wb * Math.sin(3 * a + D.ph) + 0.035 * Math.sin(5 * a + 1));
+const blobPt = (D, a, extra = 0) => [D.c[0] + Math.cos(a) * blobR(D, a, extra), D.c[1] + Math.sin(a) * blobR(D, a, extra)];
+const blob = (D, extra = 0, n = 96) => [...Array(n)].map((_, i) => blobPt(D, i / n * Math.PI * 2, extra));
+let ROADS = [], RHASH = new Map();
+function roadList() {  // ring roads round every block + curving avenues joining them to Downtown
+  const [dn, md, tr, ind, sb] = DIST, out = [dn, tr, ind, sb].map(D => ({ pts: blob(D, RW + 1, 120), loop: true }));
+  const link = (D, a, end) => {
+    const A = blobPt(dn, a, RW + 1), B = end || blobPt(D, a + Math.PI, RW + 1), mx = (A[0] + B[0]) / 2, mz = (A[1] + B[1]) / 2, L = Math.hypot(B[0] - A[0], B[1] - A[1]);
+    const nx = -(B[1] - A[1]) / L, nz = (B[0] - A[0]) / L, k = L * 0.22;
+    const ctrl = [A, [mx * 0.5 + A[0] * 0.5 + nx * k, mz * 0.5 + A[1] * 0.5 + nz * k], [mx * 0.5 + B[0] * 0.5 - nx * k, mz * 0.5 + B[1] * 0.5 - nz * k], B];
+    if (end) ctrl.splice(3, 0, [B[0] + 8, B[1]]);
+    const cv = new THREE.CatmullRomCurve3(ctrl.map(([x, z]) => new THREE.Vector3(x, 0, z)));
+    return { pts: cv.getSpacedPoints(Math.ceil(L / 2.5)).map(v => [v.x, v.z]) };
+  };
+  out.push(link(tr, -Math.PI / 2), link(sb, Math.PI / 2), link(ind, 0), link(md, Math.PI, [md.c[0] + md.hill, md.c[1]]));
+  return out;
 }
 const segsOf = R => R.pts.map((p, i) => [p, R.pts[(i + 1) % R.pts.length]]).slice(0, R.loop ? R.pts.length : R.pts.length - 1);
-function segDist(x, z, [[x0, z0], [x1, z1]]) {
-  const dx = x1 - x0, dz = z1 - z0, L2 = dx * dx + dz * dz, t = Math.max(0, Math.min(1, ((x - x0) * dx + (z - z0) * dz) / L2));
-  return Math.hypot(x - x0 - t * dx, z - z0 - t * dz);
+function hashRoads() {  // sample points along every road into a 10 m grid so "how far to the nearest road" is cheap
+  RHASH = new Map();
+  ROADS.forEach(R => segsOf(R).forEach(([[x0, z0], [x1, z1]]) => {
+    const n = Math.max(1, Math.ceil(Math.hypot(x1 - x0, z1 - z0) / 1.5));
+    for (let i = 0; i < n; i++) { const x = x0 + (x1 - x0) * i / n, z = z0 + (z1 - z0) * i / n, k = `${Math.floor(x / 10)},${Math.floor(z / 10)}`; (RHASH.get(k) || RHASH.set(k, []).get(k)).push(x, z); }
+  }));
 }
-const roadDist = (x, z) => ROADS.reduce((m, R) => Math.min(m, ...segsOf(R).map(s => segDist(x, z, s))), 1e9);
+function roadDist(x, z) {
+  let m = 1e9; const cx = Math.floor(x / 10), cz = Math.floor(z / 10);
+  for (let i = -1; i <= 1; i++) for (let j = -1; j <= 1; j++) { const a = RHASH.get(`${cx + i},${cz + j}`); if (a) for (let k = 0; k < a.length; k += 2) m = Math.min(m, Math.hypot(x - a[k], z - a[k + 1])); }
+  return m;
+}
+function normals(P, loop) {  // unit normal at every point of a polyline
+  const n = P.length;
+  return P.map((p, i) => {
+    const a = P[loop ? (i - 1 + n) % n : Math.max(0, i - 1)], b = P[loop ? (i + 1) % n : Math.min(n - 1, i + 1)], l = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1;
+    return [-(b[1] - a[1]) / l, (b[0] - a[0]) / l];
+  });
+}
+function ribbon2(P, loop, half, y, mat) {  // flat strip along a polyline
+  const N = normals(P, loop), pos = [], idx = [], n = P.length;
+  P.forEach(([x, z], i) => pos.push(x + N[i][0] * half, y, z + N[i][1] * half, x - N[i][0] * half, y, z - N[i][1] * half));
+  for (let i = 0; i < (loop ? n : n - 1); i++) { const j = (i + 1) % n; idx.push(2 * i, 2 * j, 2 * i + 1, 2 * i + 1, 2 * j, 2 * j + 1); }
+  const geo = new THREE.BufferGeometry(); geo.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3)); geo.setIndex(idx); geo.computeVertexNormals();
+  const m = new THREE.Mesh(geo, mat); scene.add(m); return m;
+}
+function along(R, step, fn, skip = 0) {  // walk a road every `step` metres: fn(x, z, nx, nz, heading)
+  const N = normals(R.pts, R.loop); let acc = skip;
+  segsOf(R).forEach(([[x0, z0], [x1, z1]], i) => {
+    const len = Math.hypot(x1 - x0, z1 - z0);
+    while (acc < len) { const t = acc / len; fn(x0 + (x1 - x0) * t, z0 + (z1 - z0) * t, N[i][0], N[i][1], Math.atan2(x1 - x0, z1 - z0)); acc += step; }
+    acc -= len;
+  });
+}
 
 function ground() {
-  towers.length = 0; ROADS = roadList();
+  towers.length = 0; ROADS = roadList(); hashRoads();
   const d = new THREE.Object3D(), col = new THREE.Color();
-  const flat = (w, h, mat, x, y, z, ry = 0) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), mat); m.rotation.set(-Math.PI / 2, 0, ry); m.position.set(x, y, z); scene.add(m); return m; };
-  // night asphalt to the horizon, the city's lawns on top
-  flat(2400, 2400, new THREE.MeshStandardMaterial({ color: 0x0b0716, roughness: 0.28, metalness: 0.6 }), 0, 0, 0);
+  const flat = (w, h, mat, x, y, z) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), mat); m.rotation.set(-Math.PI / 2, 0, 0); m.position.set(x, y, z); scene.add(m); return m; };
+  // night asphalt to the horizon, the city's lawns on top (rounded corners)
+  flat(2600, 2600, new THREE.MeshStandardMaterial({ color: 0x0b0716, roughness: 0.28, metalness: 0.6 }), 0, 0, 0);
   const grassM = new THREE.MeshStandardMaterial({ color: 0x1d6b3c, emissive: 0x06301a, roughness: 0.95 });
-  const lawn = new THREE.Mesh(new THREE.BoxGeometry(EXT * 2, 0.3, EXT * 2), grassM); lawn.position.y = 0.15; scene.add(lawn);
-  const kerb = neonEdges(new THREE.BoxGeometry(EXT * 2 + 0.4, 0.32, EXT * 2 + 0.4), 0x22ff88); kerb.position.y = 0.16; scene.add(kerb);
-  // block pads inside the ring roads (the hill gets its own mound)
+  const lawnS = new THREE.Shape(); const E = EXT, rr = 60;
+  lawnS.moveTo(-E + rr, -E); lawnS.lineTo(E - rr, -E); lawnS.quadraticCurveTo(E, -E, E, -E + rr); lawnS.lineTo(E, E - rr); lawnS.quadraticCurveTo(E, E, E - rr, E);
+  lawnS.lineTo(-E + rr, E); lawnS.quadraticCurveTo(-E, E, -E, E - rr); lawnS.lineTo(-E, -E + rr); lawnS.quadraticCurveTo(-E, -E, -E + rr, -E);
+  const lawn = new THREE.Mesh(new THREE.ShapeGeometry(lawnS, 16).rotateX(-Math.PI / 2), grassM); lawn.position.y = 0.3; scene.add(lawn);
+  const kerb = new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(lawnS.getSpacedPoints(200).map(p => new THREE.Vector3(p.x, 0.32, -p.y))), new THREE.LineBasicMaterial({ color: 0x22ff88 })); scene.add(kerb);
+  // rounded block pads inside the ring roads (the hill gets its own mound)
   const padM = new THREE.MeshStandardMaterial({ color: 0x1b1530, roughness: 0.7 });
   DIST.forEach(D => {
     if (D.hill) return;
-    const s = D.h * 2, pad = flat(s, s, D.id === "subs" ? new THREE.MeshStandardMaterial({ color: 0x23744a, emissive: 0x07361d, roughness: 0.95 }) : padM, D.c[0], 0.31, D.c[1]);
-    const e = neonEdges(new THREE.BoxGeometry(s, 0.01, s), D.color); e.position.set(D.c[0], 0.33, D.c[1]); scene.add(e);
+    const P = blob(D, 0.5), sh = new THREE.Shape(P.map(([x, z]) => new THREE.Vector2(x, -z)));
+    const pad = new THREE.Mesh(new THREE.ShapeGeometry(sh).rotateX(-Math.PI / 2), D.id === "subs" ? new THREE.MeshStandardMaterial({ color: 0x23744a, emissive: 0x07361d, roughness: 0.95 }) : padM);
+    pad.position.y = 0.31; scene.add(pad);
+    scene.add(new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(P.map(([x, z]) => new THREE.Vector3(x, 0.34, z))), new THREE.LineBasicMaterial({ color: D.color })));
   });
   // Media Hill: grassy mound with a flat top, a lit rim and a ramp road up from the west avenue
   const [hx, hz] = HILL.c, rise = HILL.hill - HILL.h;
   const mound = new THREE.Mesh(new THREE.CylinderGeometry(HILL.h, HILL.hill, HILL.y, 72, 4), new THREE.MeshStandardMaterial({ color: 0x1f7a44, emissive: 0x07361d, roughness: 0.95 }));
   mound.position.set(hx, HILL.y / 2 + 0.3, hz); scene.add(mound);
-  const top = new THREE.Mesh(new THREE.CircleGeometry(HILL.h - 6, 64), padM); top.rotation.x = -Math.PI / 2; top.position.set(hx, HILL.y + 0.32, hz); scene.add(top);
+  const top = new THREE.Mesh(new THREE.CircleGeometry(HILL.h - 4, 64), padM); top.rotation.x = -Math.PI / 2; top.position.set(hx, HILL.y + 0.32, hz); scene.add(top);
   const rim = new THREE.Mesh(new THREE.TorusGeometry(HILL.h, 0.18, 6, 96), new THREE.MeshBasicMaterial({ color: HILL.color, toneMapped: false })); rim.rotation.x = Math.PI / 2; rim.position.set(hx, HILL.y + 0.35, hz); scene.add(rim);
-  const roadM = new THREE.MeshStandardMaterial({ color: 0x14101f, roughness: 0.4, metalness: 0.5 });
+  const roadM = new THREE.MeshStandardMaterial({ color: 0x14101f, roughness: 0.4, metalness: 0.5, side: THREE.DoubleSide });
   const rampLen = Math.hypot(rise, HILL.y), ramp = new THREE.Mesh(new THREE.BoxGeometry(rampLen + 1, 0.4, RW * 2), roadM);
   ramp.position.set(hx + HILL.h + rise / 2, HILL.y / 2 + 0.45, hz); ramp.rotation.z = -Math.atan2(HILL.y, rise); scene.add(ramp);
-  flat(10, RW * 2, roadM, hx + HILL.h - 4, HILL.y + 0.34, hz);   // drive onto the plateau
-  // roads: asphalt strips, yellow dashed centre lines, lamps on both kerbs
-  const dashes = [], L = [], gap = MOBILE ? 24 : 16;
-  ROADS.forEach(R => segsOf(R).forEach(([[x0, z0], [x1, z1]]) => {
-    const len = Math.hypot(x1 - x0, z1 - z0), ux = (x1 - x0) / len, uz = (z1 - z0) / len, ry = Math.atan2(ux, uz);
-    const m = flat(RW * 2, len + RW * 2, roadM, (x0 + x1) / 2, 0.34, (z0 + z1) / 2); m.rotation.z = ry;
-    for (let s = RW + 3; s < len - RW - 3; s += 6) dashes.push([x0 + ux * s, z0 + uz * s, ry]);
-    for (let s = RW + 6; s < len - RW - 4; s += gap) for (const side of [-1, 1]) L.push([x0 + ux * s - uz * side * (RW + 0.4), z0 + uz * s + ux * side * (RW + 0.4), ry + (side > 0 ? Math.PI / 2 : -Math.PI / 2)]);
-  }));
+  flat(10, RW * 2, roadM, hx + HILL.h - 4, HILL.y + 0.34, hz);
+  // roads: one smooth asphalt ribbon each, yellow dashed centre line, lamps on both kerbs
+  const dashes = [], L = [];
+  ROADS.forEach(R => {
+    ribbon2(R.pts, R.loop, RW, 0.34, roadM);
+    along(R, 6, (x, z, nx, nz, ry) => dashes.push([x, z, ry]), 3);
+    along(R, MOBILE ? 26 : 18, (x, z, nx, nz, ry) => { for (const s of [-1, 1]) { const lx = x + nx * s * (RW + 0.4), lz = z + nz * s * (RW + 0.4); if (roadDist(lx, lz) > RW - 0.2) L.push([lx, lz, Math.atan2(-nx * s, -nz * s)]); } }, 8);
+  });
   const mark = new THREE.InstancedMesh(new THREE.BoxGeometry(0.18, 0.02, 3), new THREE.MeshBasicMaterial({ color: 0xffd34d }), dashes.length);
   dashes.forEach(([x, z, ry], i) => { d.position.set(x, 0.36, z); d.rotation.set(0, ry, 0); d.updateMatrix(); mark.setMatrixAt(i, d.matrix); });
   scene.add(mark);
@@ -606,47 +774,43 @@ function ground() {
   });
   scene.add(post, arm, head);
   suburbs(); cars(); skyCars(); rain();
-  // smoggy stars
   const sp = new Float32Array(500 * 3);
   for (let i = 0; i < 500; i++) { const a = Math.random() * 6.28, e = Math.random() * 1.2 + 0.25, R = 900; sp.set([Math.cos(a) * Math.cos(e) * R, Math.sin(e) * R, Math.sin(a) * Math.cos(e) * R], i * 3); }
   const sg = new THREE.BufferGeometry(); sg.setAttribute("position", new THREE.BufferAttribute(sp, 3));
   scene.add(new THREE.Points(sg, new THREE.PointsMaterial({ color: 0xd8ccff, size: 1.6, fog: false })));
 }
 
-// the housing suburb: rows of little neon-trimmed houses with pyramid roofs, lit windows and garden trees
+// the Suburbs: a village green with a fountain in the middle; the bots' homes stand round it (kind "home" buildings).
+// The public demo has no staff, so it gets ordinary houses instead.
 function suburbs() {
-  const S = DIST[4], d = new THREE.Object3D(), col = new THREE.Color(), H = [];
-  for (let i = 0; i < 6; i++) for (let j = 0; j < 4; j++) {
-    const x = S.c[0] - S.h + 6.5 + i * (S.h * 2 - 13) / 5, z = S.c[1] - S.h + 7 + j * (S.h * 2 - 14) / 3;
-    if (Math.abs(x - S.c[0]) < 6) continue;   // the avenue's view straight down the middle stays open
-    H.push([x + rnd(-0.6, 0.6), z, j % 2 ? Math.PI : 0, rnd(0.85, 1.15)]);
-  }
+  const S = DIST[4], [cx, cz] = S.c;
+  const green = new THREE.Mesh(new THREE.CircleGeometry(15, 48), new THREE.MeshStandardMaterial({ color: 0x3d3550, roughness: 0.7 })); green.rotation.x = -Math.PI / 2; green.position.set(cx, 0.33, cz); scene.add(green);
+  const ringE = new THREE.Mesh(new THREE.TorusGeometry(15, 0.15, 6, 64), new THREE.MeshBasicMaterial({ color: S.color, toneMapped: false })); ringE.rotation.x = Math.PI / 2; ringE.position.set(cx, 0.36, cz); scene.add(ringE);
+  const bowl = new THREE.Mesh(new THREE.CylinderGeometry(4.5, 5, 0.9, 32), new THREE.MeshStandardMaterial({ color: 0xd9d2c4, emissive: 0x332a1a, emissiveIntensity: 0.3 })); bowl.position.set(cx, 0.75, cz); scene.add(bowl);
+  const wtr = new THREE.Mesh(new THREE.CylinderGeometry(4.1, 4.1, 0.1, 32), new THREE.MeshStandardMaterial({ color: 0x0a2a55, emissive: 0x38bdf8, emissiveIntensity: 0.5 })); wtr.position.set(cx, 1.2, cz); scene.add(wtr);
+  const jet = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.5, 4, 12, 1, true), new THREE.MeshBasicMaterial({ color: 0xbfe9ff, transparent: true, opacity: 0.6, blending: THREE.AdditiveBlending, depthWrite: false }));
+  jet.position.set(cx, 3.2, cz); scene.add(jet); anim.push((dt, t) => { jet.scale.y = 0.85 + Math.sin(t * 3) * 0.15; });
+  solids.push({ x: cx, z: cz, r: 5.5, h: 5 });
+  if (M.B.some(b => b.home)) return;
+  const d = new THREE.Object3D(), col = new THREE.Color(), H = [];
+  for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2 + 0.26; H.push([cx + Math.sin(a) * 27, cz - Math.cos(a) * 27, Math.atan2(-Math.sin(a), Math.cos(a))]); }
   const body = new THREE.InstancedMesh(new THREE.BoxGeometry(6, 3.4, 5), new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0x150a30, roughness: 0.8 }), H.length);
   const roof = new THREE.InstancedMesh(new THREE.ConeGeometry(4.9, 2.6, 4).rotateY(Math.PI / 4), new THREE.MeshStandardMaterial({ color: 0x2a1f4a, emissive: 0x3b1d6e, emissiveIntensity: 0.5, flatShading: true }), H.length);
-  const win = new THREE.InstancedMesh(new THREE.BoxGeometry(4.2, 1.1, 5.1), new THREE.MeshBasicMaterial({ color: 0xffe2a8, toneMapped: false }), H.length);
-  const door = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1.9, 0.1), new THREE.MeshBasicMaterial({ color: 0xffffff, toneMapped: false }), H.length);
   const walls = [0xf6c2c2, 0xbfe0ff, 0xfff1a8, 0xc9f2c7, 0xe3cdf7, 0xffd8a8];
-  H.forEach(([x, z, ry, sc], i) => {
-    d.rotation.set(0, ry, 0); d.scale.setScalar(sc);
-    d.position.set(x, 0.3 + 1.7 * sc, z); d.updateMatrix(); body.setMatrixAt(i, d.matrix); body.setColorAt(i, col.set(walls[i % walls.length]).multiplyScalar(0.55));
-    d.position.y = 0.3 + 3.4 * sc + 1.3 * sc; d.updateMatrix(); roof.setMatrixAt(i, d.matrix);
-    d.scale.set(sc, sc * (Math.random() < 0.7 ? 1 : 0.01), sc); d.position.y = 0.3 + 2.0 * sc; d.updateMatrix(); win.setMatrixAt(i, d.matrix);
-    d.scale.setScalar(sc); d.position.set(x, 0.3 + 0.95 * sc, z); d.translateZ(2.55); d.updateMatrix(); door.setMatrixAt(i, d.matrix); door.setColorAt(i, col.set(NEON[i % NEON.length]));
-    solids.push({ x, z, r: 3.5, h: 6 });
+  H.forEach(([x, z, ry], i) => {
+    d.rotation.set(0, ry, 0); d.position.set(x, 2.0, z); d.updateMatrix(); body.setMatrixAt(i, d.matrix); body.setColorAt(i, col.set(walls[i % walls.length]).multiplyScalar(0.55));
+    d.position.y = 5.0; d.updateMatrix(); roof.setMatrixAt(i, d.matrix); solids.push({ x, z, r: 3.5, h: 6 });
   });
-  scene.add(body, roof, win, door);
+  scene.add(body, roof);
 }
 
 // cars on every road: body, glass cabin, 4 wheels, headlights, red light bar and neon underglow; one lane each way
 function cars() {
   const lanes = [];
-  ROADS.forEach(R => [[-2.4, 1], [2.4, -1]].forEach(([off, dir]) => {   // keep right: lane offset to the right of travel
-    let P = R.pts.map(p => p.slice());
-    if (R.loop) { const [cx, cz] = [P.reduce((a, p) => a + p[0], 0) / P.length, P.reduce((a, p) => a + p[1], 0) / P.length];
-      P = P.map(([x, z]) => [cx + (x - cx) * (1 + off / Math.abs(x - cx)), cz + (z - cz) * (1 + off / Math.abs(z - cz))]); }
-    else { const [[x0, z0], [x1, z1]] = P, l = Math.hypot(x1 - x0, z1 - z0), nx = -(z1 - z0) / l, nz = (x1 - x0) / l; P = P.map(([x, z]) => [x + nx * off, z + nz * off]); }
+  ROADS.forEach(R => [[-2.4, 1], [2.4, -1]].forEach(([off, dir]) => {
+    const N = normals(R.pts, R.loop); let P = R.pts.map(([x, z], i) => [x + N[i][0] * off, z + N[i][1] * off]);
     if (dir < 0) P.reverse();
-    const segs = (R.loop ? P.map((p, i) => [p, P[(i + 1) % P.length]]) : [[P[0], P[1]]]).map(([a, b]) => ({ a, b, len: Math.hypot(b[0] - a[0], b[1] - a[1]) }));
+    const segs = (R.loop ? P.map((p, i) => [p, P[(i + 1) % P.length]]) : P.slice(0, -1).map((p, i) => [p, P[i + 1]])).map(([a, b]) => ({ a, b, len: Math.hypot(b[0] - a[0], b[1] - a[1]) || 0.01 }));
     lanes.push({ segs, len: segs.reduce((t, s) => t + s.len, 0), v: rnd(9, 17) });
   }));
   const total = lanes.reduce((t, l) => t + l.len, 0), N = MOBILE ? 64 : 130, list = [];
@@ -896,6 +1060,31 @@ function building(b) {
     });
     anim.push((dt, t) => { const fd = g.userData.fade ?? 1; puffs.forEach(o => { o.k = (o.k + dt * 0.12) % 1; o.p.position.set(o.x + o.k * 2.5, o.y0 + o.k * 9, o.z - o.k * 1.5); o.p.scale.setScalar(0.6 + o.k * 1.8); o.p.material.opacity = 0.55 * (1 - o.k) * fd; }); });
     top = h1 + 2;
+  } else if (b.kind === "bigboard") {  // giant double-sided screen on steel legs (Media, Factory Output, Bot Olympics)
+    g.remove(plinth);
+    const f = faceDir(b), m = new THREE.Group(); m.rotation.y = Math.atan2(f.x, f.z); g.add(m);
+    const W = b.w, bh = W * 0.5625, yc = b.lift + bh / 2, tex = bigTex(b.slides ? b.slides[0] : b.draw);
+    [0, Math.PI].forEach(r => { const p = new THREE.Mesh(new THREE.PlaneGeometry(W, bh), new THREE.MeshBasicMaterial({ map: tex, toneMapped: false })); p.rotation.y = r; p.position.set(0, yc, r ? -0.46 : 0.46); m.add(p); });
+    const frame = new THREE.Mesh(new THREE.BoxGeometry(W + 1.2, bh + 1.2, 0.8), new THREE.MeshStandardMaterial({ color: 0x120a2a, metalness: 0.6, roughness: 0.4 })); frame.position.y = yc; m.add(frame);
+    const fe = neonEdges(new THREE.BoxGeometry(W + 1.25, bh + 1.25, 0.85), c); fe.position.y = yc; m.add(fe);
+    const steel = new THREE.MeshStandardMaterial({ color: 0x2b2550, metalness: 0.7, roughness: 0.4 });
+    [-W / 3, W / 3].forEach(x => { const leg = new THREE.Mesh(new THREE.BoxGeometry(1.2, b.lift + 1, 1.2), steel); leg.position.set(x, (b.lift + 1) / 2, 0); m.add(leg);
+      const foot = new THREE.Mesh(new THREE.BoxGeometry(3, 0.6, 3), steel); foot.position.set(x, 0.3, 0); m.add(foot); });
+    for (let i = 0; i < 6; i++) { const lamp = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.3, 0.8), new THREE.MeshBasicMaterial({ color: 0xfff2c8, toneMapped: false })); lamp.position.set(-W / 2 + W / 6 * (i + 0.5), b.lift + bh + 1, 0.9); m.add(lamp); }
+    if (b.slides && b.slides.length > 1) { let cur = 0; anim.push((dt, t) => { const k = Math.floor(t / 9) % b.slides.length; if (k !== cur) { cur = k; tex.redraw(b.slides[k]); } }); }
+    top = b.lift + bh + 1;
+  } else if (b.kind === "home") {  // a bot's house in the Suburbs: pastel walls, roof glowing in its status colour, lit windows, a path to the green
+    g.remove(plinth);
+    const f = faceDir(b), m = new THREE.Group(); m.rotation.y = Math.atan2(f.x, f.z); g.add(m);
+    const pastel = [0xf6c2c2, 0xbfe0ff, 0xfff1a8, 0xc9f2c7, 0xe3cdf7, 0xffd8a8][(b.id.length + b.short.charCodeAt(0)) % 6];
+    const wall = new THREE.Mesh(new THREE.BoxGeometry(b.w, 3.6, b.d), new THREE.MeshStandardMaterial({ color: new THREE.Color(pastel).multiplyScalar(0.6), emissive: 0x150a30, roughness: 0.8 })); wall.position.y = 2.1; m.add(wall);
+    const roof = new THREE.Mesh(new THREE.ConeGeometry(b.w * 0.8, 3, 4).rotateY(Math.PI / 4), new THREE.MeshStandardMaterial({ color: 0x2a1f4a, emissive: c, emissiveIntensity: 0.55, flatShading: true })); roof.scale.z = b.d / b.w; roof.position.y = 5.4; m.add(roof);
+    const we = neonEdges(new THREE.BoxGeometry(b.w + 0.05, 3.6, b.d + 0.05), c); we.position.y = 2.1; m.add(we);
+    const door = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 2.2), new THREE.MeshBasicMaterial({ color: c, toneMapped: false })); door.position.set(0, 1.4, b.d / 2 + 0.03); m.add(door);
+    [-1, 1].forEach(sx => { const w = new THREE.Mesh(new THREE.PlaneGeometry(1.3, 1.1), new THREE.MeshBasicMaterial({ color: 0xffe2a8, toneMapped: false })); w.position.set(sx * b.w * 0.3, 2.5, b.d / 2 + 0.03); m.add(w); });
+    const path = new THREE.Mesh(new THREE.PlaneGeometry(1.4, 7), new THREE.MeshStandardMaterial({ color: 0x5b5470 })); path.rotation.x = -Math.PI / 2; path.position.set(0, 0.34, b.d / 2 + 3.5); m.add(path);
+    const mail = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.4, 0.7), new THREE.MeshStandardMaterial({ color: c, emissive: c, emissiveIntensity: 0.4 })); mail.position.set(1.4, 1.1, b.d / 2 + 5.5); m.add(mail);
+    top = 7;
   } else if (b.kind === "warehouse") {  // warehouse: long shed, saw-tooth roof, 3 lit roll-up doors, crates + pallets out front
     const f = faceDir(b), m = new THREE.Group(); m.rotation.y = Math.atan2(f.x, f.z); g.add(m);
     m.add(tower(b.w, b.h, b.d, c, 91, lit * 0.5));
@@ -1002,20 +1191,23 @@ function building(b) {
     halo.rotation.x = Math.PI / 2; halo.position.y = top + 2; g.add(halo);
     anim.push((dt, t) => { beam.material.opacity = 0.4 + Math.sin(t * 3) * 0.15; halo.position.y = top + 2 + ((t * 3) % 6); halo.material.opacity = 1; });
   }
-  // billboard: double-sided, on posts beside the building, facing the plaza
-  const tex = boardTex(b), bw = b.kind === "mega" ? 16 : 11, bh = bw * 600 / 1024;
-  const board = new THREE.Group();
-  [0, Math.PI].forEach(r => { const p = new THREE.Mesh(new THREE.PlaneGeometry(bw, bh), new THREE.MeshBasicMaterial({ map: tex, toneMapped: false }));
-    p.rotation.y = r; p.position.z = r ? -0.06 : 0.06; board.add(p); });
-  board.add(new THREE.Mesh(new THREE.BoxGeometry(bw + 0.4, bh + 0.4, 0.1), new THREE.MeshBasicMaterial({ color: 0x05020f })));
-  const postH = b.kind === "mega" ? 10 : b.h < 14 ? 3.5 : 6;
-  [-bw / 3, bw / 3].forEach(x => { const p = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, postH), new THREE.MeshBasicMaterial({ color: 0x2a1670 })); p.position.set(x, -bh / 2 - postH / 2, 0); board.add(p); });
-  const toward = faceDir(b);
-  const off = b.kind === "market" || b.kind === "factory" ? b.d / 2 + 5.5 : Math.max(b.w, b.d) * (b.kind === "mega" ? 0.75 : 0.95) + 2;
-  if (b.kind === "library" || WLD) { board.children.slice(-2).forEach(p => p.visible = false); board.position.set(0, top + bh / 2 + 0.6, 0); top += bh + 1; if (WLD) beacon.position.y = top + 0.8; }
-  else board.position.set(toward.x * off, postH + bh / 2, toward.z * off);
-  if ((b.kind === "market" || b.kind === "factory") && !WLD) { board.position.y += b.h * 0.55; board.children.slice(-2).forEach(p => { p.scale.y = (postH + b.h * 0.55) / postH; p.position.y = -bh / 2 - (postH + b.h * 0.55) / 2; }); }
-  board.lookAt(board.position.clone().add(g.position).add(toward));
+  // billboards: theme worlds keep one on every roof; the neon city has a few giant screens instead (owner 2026-10-08), so here
+  // the "board" is just an invisible anchor that focus() frames
+  const toward = faceDir(b); let board;
+  if (WLD) {
+    const tex = boardTex(b), bw = b.kind === "mega" ? 16 : 11, bh = bw * 600 / 1024;
+    board = new THREE.Group();
+    [0, Math.PI].forEach(r => { const p = new THREE.Mesh(new THREE.PlaneGeometry(bw, bh), new THREE.MeshBasicMaterial({ map: tex, toneMapped: false }));
+      p.rotation.y = r; p.position.z = r ? -0.06 : 0.06; board.add(p); });
+    board.add(new THREE.Mesh(new THREE.BoxGeometry(bw + 0.4, bh + 0.4, 0.1), new THREE.MeshBasicMaterial({ color: 0x05020f })));
+    const postH = b.kind === "mega" ? 10 : b.h < 14 ? 3.5 : 6;
+    [-bw / 3, bw / 3].forEach(x => { const p = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, postH), new THREE.MeshBasicMaterial({ color: 0x2a1670 })); p.position.set(x, -bh / 2 - postH / 2, 0); board.add(p); });
+    const off = b.kind === "market" || b.kind === "factory" ? b.d / 2 + 5.5 : Math.max(b.w, b.d) * (b.kind === "mega" ? 0.75 : 0.95) + 2;
+    if (b.kind === "library" || WLD) { board.children.slice(-2).forEach(p => p.visible = false); board.position.set(0, top + bh / 2 + 0.6, 0); top += bh + 1; if (WLD) beacon.position.y = top + 0.8; }
+    else board.position.set(toward.x * off, postH + bh / 2, toward.z * off);
+    if ((b.kind === "market" || b.kind === "factory") && !WLD) { board.position.y += b.h * 0.55; board.children.slice(-2).forEach(p => { p.scale.y = (postH + b.h * 0.55) / postH; p.position.y = -bh / 2 - (postH + b.h * 0.55) / 2; }); }
+    board.rotation.set(0, Math.atan2(toward.x, toward.z), 0);
+  } else { board = new THREE.Group(); board.position.y = top * 0.6; }
   g.add(board); g.userData.board = board; g.userData.top = top;
   // floating tag
   const el = document.createElement("div"); el.className = "tag"; el.style.setProperty("--c", hex(c));
@@ -1081,7 +1273,7 @@ function flowBeam() {
 }
 
 // money arcs: a thin flowing beam from every money maker to the Vault (bright + sparks when it earned today)
-const MONEY = ["etsy", "gumroad", "kdp", "rose", "contra", "zoho", "lab", "krypto", "kalshi", "poly", "longshot"];
+const MONEY = ["etsy", "gumroad", "kdp", "rose", "contra", "zoho", "lab", "krypto", "kalshi", "polylive"];  // practice bots are not money; the LIVE Polymarket bot only while it is up
 function moneyBeams() {
   const V = groups.vault; if (!V) return;
   const to = V.position.clone().setY(9.5);
@@ -1089,7 +1281,7 @@ function moneyBeams() {
   const cx = cv.getContext("2d"), gr = cx.createLinearGradient(0, 0, 128, 0);
   gr.addColorStop(0, "rgba(255,255,255,0.1)"); gr.addColorStop(0.8, "rgba(255,255,255,0.1)"); gr.addColorStop(0.95, "#fff"); gr.addColorStop(1, "rgba(255,255,255,0.1)");
   cx.fillStyle = gr; cx.fillRect(0, 0, 128, 4);
-  M.B.filter(b => MONEY.includes(b.id) && groups[b.id]).forEach((b, bi) => {
+  M.B.filter(b => MONEY.includes(b.id) && groups[b.id] && (b.id !== "polylive" || b.total > 0)).forEach((b, bi) => {
     const A = groups[b.id], hot = b.today > 0, from = A.position.clone().setY(A.position.y + A.userData.top + 0.5);
     const mid = from.clone().lerp(to, 0.5).setY(Math.max(from.y, to.y) + 6 + from.distanceTo(to) * 0.12);
     const curve = new THREE.QuadraticBezierCurve3(from, mid, to);
@@ -1165,17 +1357,19 @@ function life() {
   };
   const [DN, , TR, IN] = DIST;
   // Downtown: walks from the Vault plaza out to the ring road, either side of the pool up to the Library
-  seg(0, PLAZA[3], 0, DN.h, 5, 0xffd166); seg(-9, -20, -9, PLAZA[2], 3.4); seg(9, -20, 9, PLAZA[2], 3.4);
-  seg(PLAZA[0], 6, -DN.h, 6, 4, 0xffd166); seg(PLAZA[1], 6, DN.h, 6, 4, 0xffd166);
+  seg(0, PLAZA[3], 0, DN.h * 0.88, 5, 0xffd166); seg(-9, -20, -9, PLAZA[2], 3.4); seg(9, -20, 9, PLAZA[2], 3.4);
+  seg(PLAZA[0], 6, -DN.h * 0.86, 6, 4, 0xffd166); seg(PLAZA[1], 6, DN.h * 0.86, 6, 4, 0xffd166);
   // Trading Town promenade and the Industrial Park's yard street
-  seg(TR.c[0] - TR.h + 2, TR.c[1] + 12, TR.c[0] + TR.h - 2, TR.c[1] + 12, 5, TR.color);
-  seg(IN.c[0] - IN.h + 2, IN.c[1] + 3, IN.c[0] + IN.h - 2, IN.c[1] + 3, 4, IN.color);
+  seg(TR.c[0] - TR.h * 0.8, TR.c[1] + 16, TR.c[0] + TR.h * 0.8, TR.c[1] + 16, 5, TR.color);
+  seg(IN.c[0] - IN.h * 0.8, IN.c[1] + 3, IN.c[0] + IN.h * 0.8, IN.c[1] + 3, 4, IN.color);
   // the four big parks between the quarters: a loop walk round a pond, and a path in from Downtown's corner
-  const PARKS = [[-1, -1], [1, -1], [-1, 1], [1, 1]].map(([sx, sz]) => ({ x: sx * 118, z: sz * 112, r: 44, sx, sz }));
+  const PARKS = [[-1, -1], [1, -1], [-1, 1], [1, 1]].map(([sx, sz]) => ({ x: sx * 122, z: sz * 118, r: 44, sx, sz }));
   PARKS.forEach(P => {
     const { x, z, r, sx, sz } = P;
-    seg(x - r, z - r, x + r, z - r, 4); seg(x + r, z - r, x + r, z + r, 4); seg(x + r, z + r, x - r, z + r, 4); seg(x - r, z + r, x - r, z - r, 4);
-    seg(sx * 54, sz * 54, x - sx * r, z - sz * r, 4, 0x22ff88); seg(x - sx * r, z, x - sx * 15, z, 3.4); seg(x, z - sz * r, x, z - sz * 15, 3.4);
+    const lr = r * 0.78, n = 20, wob = k => lr * (1 + 0.12 * Math.sin(k * 3 + x));   // a winding loop walk round the pond
+    for (let k = 0; k < n; k++) { const a0 = k / n * 6.283, a1 = (k + 1) / n * 6.283; seg(x + Math.cos(a0) * wob(a0), z + Math.sin(a0) * wob(a0), x + Math.cos(a1) * wob(a1), z + Math.sin(a1) * wob(a1), 3.6); }
+    const ang = Math.atan2(sz, sx), [ax, az] = blobPt(DN, ang, RW + 7), ea = Math.atan2(az - z, ax - x);
+    seg(ax, az, x + Math.cos(ea) * wob(ea), z + Math.sin(ea) * wob(ea), 4, 0x22ff88); seg(x - sx * wob(0) * 0.98, z, x - sx * 15, z, 3.2);
     const pond = new THREE.Mesh(new THREE.CircleGeometry(12, 48), new THREE.MeshStandardMaterial({ color: 0x0a2a55, emissive: 0x1e5aa8, emissiveIntensity: 0.35, metalness: 0.9, roughness: 0.05 }));
     pond.rotation.x = -Math.PI / 2; pond.position.set(x, 0.34, z); scene.add(pond);
     const edge = new THREE.Mesh(new THREE.TorusGeometry(12.2, 0.35, 6, 64), new THREE.MeshStandardMaterial({ color: 0xd9d2c4, emissive: 0x332a1a, emissiveIntensity: 0.3 })); edge.rotation.x = Math.PI / 2; edge.position.set(x, 0.4, z); scene.add(edge);
@@ -1195,7 +1389,7 @@ function life() {
   const nearPath = (x, z, pad) => paths.some(p => { const dx = x - p.a.x, dz = z - p.a.y, t = dx * p.u.x + dz * p.u.y; return t > -pad && t < p.len + pad && Math.abs(-dx * p.u.y + dz * p.u.x) < p.w / 2 + pad; });
   const nearSolid = (x, z, pad) => solids.some(s => Math.hypot(x - s.x, z - s.z) < s.r + pad);
   const inRect = (x, z, [x0, x1, z0, z1], pad) => x > x0 - pad && x < x1 + pad && z > z0 - pad && z < z1 + pad;
-  const paved = (x, z, pad) => [TR, IN].some(D => Math.abs(x - D.c[0]) < D.h + pad && Math.abs(z - D.c[1]) < D.h + pad);
+  const paved = (x, z, pad) => [TR, IN].some(D => Math.hypot(x - D.c[0], z - D.c[1]) < blobR(D, Math.atan2(z - D.c[1], x - D.c[0])) + pad);
   const hillR = (x, z) => Math.hypot(x - HILL.c[0], z - HILL.c[1]);
   const open = (x, z, pad) => Math.abs(x) < EXT - 3 && Math.abs(z) < EXT - 3 && !nearSolid(x, z, pad) && !nearPath(x, z, pad) && roadDist(x, z) > RW + 1 + pad
     && !paved(x, z, pad) && !inRect(x, z, PLAZA, pad) && !inRect(x, z, POOL, pad + 3) && !inRect(x, z, [-16, 16, -34, -14], pad)
@@ -1203,8 +1397,7 @@ function life() {
 
   // trees: rows along the avenues, loose groves in the parks and on the hillside
   const spots = [];
-  ROADS.filter(R => !R.loop).forEach(R => { const [[x0, z0], [x1, z1]] = R.pts, len = Math.hypot(x1 - x0, z1 - z0), ux = (x1 - x0) / len, uz = (z1 - z0) / len;
-    for (let s = 12; s < len - 10; s += 9) for (const side of [-1, 1]) { const x = x0 + ux * s - uz * side * 9, z = z0 + uz * s + ux * side * 9; if (open(x, z, 0.5)) spots.push([x, z, 0.95]); } });
+  ROADS.filter(R => !R.loop).forEach(R => along(R, 9, (x0, z0, nx, nz) => { for (const side of [-1, 1]) { const x = x0 + nx * side * 9, z = z0 + nz * side * 9; if (open(x, z, 0.5)) spots.push([x, z, 0.95]); } }, 12));
   for (let i = 0, n = MOBILE ? 170 : 320; spots.length < n && i < 12000; i++) {
     const x = (Math.random() * 2 - 1) * (EXT - 4), z = (Math.random() * 2 - 1) * (EXT - 4);
     if (open(x, z, 3)) spots.push([x, z, 0.8 + Math.random() * 0.7]);
@@ -1550,9 +1743,9 @@ function hud() {
   const att = (s.pulse || {}).attention || {};
   const why = b => [...(att[b.id] || []), ...(b.status === "down" ? ["Something here is down"] : [])];
   const chip = (id, label, color, w) => `<button class="chip${w.length ? " need" : ""}" data-id="${id}" title="${esc(w.join(" · "))}" style="border-color:${color}88;color:${color}">${w.length ? `<i class="blip"></i>` : ""}${esc(label)}</button>`;
-  const names = { vault: "Vault", etsy: "Etsy", fb: "Meta", ig: "Instagram", whdig: "Digital WH", whpod: "Print WH", rose: "Rose", contra: "Contra", zoho: "Outreach", gumroad: "Gumroad", kdp: "KDP", lab: "API Lab",
-    krypto: "Krypto", kalshi: "Kalshi", poly: "Polymarket", longshot: "Long Shot", pinterest: "Pinterest", github: "GitHub", rnd: "R&D", showroom: "SHC", army: "AI Army", library: "Library" };
-  const list = [chip("vault", "Vault", "#ffd166", att.vault || [])].concat(B.map(b => chip(b.id, names[b.id] || b.short, hex(b.color), why(b))));
+  const names = { vault: "Vault", etsy: "Etsy", fb: "Meta", ig: "Instagram", polylive: "Poly LIVE", poly: "Poly Practice", longshot: "Olympics", newfaces: "Media Board", output: "Output", whdig: "Digital WH", whpod: "Print WH", rose: "Rose", contra: "Contra", zoho: "Outreach", gumroad: "Gumroad", kdp: "KDP", lab: "API Lab",
+    krypto: "Krypto", kalshi: "Kalshi", pinterest: "Pinterest", github: "GitHub", rnd: "R&D", showroom: "SHC", army: "AI Army", library: "Library" };
+  const list = [chip("vault", "Vault", "#ffd166", att.vault || [])].concat(B.filter(b => !b.home).map(b => chip(b.id, names[b.id] || b.short, hex(b.color), why(b))));
   const dn = { down: "Downtown", media: "Media Hill", trade: "Trading Town", ind: "Industrial", subs: "Suburbs" };
   $("#chips").innerHTML = (WLD ? [] : DIST.map(D => `<button class="chip dchip" data-dist="${D.id}" style="border-color:${hex(D.color)}88;color:${hex(D.color)}">📍 ${dn[D.id]}</button>`)).concat(list).join("");
   document.querySelectorAll("[data-dist]").forEach(x => x.onclick = () => goDistrict(x.dataset.dist));
@@ -1563,7 +1756,7 @@ function hud() {
   todoNote(s.todo);
   document.querySelectorAll("[data-id]").forEach(x => x.onclick = () => focus(x.dataset.id));
   $("#updated").textContent = `data ${ago(s.ts)} · refreshes every 30 min`;
-  const rows = B.filter(b => b.id !== "library").map(b => {
+  const rows = B.filter(b => b.id !== "library" && !b.noPay).map(b => {
     const earned = b.id === "rose" ? (b.zar ? "R" + num(b.zar) : "R0") : usd(b.today);
     const total = b.id === "rose" ? "R" + num(b.zar || 0) : usd(b.total);
     return `<tr><td>${b.icon} ${esc(b.short)}</td><td><span class="dot" style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${dc[b.status]}"></span></td><td>${earned}</td><td>${total}</td></tr>`; });
@@ -1863,14 +2056,14 @@ function districts() {  // each quarter: a coloured fog light over it, a glow on
   const disc = glowTex(128, 128, g => { const gr = g.createRadialGradient(64, 64, 0, 64, 64, 64); gr.addColorStop(0, "rgba(255,255,255,0.9)"); gr.addColorStop(0.6, "rgba(255,255,255,0.35)"); gr.addColorStop(1, "rgba(255,255,255,0)"); g.fillStyle = gr; g.fillRect(0, 0, 128, 128); });
   const add = (map, o) => new THREE.MeshBasicMaterial({ map, transparent: true, opacity: o, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, toneMapped: false, fog: false });
   DIST.forEach(D => {
-    const R = D.h + 6, y = D.y;
+    const R = (D.hill ? D.h + 4 : D.h * 1.05), y = D.y;
     D.haze = new THREE.Mesh(new THREE.CylinderGeometry(R, R * 1.08, 46, 48, 1, true), add(col, 0.2)); D.haze.material.color.set(D.color);
     D.haze.position.set(D.c[0], y + 23.3, D.c[1]); scene.add(D.haze);
     D.glow = new THREE.Mesh(new THREE.PlaneGeometry(R * 2.8, R * 2.8), add(disc, 0.4)); D.glow.material.color.set(D.color);
     D.glow.rotation.x = -Math.PI / 2; D.glow.position.set(D.c[0], y + 0.5, D.c[1]); scene.add(D.glow);
     const el = document.createElement("div"); el.className = "dtag"; el.style.setProperty("--c", hex(D.color)); el.innerHTML = `<b>${D.name}</b>`;
     el.onclick = () => goDistrict(D.id);
-    const lab = new CSS2DObject(el); lab.position.set(D.c[0], y + 2, D.c[1] + (D.hill ? D.hill - 6 : D.h + 12)); scene.add(lab);
+    const lab = new CSS2DObject(el); lab.position.set(D.c[0], 2, D.c[1] + (D.hill ? D.hill - 4 : D.h * 1.12 + 10)); scene.add(lab);
     D.el = el; D.k = -1;
   });
 }
@@ -1892,7 +2085,7 @@ function fadeSetup() {  // after everything is built: remember each building's m
 function fadeDistricts() {  // quarters far from where you're looking sink into their fog light; they brighten as you fly over
   const t = controls.target;
   DIST.forEach(D => {
-    const far = Math.max(0, Math.max(Math.abs(t.x - D.c[0]), Math.abs(t.z - D.c[1])) - D.h - 6), k = Math.round((1 - smooth(0, 70, far)) * 20) / 20;
+    const far = Math.max(0, Math.hypot(t.x - D.c[0], t.z - D.c[1]) - (D.hill ? D.hill * 0.75 : D.h * 1.08) - 6), k = Math.round((1 - smooth(0, 70, far)) * 20) / 20;
     if (k === D.k) return; D.k = k;
     D.haze.material.opacity = 0.04 + 0.26 * (1 - k); D.glow.material.opacity = 0.18 + 0.4 * (1 - k);
     D.el.classList.toggle("here", k > 0.5);
@@ -1908,7 +2101,9 @@ function goDistrict(id) {
   const D = DIST.find(x => x.id === id); if (!D) return;
   $("#sheet").hidden = true; closeTerm(); $("#hint").style.opacity = 0; showStaffTags(null);
   const s = innerWidth < innerHeight ? 1.75 : 1;
-  fly(new THREE.Vector3(D.c[0], D.y + 4, D.c[1] - 4), new THREE.Vector3(D.c[0], D.y + 58 * s, D.c[1] + 80 * s));
+  const [vx, vz] = D.view || [0, 1];   // look at the quarter from the side its fronts face
+  const ly = D.y + (D.look || 4);
+  fly(new THREE.Vector3(D.c[0] - vx * 4, ly, D.c[1] - vz * 4), new THREE.Vector3(D.c[0] + vx * 88 * s, ly + 54 * s, D.c[1] + vz * 88 * s));
 }
 
 // ---------- THEMES / WORLDS (owner 2026-10-08) ----------
@@ -2393,6 +2588,7 @@ function world3DText(text, opts, place) {  // 3D letters (font loads async; skip
 }
 function build() {
   M = model(D); VAULT[0] = 0; VAULT[1] = 6; solids.length = 0; WLD = !DEMO && WORLDS[THEME] || null;
+  if (WLD) M.B = M.B.filter(b => !b.neonOnly);   // giant screens + bot homes belong to the neon city's layout
   if (WLD) { worldLayout(); worldEnv(); WS.dec = new THREE.Group(); scene.add(WS.dec); worldVault(); }
   else { scene.environment = null; renderer.shadowMap.enabled = false; if (bloom) bloom.enabled = true; filmGrain(false); ground(); vault(); }
   M.B.forEach(building);
