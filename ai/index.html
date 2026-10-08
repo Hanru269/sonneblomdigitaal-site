@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Meet the AI influencers taking over your feed · AI Influencer Kit</title>
-<meta name="description" content="Granny Mae, Ollie and Rose: meet the characters, then build your own with the AI Influencer Kit. Plus done-for-you AI avatars and e-commerce automation.">
+<meta name="description" content="Granny Mae, Ollie, Rose and Mr Nobody: meet the characters, then build your own with the AI Influencer Kit. Plus done-for-you AI avatars and e-commerce automation.">
 <meta property="og:title" content="Meet the AI influencers taking over your feed">
 <meta property="og:description" content="Build your own wacky AI influencer: prompts, trend-hijack workflow, 30-day plan. Instant download.">
 <meta property="og:image" content="https://sonneblomdigitaal.co.za/ai/img/og.jpg">
@@ -16,8 +16,9 @@
 /* ===== EDIT HERE (everything the owner may change) ===== */
 const HANDLES = {
   granny: "grannymae.kitchen",   // live
-  ollie:  "",                    // e.g. "ollie.scouse" (empty = "coming soon")
+  ollie:  "poshollie",           // live
   rose:   "rose.companion",      // live
+  nobody: "mrnobodyfc",          // live
 };
 const HIGGSFIELD_REFERRAL = "";  // paste the Higgsfield referral link here; empty = goes to higgsfield.ai
 const BUY = {                    // checkout links per button (data-buy="...")
@@ -56,10 +57,10 @@ h3{font-size:20px;line-height:1.15}
 section{padding:54px 0}
 /* hero */
 .hero{padding:30px 0 40px;background:radial-gradient(1100px 500px at 15% -10%,#5b1d8a 0,transparent 60%),radial-gradient(900px 500px at 100% 10%,#1b3d8f 0,transparent 55%)}
-.squad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:24px}
+.squad{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:24px}
 .av{position:relative;border-radius:22px;overflow:hidden;aspect-ratio:9/16;background:var(--ink2);border:3px solid var(--yel);box-shadow:0 10px 30px rgba(0,0,0,.4)}
 .av:nth-child(1){transform:rotate(-2deg)}.av:nth-child(3){transform:rotate(2deg)}
-.av:nth-child(2){border-color:var(--sky)}.av:nth-child(3){border-color:var(--mint)}
+.av:nth-child(2){border-color:var(--sky)}.av:nth-child(3){border-color:var(--mint)}.av:nth-child(4){border-color:var(--pink);transform:rotate(-1.5deg)}
 .av video,.av img,.av svg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
 .av .tag{position:absolute;left:8px;right:8px;bottom:8px;background:rgba(20,16,42,.82);border-radius:14px;padding:8px 9px;backdrop-filter:blur(6px)}
 .av .tag b{display:block;font-size:15px;line-height:1.1}.av .tag span{display:block;font-size:11px;color:var(--dim);line-height:1.25;margin-top:2px}
@@ -135,7 +136,7 @@ footer a{color:var(--dim)}
   .ad{padding:40px}
   .shcWrap{display:grid;grid-template-columns:1fr 1fr;gap:28px;align-items:center}
 }
-@media (max-width:560px){.av .tag{left:5px;right:5px;bottom:5px;padding:6px 7px;border-radius:12px}.av .tag span{display:none}.av .tag b{font-size:13.5px}.av .tag a{font-size:11px;padding:4px 8px;margin-top:4px}.bar nav a.n{display:none}}
+@media (max-width:560px){.squad{grid-template-columns:repeat(2,1fr);gap:12px}.av .tag{left:5px;right:5px;bottom:5px;padding:6px 7px;border-radius:12px}.av .tag span{display:none}.av .tag b{font-size:13.5px}.av .tag a{font-size:11px;padding:4px 8px;margin-top:4px}.bar nav a.n{display:none}}
 </style>
 </head>
 <body>
@@ -147,7 +148,7 @@ footer a{color:var(--dim)}
 <header class="hero" id="top"><div class="wrap">
   <span class="kick">Follow the chaos</span>
   <h1>Meet the <span class="hl">AI influencers</span> taking over your feed</h1>
-  <p class="lead">A dancing granny, a cocky Scouse lad with a blue mohawk, and Rose, everyone's favourite late-night chat. Follow them, then build your own.</p>
+  <p class="lead">A dancing granny, a cocky Scouse lad with a blue mohawk, Rose, everyone's favourite late-night chat, and a man nobody can see. Follow them, then build your own.</p>
 
   <div class="squad">
     <div class="av" id="av-granny">
@@ -162,6 +163,11 @@ footer a{color:var(--dim)}
     <div class="av" id="av-rose">
       <img src="img/rose.jpg" alt="Rose, smiling at a rooftop bar" loading="eager">
       <div class="tag"><b>Rose</b><span>Your favourite late-night chat</span><a data-handle="rose" href="#">Follow</a></div>
+    </div>
+    <div class="av" id="av-nobody">
+      <video src="img/nobody_dance.mp4" poster="img/nobody_dance.jpg" autoplay muted loop playsinline preload="metadata" aria-label="Mr Nobody, an invisible man in a football kit, dancing"></video>
+      <span class="live">▶ NEW</span>
+      <div class="tag"><b>Mr Nobody</b><span>You can't see him. You can see his kit.</span><a data-handle="nobody" href="#">Follow</a></div>
     </div>
   </div>
 
@@ -187,7 +193,7 @@ footer a{color:var(--dim)}
       <li data-i="📅">30-day posting plan</li>
       <li data-i="🧮">Credit and cost calculator: what a reel really costs</li>
       <li data-i="✅">Instagram setup checklist, including Meta's AI label done right</li>
-      <li data-i="📖">The story: how we built Granny Mae and Ollie</li>
+      <li data-i="📖">The story: how we built Granny Mae, Ollie and Mr Nobody</li>
     </ul>
 
     <div class="prices">
