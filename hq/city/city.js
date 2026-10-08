@@ -58,9 +58,10 @@ function model(D) {
     ["Highest profit day", `${pnl(x.best_day)} · ${x.best_day_date || ""}`], ["Worst day", `${pnl(x.worst_day)} · ${x.worst_day_date || ""}`],
     ["Days traded", x.days_traded ?? "–"], ["Last trade", x.last_trade ? ago(x.last_trade) : "–"], ["Bot", x.running ? "🟢 running" : "⚪ stopped"]];
   const ks = bo.kalshi || {}, pm = bo.polymarket || {}, kb = bo.krypto || {};
-  const ls = s.longshot || {}; const lb = s.lsbot || {}; const lr = s.lslive || {}; const polyReal = lr.value != null ? +(lr.value - (lr.start_real || lr.start || 19.53)).toFixed(2) : 0; const kx = s.k10x || {}; const sb = s.solbot || {};
+  const ls = s.longshot || {}; const lb = s.lsbot || {}; const lr = s.lslive || {}; const polyReal = lr.value != null ? +(lr.value - (lr.start_real || lr.start || 19.53)).toFixed(2) : 0; const kx = s.k10x || {}; const sb = s.solbot || {}; const cb = s.copybot || {};
   const race = [{ name: "Polymarket LIVE", method: "same style, REAL money", value: lr.value, start: lr.start_real || lr.start || 19.53, trades: lr.trades || 0, wins: lr.wins || 0, live: true },
     { name: "Polymarket", method: "momentum on favourites", value: lb.value, trades: lb.trades || 0, wins: lb.wins || 0 },
+    { name: "Copy Desk", method: "copies 5 top Polymarket traders", value: cb.value, start: cb.start || 125, trades: sum(cb.traders || [], t => t.trades), wins: sum(cb.traders || [], t => t.wins) },
     { name: "Kalshi", method: "fair value (price + volatility)", value: kx.value, trades: kx.trades || 0, wins: kx.wins || 0 },
     { name: "Phantom SOL", method: "dip buying (mean reversion)", value: sb.value, trades: sb.trades || 0, wins: sb.wins || 0 }]
     .filter(x => x.value != null).map(x => ({ start: 25, ...x })).sort((a, b) => (b.value - b.start) / b.start - (a.value - a.start) / a.start);
@@ -252,6 +253,16 @@ function model(D) {
         [["Started with", usd(lr.start_real || 19.53)], ["Profit", pnlU(lr.value, lr.start_real || 19.53)], ["Profit %", pct(lr.value, lr.start_real || 19.53)], ["Cash", usd(lr.cash || 0)], ["Trades done", `${lr.trades || 0} (${lr.wins || 0} wins)`], ["Status", lr.status || "–"], ["Race place", place("Polymarket LIVE")]]
           .concat((lr.positions || []).map(p => [`${p.q} · ${p.outcome}`, `${usd(p.stake)} @ ${Math.round(p.entry * 100)}c → now ${Math.round((p.mark ?? p.entry) * 100)}c`])),
         (lr.log || []).slice(0, 8).map(l => [l.msg, (l.ts || "").slice(5, 16).replace("T", " ")]), "Latest bot moves", "https://polymarket.com") },
+
+    { id: "copy", name: "Copy Desk", short: "COPY DESK", icon: "🪞", color: 0xffb020, pos: [-8, -128], w: 7, d: 7, h: 12, kind: "coin", face: [0, 1],
+      status: cb.ts ? "ok" : "unknown", today: 0, total: 0,
+      tag: cb.value != null ? [`${usd(cb.value)} of ${usd(cb.start || 125)} (practice)`, `${(cb.traders || []).length} traders copied`] : ["starting", ""],
+      board: { title: "COPY DESK", main: usd(cb.value || 0), mainLabel: "copying 5 top traders · practice money", rows: (cb.traders || []).map(t => [t.name.slice(0, 16), usd(t.value ?? 25)]) },
+      sheet: () => sheetHTML("Copy Desk", "Copies 5 top Polymarket traders trade-for-trade (same share of the bankroll as they use, $25 practice money each). Picked from the public leaderboard: profitable this month AND all time, active, no market makers or fast-crypto bots. Assess after 2-4 weeks before any real money.",
+        usd(cb.value || 0), `value of ${usd(cb.start || 125)} practice money`,
+        (cb.traders || []).map(t => [`${t.name} (+$${num(t.month_pnl)} this month)`, `${usd(t.value ?? 25)} · ${pct(t.value ?? 25, 25)} · ${t.open || 0} open · ${t.trades} done`]),
+        (cb.traders || []).flatMap(t => (t.log || []).slice(0, 3).map(l => [`${t.name.slice(0, 10)}: ${l.msg}`, (l.ts || "").slice(5, 16).replace("T", " ")])).slice(0, 12), "Latest copied trades",
+        "https://polymarket.com/leaderboard", "Started " + (cb.started || "–") + ". Checks for new trades every 5 minutes.") },
 
     { id: "longshot", name: "Bot Olympics", short: "BOT OLYMPICS", icon: "🏅", color: 0xffd166, pos: [0, -174], w: 38, d: 3, h: 21, lift: 22, kind: "bigboard", face: [0, 1], draw: g => drawOlympics(g, race),
       status: "ok", today: 0, total: 0,
@@ -1762,7 +1773,7 @@ function hud() {
   const att = (s.pulse || {}).attention || {};
   const why = b => [...(att[b.id] || []), ...(b.status === "down" ? ["Something here is down"] : [])];
   const chip = (id, label, color, w) => `<button class="chip${w.length ? " need" : ""}" data-id="${id}" title="${esc(w.join(" · "))}" style="border-color:${color}88;color:${color}">${w.length ? `<i class="blip"></i>` : ""}${esc(label)}</button>`;
-  const names = { vault: "Vault", etsy: "Etsy", fb: "Meta", ig: "Instagram", polylive: "Poly LIVE", poly: "Poly Practice", longshot: "Olympics", newfaces: "Media Board", output: "Output", whdig: "Digital WH", whpod: "Print WH", rose: "Rose", contra: "Contra", zoho: "Outreach", gumroad: "Gumroad", kdp: "KDP", lab: "API Lab",
+  const names = { vault: "Vault", etsy: "Etsy", fb: "Meta", ig: "Instagram", copy: "Copy Desk", polylive: "Poly LIVE", poly: "Poly Practice", longshot: "Olympics", newfaces: "Media Board", output: "Output", whdig: "Digital WH", whpod: "Print WH", rose: "Rose", contra: "Contra", zoho: "Outreach", gumroad: "Gumroad", kdp: "KDP", lab: "API Lab",
     krypto: "Krypto", kalshi: "Kalshi", pinterest: "Pinterest", github: "GitHub", rnd: "R&D", showroom: "SHC", army: "AI Army", library: "Library" };
   const list = [chip("vault", "Vault", "#ffd166", att.vault || [])].concat(B.filter(b => !b.home).map(b => chip(b.id, names[b.id] || b.short, hex(b.color), why(b))));
   const dn = { down: "Downtown", media: "Media Hill", trade: "Trading Town", ind: "Industrial", subs: "Suburbs" };
