@@ -96,6 +96,7 @@ function model(D) {
 
   // Media billboard: the new faces (every influencer but Rose) and the ventures being tested; Factory Output rows; bot homes
   const faces = ia.length ? ia.filter(a => a.id !== "rose" && !a.error) : (av.avatars || []).slice(0, 4).map(a => ({ name: a.short || a.name, emoji: a.emoji, username: a.status }));
+  const prod = { hubSales: (shF.page || {}).paid ?? sh.sales ?? 0, hubVisits: (shF.page || {}).visits ?? 0, faces: ia.length || (av.avatars || []).length, followers: sum(ia, a => a.followers) };
   const ideasL = (s.ideas || {}).items || [], ventures = (ideasL.filter(x => ["testing", "live"].includes(x.status)).length ? ideasL.filter(x => ["testing", "live"].includes(x.status)) : ideasL.filter(x => x.status !== "dropped")).slice(0, 5);
   const output = [["🛍️ Etsy", `${num(L.length)} listings`, `${num(eS.length)} orders`, usd(eTot)], ["🎨 Gumroad", `${num(G.length)} products`, `${num(gS.length)} sales`, usd(gTot)],
     ["📦 KDP", `${m.kdp_books ?? 0} books`, `${m.kdp_sales ?? 0} sales`, usd(m.kdp_royalty || 0)], ["🧪 API Lab", `${(ap.actors || []).length} actors`, `${num(runs)} runs`, "$" + (x4.balance_usdc ?? 0)],
@@ -337,8 +338,8 @@ function model(D) {
 
     // the big billboards (owner 2026-10-08): one giant screen per quarter instead of a board on every building
     { id: "newfaces", name: "Media Billboard", short: "NEW FACES", icon: "✨", color: 0xff4fd8, pos: [-174, 0], w: 40, d: 3, h: 22, lift: 6, kind: "bigboard", face: [1, 0], neonOnly: true, noPay: true,
-      slides: [g => drawFaces(g, faces), g => drawVentures(g, ventures)], status: "ok", today: 0, total: 0,
-      tag: ["Introducing the new faces", `${faces.length} faces · ${ventures.length} ventures`],
+      slides: [g => drawProducts(g, prod), g => drawFaces(g, faces), g => drawVentures(g, ventures)], status: "ok", today: 0, total: 0,
+      tag: ["Our 2 products", "Dashboard HUBs · AI Influencers"],
       board: { title: "NEW FACES", main: String(faces.length), mainLabel: "new faces", rows: [] },
       sheet: () => sheetHTML("Media Billboard", "Our newest faces and ventures, shown on the big screen over Media Hill", faces.length, "new faces",
         faces.map(a => [`${a.emoji || ""} ${a.name}`, a.followers != null ? `${num(a.followers)} followers${a.username ? " · @" + a.username : ""}` : a.username || ""]),
@@ -547,6 +548,19 @@ function drawOutput(g, rows) {  // Factory Output: one row per factory
     g.fillStyle = "#3dffa8"; g.font = "800 28px Sora"; g.fillText(r[3] || "", cols[3], cy, 190);
   });
   g.textBaseline = "alphabetic";
+}
+function drawProducts(g, p) {  // the 2 main products (owner 2026-10-08): Virtual Dashboard HUBs + The AI Influencers
+  bigFrame(g, "#ffd166", "OUR 2 PRODUCTS", "Sonneblom Digitaal");
+  [["🏙️", "VIRTUAL DASHBOARD HUBS", "Your side hustles as a living 3D city", `${num(p.hubVisits)} visits · ${num(p.hubSales)} sold`, "#00f0ff"],
+   ["🤖", "THE AI INFLUENCERS", "AI faces that grow audiences and sell", `${num(p.faces)} faces · ${num(p.followers)} followers`, "#ff4fd8"]].forEach(([ic, t, sub, st, c], i) => {
+    const x = 40 + i * 482, y = 132, w = 462, h = 410;
+    g.fillStyle = "rgba(255,255,255,0.05)"; g.fillRect(x, y, w, h); g.strokeStyle = c; g.lineWidth = 5; g.shadowColor = c; g.shadowBlur = 18; g.strokeRect(x, y, w, h); g.shadowBlur = 0;
+    g.textAlign = "center"; g.textBaseline = "middle"; g.font = "120px serif"; g.fillStyle = "#fff"; g.fillText(ic, x + w / 2, y + 110);
+    g.fillStyle = c; g.font = "800 36px Sora"; g.fillText(t, x + w / 2, y + 230, w - 30);
+    g.fillStyle = "#d8ccff"; g.font = "600 22px Inter"; g.fillText(sub, x + w / 2, y + 280, w - 30);
+    g.fillStyle = "#3dffa8"; g.font = "800 26px Sora"; g.fillText(st, x + w / 2, y + 345, w - 30);
+    g.textAlign = "left"; g.textBaseline = "alphabetic";
+  });
 }
 function drawFaces(g, faces) {  // "Introducing the new faces of SHC": one card per new influencer
   bigFrame(g, "#ff4fd8", "INTRODUCING THE NEW FACES OF SHC", "Side Hustle City's newest creators");
@@ -1649,22 +1663,27 @@ function todoNote(t) {
   const el = $("#todo");
   if (DEMO || !t || !t.items) return (el.hidden = true);
   let ticks = {}; try { ticks = JSON.parse(get("todo-ticks") || "{}"); } catch (e) {}
-  const min = get("todo-min") === "1", done = t.items.filter(x => x.done || ticks[x.id]).length;
-  const who = { you: "YOU", claude: "CLAUDE", both: "US" };
+  // ticked items leave the note at once (owner 2026-10-08); the server removes them for good every 5 min
+  const open = t.items.filter(x => !x.done && !ticks[x.id]), done = t.items.length - open.length;
+  const min = get("todo-min") === "1", who = { you: "YOU", claude: "CLAUDE", both: "US" };
   el.hidden = false; el.classList.toggle("min", min);
-  el.innerHTML = `<h4><span>📝 ${esc(t.title || "TO DO")} · ${done}/${t.items.length}</span><button id="todomin">${min ? "show" : "hide"}</button></h4>` +
-    t.items.map(x => { const d = x.done || ticks[x.id];
-      return `<label class="${d ? "done" : ""}"><input type="checkbox" data-t="${esc(x.id)}" ${d ? "checked" : ""} ${x.done ? "disabled" : ""}><span>${esc(x.text)}<span class="who">${who[x.who] || ""}</span></span></label>`; }).join("");
+  el.innerHTML = `<h4><span>📝 ${esc(t.title || "TO DO")} · ${open.length} left${done ? ` · ✓ ${done} done` : ""}</span><button id="todomin">${min ? "show" : "hide"}</button></h4>` +
+    (open.length ? open.map(x => `<label><input type="checkbox" data-t="${esc(x.id)}"><span>${esc(x.text)}<span class="who">${who[x.who] || ""}</span></span></label>`).join("") : `<label><span>All done 🎉</span></label>`);
   $("#todomin").onclick = () => { try { localStorage.setItem("todo-min", min ? "0" : "1"); } catch (e) {} todoNote(t); };
   el.querySelectorAll("input[data-t]").forEach(i => i.onchange = () => {
-    ticks[i.dataset.t] = i.checked; try { localStorage.setItem("todo-ticks", JSON.stringify(ticks)); } catch (e) {} todoSync(ticks); todoNote(t); });
-  if (!todoNote.sent) { todoNote.sent = 1; todoSync(ticks); }
+    ticks[i.dataset.t] = true; try { localStorage.setItem("todo-ticks", JSON.stringify(ticks)); } catch (e) {} todoSync({ [i.dataset.t]: true }, t); todoNote(t); });
+  if (!todoNote.sent) { todoNote.sent = 1; todoSync(ticks, t); }
 }
-// ticks go to the server too; hq/todo_sync.py removes ticked items every hour
-function todoSync(ticks) {
+// ticks are MERGED on the server (every device's ticks count); the reply carries everyone's ticks, so the note matches on all devices
+function todoSync(ticks, t) {
   if (DEMO || GUEST || !PW) return;
   fetch("https://chat.sonneblomdigitaal.co.za/api/hq-todo", { method: "POST", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ pw: PW, ticks }) }).catch(() => {});
+    body: JSON.stringify({ pw: PW, ticks }) }).then(r => r.json()).then(j => {
+      if (!j.ticks) return;
+      const ids = new Set((t?.items || []).map(x => x.id)), mine = Object.fromEntries(Object.keys(j.ticks).filter(k => ids.has(k)).map(k => [k, true]));
+      try { localStorage.setItem("todo-ticks", JSON.stringify(mine)); } catch (e) {}
+      if (t) todoNote(t);
+    }).catch(() => {});
 }
 $("#askbar").onclick = () => DEMO ? focus("library") : openTerm();
 
