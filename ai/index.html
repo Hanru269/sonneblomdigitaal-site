@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Meet the AI influencers taking over your feed · AI Influencer Kit</title>
-<meta name="description" content="Granny Mae, Ollie and Mr Nobody: meet the characters, then build your own with the AI Influencer Kit. Plus done-for-you AI avatars and e-commerce automation.">
+<meta name="description" content="Granny Mae, Ollie and Rose: meet the characters, then build your own with the AI Influencer Kit. Plus done-for-you AI avatars and e-commerce automation.">
 <meta property="og:title" content="Meet the AI influencers taking over your feed">
 <meta property="og:description" content="Build your own wacky AI influencer: prompts, trend-hijack workflow, 30-day plan. Instant download.">
 <meta property="og:image" content="https://sonneblomdigitaal.co.za/ai/img/og.jpg">
@@ -17,7 +17,7 @@
 const HANDLES = {
   granny: "grannymae.kitchen",   // live
   ollie:  "",                    // e.g. "ollie.scouse" (empty = "coming soon")
-  nobody: "",                    // e.g. "mr.nobody.fc"
+  rose:   "rose.companion",      // live
 };
 const HIGGSFIELD_REFERRAL = "";  // paste the Higgsfield referral link here; empty = goes to higgsfield.ai
 const BUY = {                    // checkout links per button (data-buy="...")
@@ -147,7 +147,7 @@ footer a{color:var(--dim)}
 <header class="hero" id="top"><div class="wrap">
   <span class="kick">Follow the chaos</span>
   <h1>Meet the <span class="hl">AI influencers</span> taking over your feed</h1>
-  <p class="lead">A dancing granny, a cocky Scouse lad with a blue mohawk, and a man nobody can see. Follow them, then build your own.</p>
+  <p class="lead">A dancing granny, a cocky Scouse lad with a blue mohawk, and Rose, everyone's favourite late-night chat. Follow them, then build your own.</p>
 
   <div class="squad">
     <div class="av" id="av-granny">
@@ -159,21 +159,9 @@ footer a{color:var(--dim)}
       <img src="img/ollie.jpg" alt="Ollie, blue mohawk-mullet and brown suit" loading="eager">
       <div class="tag"><b>Ollie</b><span>Liverpool's fittest (allegedly)</span><a data-handle="ollie" href="#">Follow</a></div>
     </div>
-    <div class="av" id="av-nobody">
-      <svg viewBox="0 0 180 320" preserveAspectRatio="xMidYMid slice" aria-label="Mr Nobody: floating football jersey, glasses and boxers">
-        <defs><linearGradient id="nb" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1b2a5e"/><stop offset="1" stop-color="#0c0820"/></linearGradient>
-        <radialGradient id="sp" cx=".5" cy=".42" r=".5"><stop offset="0" stop-color="#3ad6ff" stop-opacity=".35"/><stop offset="1" stop-color="#3ad6ff" stop-opacity="0"/></radialGradient></defs>
-        <rect width="180" height="320" fill="url(#nb)"/><circle cx="90" cy="130" r="95" fill="url(#sp)"/>
-        <g class="float">
-          <rect x="62" y="58" width="24" height="15" rx="4" fill="none" stroke="#0a0a0a" stroke-width="5"/><rect x="94" y="58" width="24" height="15" rx="4" fill="none" stroke="#0a0a0a" stroke-width="5"/><path d="M86 65h8" stroke="#0a0a0a" stroke-width="4"/>
-          <path d="M50 108 L74 94 Q90 104 106 94 L130 108 L148 148 L130 157 L126 138 L126 206 L54 206 L54 138 L50 157 L32 148 Z" fill="#75aadb"/>
-          <path d="M76 95V206M90 100V206M104 95V206" stroke="#fff" stroke-width="7"/>
-          <text x="90" y="160" font-family="Arial Black,Arial" font-size="30" fill="#14102a" text-anchor="middle">10</text>
-          <path d="M56 212h68l5 32h-31l-8-12-8 12H51z" fill="#1f1f1f"/><rect x="56" y="212" width="68" height="7" fill="#ff2b8a"/>
-        </g>
-      </svg>
-      <span class="live" style="background:#2dffb3;color:#14102a">SOON</span>
-      <div class="tag"><b>Mr Nobody</b><span>You can't see him. You can see his kit.</span><a data-handle="nobody" href="#">Follow</a></div>
+    <div class="av" id="av-rose">
+      <img src="img/rose.jpg" alt="Rose, smiling at a rooftop bar" loading="eager">
+      <div class="tag"><b>Rose</b><span>Your favourite late-night chat</span><a data-handle="rose" href="#">Follow</a></div>
     </div>
   </div>
 
@@ -199,7 +187,7 @@ footer a{color:var(--dim)}
       <li data-i="📅">30-day posting plan</li>
       <li data-i="🧮">Credit and cost calculator: what a reel really costs</li>
       <li data-i="✅">Instagram setup checklist, including Meta's AI label done right</li>
-      <li data-i="📖">The story: how we built Granny Mae, Ollie and Mr Nobody</li>
+      <li data-i="📖">The story: how we built Granny Mae and Ollie</li>
     </ul>
 
     <div class="prices">
@@ -347,8 +335,6 @@ document.querySelectorAll("[data-handle]").forEach(a => {
 });
 // referral
 if (HIGGSFIELD_REFERRAL) document.getElementById("refLink").href = HIGGSFIELD_REFERRAL;
-// Mr Nobody: drop img/nobody.jpg in this folder and it replaces the silhouette automatically
-(() => { const i = new Image(); i.onload = () => { const box = document.getElementById("av-nobody"); box.querySelector("svg").replaceWith(Object.assign(i, { alt: "Mr Nobody" })); const s = box.querySelector(".live"); if (s && !HANDLES.nobody) s.remove(); }; i.src = "img/nobody.jpg"; })();
 // sticky buy button on phones after the hero
 const st = document.getElementById("stick"), kit = document.getElementById("kit");
 addEventListener("scroll", () => { const r = kit.getBoundingClientRect(); st.classList.toggle("on", scrollY > 500 && (r.top > innerHeight || r.bottom < 0)); }, { passive: true });
