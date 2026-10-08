@@ -277,3 +277,8 @@ body[data-skin="seventies"]::after{content:"";position:fixed;inset:0;pointer-eve
 #credits{position:fixed;right:12px;top:calc(env(safe-area-inset-top) + 124px);z-index:30;padding:4px 10px;box-shadow:0 0 12px #ffd16644}
 #credits.open{max-width:min(360px,calc(100vw - 24px))}
 @media (min-width:900px){#credits{right:auto;left:14px;top:calc(env(safe-area-inset-top) + 146px)}}
+/* quarter name tags (owner 2026-10-08): tap to fly there; the one you're in lights up */
+.dtag{pointer-events:auto;cursor:pointer;background:rgba(10,5,30,.55);border:1px solid var(--c);border-radius:999px;padding:5px 14px;font:800 13px Sora;letter-spacing:2px;color:var(--c);
+  text-shadow:0 0 10px var(--c);box-shadow:0 0 18px color-mix(in srgb,var(--c) 40%,transparent);opacity:.8;transition:opacity .4s,transform .4s}
+.dtag.here{opacity:1;background:rgba(10,5,30,.85);transform:scale(1.08)}
+.chip.dchip{background:rgba(10,5,30,.7)}
