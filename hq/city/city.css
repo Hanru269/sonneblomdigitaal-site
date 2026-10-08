@@ -199,3 +199,37 @@ header{position:absolute;top:0;left:0;right:0;display:flex;justify-content:space
 #todo h4,#askbar,.termbar{touch-action:none}#todo h4{cursor:grab}.termbar{cursor:move}
 @media (max-width:520px){#todo{max-height:calc(100svh - env(safe-area-inset-top) - 150px - 96px)}}
 .lt{color:var(--dim);font-size:12px;font-weight:700;letter-spacing:.04em}
+/* Virtual office (owner 2026-10-08): whiteboard wall, staff floor, background-job monitor */
+#office{position:fixed;inset:0;z-index:60;overflow:auto;-webkit-overflow-scrolling:touch;color:#2b2118;
+  background:linear-gradient(#e9dcc6 0,#e3d3b8 62%,#8a5a34 62%,#6e4526 100%);background-attachment:local;padding:calc(env(safe-area-inset-top) + 12px) 12px 40px}
+#office[hidden]{display:none}
+#office .otop{display:flex;align-items:center;gap:10px;max-width:1300px;margin:0 auto 10px}
+#office .otop h2{margin:0;flex:1;font:800 20px Sora;color:#3a2a1c}
+#office .otop button{border:0;border-radius:10px;padding:8px 14px;font:700 14px Sora;background:#3a2a1c;color:#fff;cursor:pointer}
+#office .wb{max-width:1300px;margin:0 auto;background:#fdfdfb;border:10px solid #b9bec6;border-radius:6px;box-shadow:0 10px 0 #8d939c,0 18px 40px #0005;padding:16px;
+  font-family:Caveat,cursive;font-size:20px;position:relative;background-image:radial-gradient(#0000000a 1px,transparent 1px);background-size:22px 22px}
+#office .wb::after{content:"";position:absolute;left:12%;right:12%;bottom:-26px;height:12px;background:#9aa0a8;border-radius:0 0 6px 6px}
+#office .wbt{font:28px "Permanent Marker",cursive;color:#1d4ed8;margin:0 0 8px}
+#office .wcols{display:grid;grid-template-columns:minmax(260px,1.1fr) 2fr;gap:18px}
+@media (max-width:820px){#office .wcols{grid-template-columns:1fr}}
+#office textarea{width:100%;min-height:340px;border:2px dashed #cbd5e1;border-radius:8px;background:#fffef0;padding:10px;font:22px/1.25 Caveat,cursive;color:#111;resize:vertical;box-sizing:border-box}
+#office .saved{font:12px Inter;color:#64748b;margin-top:4px}
+#office .mk{font:22px "Permanent Marker",cursive;margin:10px 0 6px}
+#office .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px}
+#office .pc{background:#fff8a8;padding:10px 12px 12px;box-shadow:2px 4px 8px #0002;transform:rotate(var(--r,-1deg));line-height:1.15}
+#office .pc h5{margin:0 0 4px;font:21px "Permanent Marker",cursive}
+#office .pc .st{display:inline-block;font:700 11px Inter;letter-spacing:.05em;padding:2px 7px;border-radius:9px;color:#fff;margin-bottom:4px}
+#office .ph{display:flex;flex-wrap:wrap;gap:8px}
+#office .ph div{border:2px solid currentColor;border-radius:10px;padding:6px 10px;min-width:150px;flex:1}
+#office .floor{max-width:1300px;margin:44px auto 0;display:grid;grid-template-columns:1.3fr 1fr;gap:14px}
+@media (max-width:820px){#office .floor{grid-template-columns:1fr}}
+#office .desk{background:#fff7ec;border-radius:14px;padding:12px;box-shadow:0 8px 24px #0004;font:13px Inter}
+#office .desk h3{margin:0 0 8px;font:800 16px Sora}
+#office .team{margin:8px 0}#office .team b{font:700 12px Sora;color:#7c5a3a}
+#office .ppl{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+#office .pp{background:#fff;border:1px solid #e7d8c3;border-radius:10px;padding:5px 8px;font-size:12px;display:flex;gap:5px;align-items:center}
+#office .dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+#office .mon{background:#0b1220;color:#c7f9cc;border:8px solid #1f2937;border-radius:12px;font:12px/1.5 "JetBrains Mono",monospace;padding:10px;min-height:200px}
+#office .mon h3{color:#fff;font:800 15px Sora;margin:0 0 6px}
+#office .job{border-bottom:1px dashed #1f3a2a;padding:6px 0}#office .job i{color:#7dd3fc;font-style:normal}#office .job small{display:block;color:#94a3b8}
+body[data-skin="seventies"]::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:1;background:radial-gradient(ellipse at center,transparent 55%,#3a1f0a77)}

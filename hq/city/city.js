@@ -295,7 +295,7 @@ function model(D) {
       status: sv("hq-portal"), today: 0, total: 0,
       tag: ["Claude", "tap to talk"],
       board: { title: "THE LIBRARY", main: "CLAUDE", mainLabel: "tap the Library to talk",
-        rows: [["Bot services", svc ? Object.values(svc).filter(v => v === "active").length + "/" + Object.keys(svc).length + " up" : "–"], ["Data", ago(s.ts)]] },
+        rows: [...(s.rtk?.sim ? [["RTK saved", "$" + num(Math.round(s.rtk.sim.usd + (s.rtk.real?.usd || 0)))]] : []), ["Bot services", svc ? Object.values(svc).filter(v => v === "active").length + "/" + Object.keys(svc).length + " up" : "–"], ["Data", ago(s.ts)]] },
       sheet: () => sheetHTML("The Library", "Where the owner talks to Claude from inside the city", "Claude", "AI operator",  // only shown in the public demo (the real one opens the chat)
         [["Model", "Claude (Claude Code)"], ["Runs on", "the server, 24/7"], ["Can", "read data, write code, deploy"]], [], "",
         "In the real city this opens a live chat with Claude Code running on the server. The owner asks for changes from a phone and Claude edits the code, refreshes the data and redeploys the city.") },
@@ -1683,6 +1683,76 @@ $("#sheetbody").addEventListener("click", e => { const b = e.target.closest("but
 $("#tstop").onclick = () => api("/stop", { method: "POST", body: "{}" });
 $("#tnew").onclick = async () => { if (tBusy) return; await api("/new", { method: "POST", body: "{}" }); tlog().innerHTML = ""; tAdd("sys", "New conversation. Claude still has its memory notes."); };
 
+// ---------- Virtual Office (owner 2026-10-08) ----------
+// Whiteboard wall: the owner's own notes (saved live via rose-web /api/hq-office -> hq-data/board.json) + Claude's planning
+// (AI Influencer Army from avatars.json, extra board.sections). Staff floor from snapshot.staff, job monitor from hq-data/tasks.jsonl.
+const OFFICE_API = "https://chat.sonneblomdigitaal.co.za/api/hq-office";
+let oTimer = null, oLive = null;
+async function officeCall(body = {}) {
+  try { const r = await fetch(OFFICE_API, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ pw: PW, ...body }) }); return r.ok ? r.json() : null; }
+  catch (e) { return null; }
+}
+function officeHTML(live) {
+  const s = M.s, av = s.avatars || {}, A = av.avatars || [], P = av.phases || [], bd = (live && live.board) || s.board || {}, T = (live && live.tasks) || s.tasks || [];
+  const sc = { live: "#16a34a", building: "#d97706", next: "#0284c7", planned: "#64748b", paused: "#dc2626" };
+  const ink = ["#1d4ed8", "#dc2626", "#16a34a", "#9333ea", "#ea580c"];
+  const army = A.map((x, i) => `<div class="pc" style="--r:${[-2, 1.5, -1, 2, -1.5][i % 5]}deg;background:${["#fff8a8", "#ffd6e7", "#c8f7ff", "#e4d4ff", "#d6ffd0"][i % 5]}">
+      <h5>${x.emoji} ${esc(x.name)}</h5><span class="st" style="background:${sc[x.status] || "#64748b"}">${esc((x.status || "").toUpperCase())}</span><br>
+      ${esc(x.niche)}<br>💰 ${esc(x.money)}<br>🎯 ${esc(x.goal)}<br>⚡ ${num(x.credits)} credits · ${esc(x.start || "")}</div>`).join("");
+  const phases = P.map((p, i) => { const d = (p.steps || []).filter(t => t.done).length;
+    return `<div style="color:${ink[i % 5]}"><b>${esc(p.name)}</b> · ${d}/${(p.steps || []).length} · ⚡${num(p.credits)}<br>${(p.steps || []).slice(0, 6).map(t => `${t.done ? "☑" : "☐"} ${esc(t.t)}`).join("<br>")}</div>`; }).join("");
+  const extra = (bd.sections || []).map((x, i) => `<div class="mk" style="color:${x.color || ink[(i + 2) % 5]}">${esc(x.title)}</div>
+      <div class="cards">${(x.cards || []).map((c, j) => `<div class="pc" style="--r:${j % 2 ? 1 : -1}deg"><h5>${esc(c.h)}</h5>${(c.lines || []).map(esc).join("<br>")}</div>`).join("")}</div>`).join("");
+  const all = (s.staff || {}).staff || [], dot = { working: "#16a34a", "on duty": "#22c55e", "on call": "#0ea5e9", late: "#f59e0b", off: "#94a3b8" };
+  const bosses = all.filter(x => !x.boss || x.boss === "claude");
+  const team = b => all.filter(x => x.boss === b.id);
+  const pp = x => `<span class="pp" title="${esc(x.job)}"><i class="dot" style="background:${dot[x.status] || "#94a3b8"}"></i>${x.emoji || "🙂"} <b>${esc(x.name)}</b> ${esc((x.job || "").split(":")[0].slice(0, 28))}</span>`;
+  const staff = bosses.map(b => `<div class="team"><b>${b.emoji || ""} ${esc(b.name)} · ${esc((b.job || "").split(":")[0])}</b><div class="ppl">${team(b).map(pp).join("") || '<span class="pp">no team yet</span>'}</div></div>`).join("");
+  const on = all.filter(x => ["working", "on duty"].includes(x.status)).length;
+  const ic = { running: "⏳", done: "✅", failed: "❌", stopped: "⚪" };
+  const jobs = T.length ? T.map(t => `<div class="job">${ic[t.state] || "•"} <i>${esc(t.title)}</i><small>${esc(t.state)} · started ${esc((t.started || "").slice(5, 16).replace("T", " "))}${t.state !== "running" ? " · ended " + esc((t.updated || "").slice(11, 16)) : ""}${t.note ? " · " + esc(t.note.slice(0, 140)) : ""}</small></div>`).join("")
+    : '<div class="job">No background jobs yet.</div>';
+  return `<div class="otop"><h2>🏢 Head Office</h2><button id="oclose">✕ Back to the city</button></div>
+  <div class="wb"><div class="wcols">
+    <div><div class="wbt">✍️ My notes & planning</div><textarea id="onotes" placeholder="Type anything: ideas, plans, lists… it saves by itself.">${esc(bd.notes || "")}</textarea>
+      <div class="saved" id="osaved">${bd.notes_at ? "saved " + esc(bd.notes_at.slice(5, 16).replace("T", " ")) : "not saved yet"}</div></div>
+    <div><div class="wbt">🤖 AI Influencer Army ${av.credits?.left != null ? `<span style="font:20px Caveat;color:#475569">· ${num(av.credits.left)} Higgsfield credits left</span>` : ""}</div>
+      <div class="cards">${army || "<i>Plan coming…</i>"}</div>
+      ${phases ? `<div class="mk" style="color:#dc2626">Game plan</div><div class="ph">${phases}</div>` : ""}${extra}</div>
+  </div></div>
+  <div class="floor">
+    <div class="desk"><h3>👥 Staff floor · ${on}/${all.length} at work</h3>${staff}</div>
+    <div class="mon"><h3>🖥️ Background jobs</h3>${jobs}${rtkHTML(s.rtk)}</div>
+  </div>`;
+}
+// RTK token saver (hq/rtk_savings.py): simulated savings over all our Claude history + real savings since the hook went live
+function rtkHTML(r) {
+  if (!r || !r.sim) return "";
+  const k = n => n >= 1e6 ? (n / 1e6).toFixed(1) + "M" : n >= 1e3 ? Math.round(n / 1e3) + "k" : String(n || 0);
+  const mx = Math.max(1, ...(r.days || []).map(d => d[1]));
+  return `<h3 style="margin-top:14px">🪙 RTK token saver</h3>
+    <div class="job">If RTK had been on from day one: <i>${k(r.sim.tokens_saved)} tokens</i> less output read, plus <i>${k(r.sim.cache_rereads_saved)}</i> cached re-reads<br>
+    = <b style="color:#fde047;font-size:16px">$${r.sim.usd.toFixed(2)}</b> <small>(${r.sim.rtk_would_shrink} of ${num(r.sim.commands)} commands shrunk · $${r.sim.usd_fresh} fresh + $${r.sim.usd_cache} cache · ${esc(r.model)} API prices)</small></div>
+    <div class="job">Real since ${esc(r.real.since)}: <i>${k(r.real.tokens_saved)} tokens</i> saved on ${num(r.real.commands)} commands (${r.real.pct}%) = <b style="color:#fde047">$${r.real.usd.toFixed(2)}</b></div>
+    <div style="display:flex;align-items:flex-end;gap:3px;height:46px;margin-top:6px">${(r.days || []).map(([d, v]) => `<div title="${esc(d)}: ${k(v)} tokens" style="flex:1;background:#4ade80;height:${Math.max(2, 46 * v / mx)}px;border-radius:2px"></div>`).join("")}</div>
+    <small style="color:#94a3b8">Tokens RTK would have saved per day (last 14). On the subscription this means more work per usage limit, not cash back.</small>`;
+}
+async function openOffice() {
+  const el = $("#office"); el.hidden = false; el.innerHTML = officeHTML(oLive);
+  const wire = () => {
+    $("#oclose").onclick = () => { el.hidden = true; clearInterval(oTimer); };
+    $("#onotes").oninput = e => { $("#osaved").textContent = "typing…"; clearTimeout(wire.t);
+      wire.t = setTimeout(async () => { const r = await officeCall({ notes: e.target.value }); $("#osaved").textContent = r ? "saved ✓ " + new Date().toTimeString().slice(0, 5) : "⚠️ not saved (offline?)"; if (r) oLive = r; }, 1200); };
+  };
+  wire();
+  const refresh = async () => { const r = await officeCall(); if (!r || el.hidden) return; oLive = r;
+    if (document.activeElement === $("#onotes")) return;  // never redraw under the owner's fingers
+    el.innerHTML = officeHTML(r);
+    wire(); };
+  refresh(); clearInterval(oTimer); oTimer = setInterval(refresh, 30000);
+}
+$("#officebtn").onclick = openOffice;
+
 // ---------- boot ----------
 // District signs (owner 2026-10-07): Media block west, Warehouses east, Shop Street south, Bot Row north, City Park in the middle
 function districts() {
@@ -1729,6 +1799,17 @@ const SKINS = [
   { id: "day", name: "Sunny Day", price: 1, swatch: ["#7cc8ff", "#ffffff", "#4caf50"],
     bg: 0x8fd0ff, fog: 0xbfe4ff, fogD: 0.0011, hemi: [0xffffff, 0x6b8f5a, 1.6], sun: [0xfff3d6, 2.0], bloom: 0.12, exposure: 1.0,
     tint: { sat: 0.85, light: 1.1 }, ground: { asphalt: 0x3a3f4a, grass: 0x4caf50 }, weather: { kind: "none" } },
+  // Retro skins (owner 2026-10-08, "anemoia"): flat cartoon colours with black ink outlines, and a faded 1970s small town
+  { id: "springfield", name: "Springfield (Simpsons)", price: 1, swatch: ["#70c5ff", "#ffd90f", "#f58bb8"],
+    bg: 0x70c5ff, fog: 0xbfe6ff, fogD: 0.0012, hemi: [0xffffff, 0x8fbf5a, 1.7], sun: [0xfff6d0, 2.0], bloom: 0.05, exposure: 1.05,
+    tint: { hue: 0.14, hue2: 0.92, hueMix: 0.55, sat: 1.35, light: 1.2 }, ground: { asphalt: 0x6e6e78, grass: 0x6fcf3a }, edges: 0x111111, weather: { kind: "none" } },
+  { id: "cartoon", name: "Cartoon Network", price: 1, swatch: ["#000000", "#ffffff", "#ff2fa0"],
+    bg: 0xfff3c4, fog: 0xffffff, fogD: 0.001, hemi: [0xffffff, 0xbdbdbd, 1.8], sun: [0xffffff, 1.8], bloom: 0.0, exposure: 1.0,
+    tint: { sat: 1.6, light: 1.25 }, ground: { asphalt: 0x1a1a1a, grass: 0x4ade3a }, edges: 0x000000, filter: "contrast(1.15) saturate(1.2)", weather: { kind: "none" } },
+  { id: "seventies", name: "1970s Small Town", price: 1, swatch: ["#e8b878", "#b5651d", "#7a8a3a"],
+    bg: 0xe2b77e, fog: 0xd9a86a, fogD: 0.0022, hemi: [0xffe0b0, 0x5a4030, 1.35], sun: [0xffc58a, 1.5], bloom: 0.15, exposure: 1.0,
+    tint: { hue: 0.07, hue2: 0.19, hueMix: 0.75, sat: 0.6, light: 0.95, gray: 0.12 }, ground: { asphalt: 0x4a3b2e, grass: 0x7d8a3c }, edges: 0x5a3a1e,
+    filter: "sepia(0.35) contrast(1.05) saturate(0.9)", weather: { kind: "snow", color: 0xffe2b0, speed: 0.05, len: 0.15, opacity: 0.25 } },
 ];
 const OWNED = window.CITY_SKINS_OWNED || null;  // kit buyers: list of unlocked skin ids (null = all, as in our own city and the demo preview)
 let SKIN = SKINS.find(k => k.id === get("city-skin")) || SKINS[0];
@@ -1766,6 +1847,7 @@ function applySkin(id) {
       if (m.color) { u.c0 ??= m.color.getHex(); m.color.setHex(u.c0); }
       if (m.emissive) { u.e0 ??= m.emissive.getHex(); m.emissive.setHex(u.e0); }
       const g = k.ground || {};
+      if (m.isLineBasicMaterial && k.edges != null) { m.color.set(k.edges); continue; }  // cartoon ink outlines
       if (u.c0 === 0x0b0716 && g.asphalt != null) { m.color.set(g.asphalt); continue; }
       if (u.c0 === 0x1d6b3c && g.grass != null) { m.color.set(g.grass); if (m.emissive) m.emissive.set(g.grass).multiplyScalar(0.15); continue; }
       if (m.map && m.color && m.color.getHex() === 0xffffff) continue;  // textured screens/billboards keep their own colours
@@ -1773,6 +1855,7 @@ function applySkin(id) {
       if (m.emissive && m.emissive.getHex() !== 0xffffff) tintColor(m.emissive, k.tint);
     }
   });
+  renderer.domElement.style.filter = k.filter || ""; document.body.dataset.skin = k.id;
   set("city-skin", SKIN.id);
   if (!$("#skins").hidden) skinPicker();
 }
@@ -1801,6 +1884,7 @@ async function enter(pw, remember) {
   try { D = await decrypt(pw); } catch (e) { $("#loading").hidden = true; $("#err").hidden = false; if (GUEST) $("#err").textContent = "This guest link has expired or is not valid."; else set(KEY, null); return; }
   PW = pw; if (remember) set(KEY, pw);
   $("#lock").hidden = true;
+  if (DEMO || GUEST) $("#officebtn").hidden = true;
   if (GUEST) { $("#bananas").hidden = true; $("#lockbtn").hidden = true; document.querySelectorAll("#askbar .ph").forEach(e => e.textContent = "Ask Claude how this was built…"); }
   await Promise.all([document.fonts.load("800 54px Sora"), document.fonts.load("600 30px Inter"), services()]).catch(() => {});
   initScene(); build();
