@@ -79,7 +79,7 @@ function model(D) {
   const plus = n => n == null ? "–" : (n >= 0 ? "+" : "") + num(n);
   const L = et.listings || [], G = gu.listings || [];
   const eS = et.sales || [], gS = gu.sales || [];
-  const sum = (a, f) => a.reduce((t, x) => t + (+f(x) || 0), 0);
+  function sum(a, f) { return a.reduce((t, x) => t + (+f(x) || 0), 0); }
   const today = a => a.filter(x => isToday(x.ts));
   const last7 = k => sum((fb.daily?.[k] || []).slice(-7), x => x.value);
   const st = ch => (s[ch]?.stale ? "stale" : "ok");

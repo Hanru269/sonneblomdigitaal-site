@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>$NOBODY & $OLLIE · Community coins</title>
+<meta name="description" content="The community coins of Mr Nobody and Posh Ollie. Fun fan tokens on Solana: fixed supply, nobody can print more. Not an investment.">
+<meta property="og:title" content="$NOBODY & $OLLIE · Community coins"><meta property="og:image" content="https://sonneblomdigitaal.co.za/community/nobody.png">
+<link rel="icon" href="nobody.png">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;800&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<script>
+/* ===== EDIT HERE ===== mint = token address once minted; buy = trading link once the pool is open; lock = team-share lock link */
+const COINS = {
+  nobody: { mint: "", buy: "", lock: "" },
+  ollie:  { mint: "", buy: "", lock: "" },
+};
+const JOIN_API = "https://chat.sonneblomdigitaal.co.za/api/community-join";
+</script>
+<style>
+:root{--bg:#0a0420;--panel:rgba(255,255,255,.05);--line:rgba(255,255,255,.14);--dim:#a99cd6;--mint:#3dffa8;--blue:#38bdf8;--yel:#ffd166}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(1000px 500px at 10% -10%,#4b1d7a,transparent 60%),radial-gradient(900px 500px at 100% 0,#123a7a,transparent 55%),var(--bg);color:#fff;font:400 16px/1.55 Inter,sans-serif}
+.wrap{max-width:980px;margin:0 auto;padding:0 18px}
+h1,h2,h3{font-family:Sora,sans-serif;margin:0}
+.hero{padding:46px 0 20px;text-align:center}.hero h1{font-size:clamp(30px,6vw,52px);line-height:1.1}
+.hero p{color:var(--dim);max-width:640px;margin:14px auto 0}
+.kick{display:inline-block;font:800 12px Sora;letter-spacing:2px;color:var(--yel);border:1px solid var(--yel);border-radius:999px;padding:4px 12px;margin-bottom:14px}
+.coins{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin:28px 0}
+.coin{background:var(--panel);border:1px solid var(--c);border-radius:20px;padding:22px;text-align:center;box-shadow:0 0 30px color-mix(in srgb,var(--c) 22%,transparent)}
+.coin img{width:170px;height:170px;border-radius:50%}.coin h2{font-size:28px;margin-top:12px;color:var(--c)}.coin .nm{color:var(--dim);font-weight:700}
+.coin .tag{color:#d8ccff;margin:10px 0 14px}
+.st{display:inline-block;font:800 12px Sora;letter-spacing:1px;padding:5px 12px;border-radius:999px;background:rgba(255,209,102,.12);color:var(--yel);border:1px solid var(--yel)}
+.st.on{background:rgba(61,255,168,.12);color:var(--mint);border-color:var(--mint)}
+.addr{margin-top:14px;font:600 12px monospace;color:var(--dim);word-break:break-all}
+.btns{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:14px}
+.btn{display:inline-block;padding:10px 16px;border-radius:12px;font:800 14px Sora;text-decoration:none;color:#0a0420;background:var(--c,var(--mint));border:0;cursor:pointer}
+.btn.gh{background:transparent;color:#fff;border:1px solid var(--line)}
+.facts{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:10px 0 30px}
+.fact{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px}.fact b{display:block;font-family:Sora;margin-bottom:4px}.fact span{color:var(--dim);font-size:14px}
+section{margin:34px 0}section h2{font-size:26px;margin-bottom:12px}
+ol{color:#d8ccff;padding-left:20px}ol li{margin:6px 0}
+form{display:grid;gap:10px;max-width:520px}input,select{background:#140a33;color:#fff;border:1px solid #3a2f66;border-radius:12px;padding:12px;font:500 15px Inter}
+.ok{color:var(--mint);font-weight:700}.err{color:#ff6b8a}
+.disc{color:var(--dim);font-size:13px;border-top:1px solid var(--line);padding:22px 0 40px;margin-top:30px}
+@media(max-width:700px){.coins,.facts{grid-template-columns:1fr}}
+</style></head><body>
+<header class="hero"><div class="wrap">
+  <span class="kick">COMMUNITY COINS · SOLANA</span>
+  <h1>$NOBODY &amp; $OLLIE</h1>
+  <p>Fun fan coins for the community around Mr Nobody, the invisible man in a football kit, and Posh Ollie, the posh lad with a Scouse mouth. Join the list for airdrops and community drops.</p>
+</div></header>
+<main class="wrap">
+  <div class="coins">
+    <div class="coin" id="c-nobody" style="--c:var(--mint)"><img src="nobody.png" alt="$NOBODY coin"><h2>$NOBODY</h2><div class="nm">Mr Nobody</div>
+      <div class="tag">You can't see him. You can see his kit.</div><span class="st">COMING SOON</span><div class="addr"></div><div class="btns"></div></div>
+    <div class="coin" id="c-ollie" style="--c:var(--blue)"><img src="ollie.png" alt="$OLLIE coin"><h2>$OLLIE</h2><div class="nm">Posh Ollie</div>
+      <div class="tag">Posh lad. Scouse mouth. Wallet thicker than his accent.</div><span class="st">COMING SOON</span><div class="addr"></div><div class="btns"></div></div>
+  </div>
+
+  <div class="facts">
+    <div class="fact"><b>🔒 Fixed supply</b><span>1,000,000,000 coins each. Minting is switched off for good: nobody can ever print more.</span></div>
+    <div class="fact"><b>🧊 No freezing</b><span>Freeze authority is revoked, so nobody can lock your coins in your wallet.</span></div>
+    <div class="fact"><b>⏳ Team share locked</b><span>The creators' share goes into a public time-lock before trading opens, so it can't be dumped on fans.</span></div>
+  </div>
+
+  <section><h2>How it works</h2><ol>
+    <li>The coins are created first and held by the creators. Trading is not open yet.</li>
+    <li>Fans on the list get free airdrops at community moments (challenges, milestones, giveaways).</li>
+    <li>When the community is ready, a trading pool opens with locked liquidity, and the creators' share is time-locked.</li>
+    <li>Everything is on-chain: tap the address under each coin to check it yourself on Solscan.</li>
+  </ol></section>
+
+  <section id="join"><h2>Join the community list</h2>
+    <p style="color:var(--dim)">Leave your Solana wallet address (Phantom etc.) to get airdrops. We never ask for your seed phrase or private key: anyone who does is a scammer.</p>
+    <form id="jf">
+      <select name="coin"><option value="both">Both coins</option><option value="nobody">$NOBODY</option><option value="ollie">$OLLIE</option></select>
+      <input name="wallet" placeholder="Your Solana wallet address" required minlength="32" maxlength="44" pattern="[1-9A-HJ-NP-Za-km-z]{32,44}">
+      <input name="handle" placeholder="Your Instagram or TikTok name (optional)" maxlength="40">
+      <button class="btn" style="--c:var(--yel)">Join the list</button><div id="jm"></div>
+    </form>
+  </section>
+
+  <div class="disc">Fan coins for fun and community. They are not an investment, carry no promise of profit or value, and can go to zero. Never spend more than you'd happily lose. Nothing here is financial advice. By Sonneblom Digitaal.</div>
+</main>
+<script>
+for (const [id, c] of Object.entries(COINS)) {
+  const el = document.getElementById("c-" + id), st = el.querySelector(".st"), b = el.querySelector(".btns");
+  if (c.mint) {
+    st.textContent = c.buy ? "TRADING OPEN" : "MINTED · TRADING NOT OPEN YET"; st.classList.add("on");
+    el.querySelector(".addr").textContent = c.mint;
+    b.innerHTML = `<a class="btn gh" href="https://solscan.io/token/${c.mint}" target="_blank" rel="noopener">Check on Solscan</a><button class="btn gh" type="button">Copy address</button>` +
+      (c.lock ? `<a class="btn gh" href="${c.lock}" target="_blank" rel="noopener">Team lock</a>` : "") + (c.buy ? `<a class="btn" href="${c.buy}" target="_blank" rel="noopener">Buy</a>` : "");
+    b.querySelector("button").onclick = e => { navigator.clipboard.writeText(c.mint); e.target.textContent = "Copied ✓"; };
+  }
+}
+document.getElementById("jf").onsubmit = async e => {
+  e.preventDefault(); const f = e.target, m = document.getElementById("jm");
+  try {
+    const r = await fetch(JOIN_API, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(Object.fromEntries(new FormData(f))) });
+    const j = await r.json(); if (!r.ok) throw new Error(j.error || "error");
+    m.className = "ok"; m.textContent = "You're on the list 🎉"; f.reset();
+  } catch (err) { m.className = "err"; m.textContent = "Couldn't save that: " + err.message; }
+};
+</script>
+</body></html>
