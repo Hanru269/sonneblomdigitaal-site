@@ -273,5 +273,7 @@ body[data-skin="seventies"]::after{content:"";position:fixed;inset:0;pointer-eve
 #inf .thumbs a span{position:absolute;left:2px;right:2px;bottom:2px;font:700 9px Inter;background:#000a;border-radius:4px;text-align:center}
 #inf .card .none{color:var(--dim);font-size:13px;padding:14px 0}
 .infopen{padding:8px 12px;border-radius:9px;border:1px solid #ff4fd8;background:#ff4fd822;color:#ff9be9;font:700 13px Inter,sans-serif;cursor:pointer;margin:6px 0}
-@media (max-width:600px){#credits{position:fixed;right:12px;top:calc(env(safe-area-inset-top) + 124px);z-index:12;padding:4px 10px}
-  #credits.open{max-width:calc(100vw - 24px)}}
+/* always on its own spot (right of the "data … ago" line), above the chips and quick buttons: in the header it hid behind them (owner) */
+#credits{position:fixed;right:12px;top:calc(env(safe-area-inset-top) + 124px);z-index:30;padding:4px 10px;box-shadow:0 0 12px #ffd16644}
+#credits.open{max-width:min(360px,calc(100vw - 24px))}
+@media (min-width:900px){#credits{right:auto;left:14px;top:calc(env(safe-area-inset-top) + 146px)}}

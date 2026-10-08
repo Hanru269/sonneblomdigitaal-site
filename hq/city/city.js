@@ -1437,20 +1437,6 @@ function todoSync(ticks) {
 }
 $("#askbar").onclick = () => DEMO ? focus("library") : openTerm();
 
-// LIVE strip under the building buttons: Rose users, Side Hustle City visits, Etsy + Gumroad visits today (collect.py pulse().stats)
-function liveStrip(p) {
-  const el = $("#livestats"), st = (p || {}).stats;
-  if (DEMO || !st) return (el.hidden = true);
-  const v = x => x === null || x === undefined ? "—" : num(x);
-  el.hidden = false;
-  const inf = M.s.influencers;
-  el.innerHTML = `<span class="lv">● LIVE</span>` + (inf && inf.accounts ? `<button id="infbtn">📊 Influencers <b>${num(inf.followers)}</b>${inf.gained_24h ? ` <em>${inf.gained_24h > 0 ? "+" : ""}${inf.gained_24h}</em>` : ""}</button>` : "") +
-    `<button data-id="rose">🌹 Rose users <b>${v(st.rose_users)}</b>${st.rose_new ? ` <em>+${st.rose_new}</em>` : ""}</button>` +
-    `<button data-id="showroom">🏙️ SHC visits <b>${v(st.shc_visits)}</b></button>` +
-    `<button data-id="etsy" title="from ${esc(st.etsy_src || "")}">🛍️ Etsy visits <b>${v(st.etsy_visits)}</b></button>` +
-    `<button data-id="gumroad" title="${st.gumroad_visits === null ? "read from Gumroad via Chrome on Go Bananas (last " + esc(st.gumroad_at || "never") + ")" : ""}">🎨 Gumroad visits <b>${v(st.gumroad_visits)}</b></button>`;
-}
-
 // Credits bubble under the city name (owner 2026-10-08): Higgsfield credits, fal.ai, Claude plan left (collect.py credits()); tap = details
 function creditsBubble(c) {
   const el = $("#credits");
@@ -1503,6 +1489,20 @@ function openInf() {
   $("#infclose").onclick = () => (el.hidden = true);
 }
 window.openInf = openInf;
+
+// LIVE strip under the building buttons: Rose users, Side Hustle City visits, Etsy + Gumroad visits today (collect.py pulse().stats)
+function liveStrip(p) {
+  const el = $("#livestats"), st = (p || {}).stats;
+  if (DEMO || !st) return (el.hidden = true);
+  const v = x => x === null || x === undefined ? "—" : num(x);
+  el.hidden = false;
+  const inf = M.s.influencers;
+  el.innerHTML = `<span class="lv">● LIVE</span>` + (inf && inf.accounts ? `<button id="infbtn">📊 Influencers <b>${num(inf.followers)}</b>${inf.gained_24h ? ` <em>${inf.gained_24h > 0 ? "+" : ""}${inf.gained_24h}</em>` : ""}</button>` : "") +
+    `<button data-id="rose">🌹 Rose users <b>${v(st.rose_users)}</b>${st.rose_new ? ` <em>+${st.rose_new}</em>` : ""}</button>` +
+    `<button data-id="showroom">🏙️ SHC visits <b>${v(st.shc_visits)}</b></button>` +
+    `<button data-id="etsy" title="from ${esc(st.etsy_src || "")}">🛍️ Etsy visits <b>${v(st.etsy_visits)}</b></button>` +
+    `<button data-id="gumroad" title="${st.gumroad_visits === null ? "read from Gumroad via Chrome on Go Bananas (last " + esc(st.gumroad_at || "never") + ")" : ""}">🎨 Gumroad visits <b>${v(st.gumroad_visits)}</b></button>`;
+}
 
 function hud() {
   const { B, tot, day, roseZar, sales, s } = M;
