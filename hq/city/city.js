@@ -762,7 +762,8 @@ function building(b) {
   const plinth = new THREE.Mesh(new THREE.CylinderGeometry(b.w * 0.95, b.w, 0.6, 6), new THREE.MeshStandardMaterial({ color: 0x24125e, emissive: c, emissiveIntensity: 0.25 }));
   plinth.position.y = 0.3; g.add(plinth);
   let top = b.h;
-  if (b.kind === "mega") {  // stepped skyscraper with a crown
+  if (THEME === "springfield" && !DEMO) { plinth.visible = false; top = springModel(g, b); }
+  else if (b.kind === "mega") {  // stepped skyscraper with a crown
     const t1 = tower(b.w, b.h * 0.55, b.d, c, 11, lit); g.add(t1);
     const t2 = tower(b.w * 0.72, b.h * 0.3, b.d * 0.72, c, 12, lit); t2.position.y = b.h * 0.55; g.add(t2);
     const t3 = tower(b.w * 0.45, b.h * 0.15, b.d * 0.45, c, 13, lit); t3.position.y = b.h * 0.85; g.add(t3);
@@ -1772,8 +1773,203 @@ function districts() {
 
 function build() {
   M = model(D);
-  ground(); vault(); M.B.forEach(building); districts(); flowBeam(); moneyBeams(); workBeams(); life(); staffFigures(); hud();
-  applySkin(SKIN.id);
+  const SF = THEME === "springfield" && !DEMO;
+  if (SF) { springWorld(); springVault(); } else { ground(); vault(); }
+  M.B.forEach(building); districts(); flowBeam(); moneyBeams(); workBeams(); life(); staffFigures(); hud();
+  if (!SF) applySkin(SKIN.id);
+  else scene.traverse(o => { for (const m of [].concat(o.material || [])) if (m.isMeshStandardMaterial) {  // park paths/plaza: night paving -> sunny pavement
+    const hsl = {}; m.color.getHSL(hsl); if (hsl.l < 0.3) m.color.setHex(0xd8cfb8); if (m.emissive) m.emissiveIntensity *= 0.25; } });
+}
+
+// ---------- THEMES (owner 2026-10-08): whole-city redesigns, not colour skins ----------
+// "springfield": our buildings rebuilt as Springfield landmarks (cartoon toon shading + black ink outlines, blue sky,
+// suburbs, a SPRINGFIELD hill sign). Picked in the 🎨 menu; saved per device (localStorage city-theme).
+let THEME = get("city-theme") || "neon";
+const THEMES = [{ id: "neon", name: "Neon Night (classic)", swatch: ["#0a0420", "#ff2bd6", "#00f0ff"] },
+  { id: "springfield", name: "Springfield", swatch: ["#70c5ff", "#ffd90f", "#7ccf4a"] }];
+let TOONGRAD = null, INK = null;
+function toon(color) {
+  if (!TOONGRAD) { TOONGRAD = new THREE.DataTexture(new Uint8Array([90, 90, 90, 255, 175, 175, 175, 255, 255, 255, 255, 255]), 3, 1, THREE.RGBAFormat);
+    TOONGRAD.minFilter = TOONGRAD.magFilter = THREE.NearestFilter; TOONGRAD.needsUpdate = true; INK = new THREE.LineBasicMaterial({ color: 0x111111 }); }
+  return new THREE.MeshToonMaterial({ color, gradientMap: TOONGRAD });
+}
+function sMesh(p, geo, color, x, y, z, ink = true) {
+  const m = new THREE.Mesh(geo, toon(color)); m.position.set(x, y, z); p.add(m);
+  if (ink) { const e = new THREE.LineSegments(new THREE.EdgesGeometry(geo, 30), INK); e.position.copy(m.position); e.rotation.copy(m.rotation); m.userData.ink = e; p.add(e); }
+  return m;
+}
+const sBox = (p, w, h, d, c, x, y, z, ink) => sMesh(p, new THREE.BoxGeometry(w, h, d), c, x, y + h / 2, z, ink);
+function sSign(p, text, w, h, bg, fg, x, y, z, ry = 0, font = "900") {
+  const cv = document.createElement("canvas"); cv.width = 1024; cv.height = Math.round(1024 * h / w);
+  const g = cv.getContext("2d"); g.fillStyle = bg; g.fillRect(0, 0, cv.width, cv.height);
+  g.strokeStyle = "#111"; g.lineWidth = 18; g.strokeRect(9, 9, cv.width - 18, cv.height - 18);
+  let fs = cv.height * 0.62; g.font = `${font} ${fs}px Sora, sans-serif`;
+  while (g.measureText(text).width > cv.width * 0.9 && fs > 10) { fs -= 4; g.font = `${font} ${fs}px Sora, sans-serif`; }
+  g.textAlign = "center"; g.textBaseline = "middle"; g.lineWidth = fs * 0.12; g.strokeStyle = "#111"; g.strokeText(text, cv.width / 2, cv.height / 2 + fs * 0.04);
+  g.fillStyle = fg; g.fillText(text, cv.width / 2, cv.height / 2 + fs * 0.04);
+  const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace;
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: t, side: THREE.DoubleSide })); m.position.set(x, y, z); m.rotation.y = ry; p.add(m); return m;
+}
+function sRoof(p, w, d, h, c, y) {  // gable roof (triangular prism) along x
+  const s = new THREE.Shape(); s.moveTo(-d / 2 - 0.4, 0); s.lineTo(0, h); s.lineTo(d / 2 + 0.4, 0); s.lineTo(-d / 2 - 0.4, 0);
+  const geo = new THREE.ExtrudeGeometry(s, { depth: w + 0.8, bevelEnabled: false }); geo.translate(0, 0, -(w + 0.8) / 2); geo.rotateY(Math.PI / 2);
+  return sMesh(p, geo, c, 0, y, 0);
+}
+function sWindows(p, w, h, z, rows, cols, y0, c = 0xbfe9ff) {
+  for (let r = 0; r < rows; r++) for (let k = 0; k < cols; k++)
+    sBox(p, Math.min(1.4, w / cols * 0.5), 1.1, 0.12, c, -w / 2 + w / cols * (k + 0.5), y0 + r * (h / rows), z);
+}
+function sStore(p, w, d, h, wall, sign, signBg, signFg, opt = {}) {
+  sBox(p, w, h, d, wall, 0, 0, 0);
+  sBox(p, w + 0.3, 0.5, d + 0.3, opt.trim ?? 0xffffff, 0, h, 0);                         // roof edge
+  sBox(p, 1.6, 2.4, 0.15, opt.door ?? 0x7a4b2a, 0, 0, d / 2 + 0.05);                       // door
+  if (!opt.noWin) sWindows(p, w * 0.8, h * 0.5, d / 2 + 0.06, 1, Math.max(2, Math.round(w / 3)), 0.9);
+  if (opt.awning) for (let i = 0; i < 6; i++) sBox(p, w / 6, 0.25, 1.4, i % 2 ? 0xffffff : opt.awning, -w / 2 + w / 12 + i * w / 6, h * 0.62, d / 2 + 0.7, false);
+  if (sign) sSign(p, sign, Math.min(w * 1.05, 14), Math.min(2.6, w * 0.3), signBg, signFg, 0, h + 1.9, d / 2 - 0.4);
+}
+function springModel(g, b) {
+  const f = faceDir(b), m = new THREE.Group(); m.rotation.y = Math.atan2(f.x, f.z); g.add(m);
+  const W = Math.max(7, b.w), D = Math.max(6, b.d);
+  switch (b.id) {
+    case "library": {  // Springfield Town Hall: columns, pediment, dome
+      sBox(m, 20, 8, 12, 0xf3e7c9, 0, 0, 0); sBox(m, 21, 1, 13, 0xd9c9a3, 0, 8, 0);
+      for (let i = 0; i < 6; i++) sMesh(m, new THREE.CylinderGeometry(0.5, 0.5, 7, 12), 0xffffff, -7.5 + i * 3, 3.9, 7);
+      sBox(m, 18, 0.6, 3, 0xd9c9a3, 0, 0, 7); const ped = sRoof(m, 3, 18, 2.6, 0xe6d6b0, 7.6); ped.rotation.y = 0; ped.position.z = 7; if (ped.userData.ink) { ped.userData.ink.position.z = 7; }
+      sMesh(m, new THREE.CylinderGeometry(3.4, 3.4, 2.5, 24), 0xf3e7c9, 0, 10.2, 0);
+      sMesh(m, new THREE.SphereGeometry(3.4, 24, 12, 0, 6.28, 0, Math.PI / 2), 0x9fd3c7, 0, 11.4, 0);
+      sMesh(m, new THREE.CylinderGeometry(0.08, 0.08, 4), 0x555555, 0, 16.6, 0, false); sBox(m, 1.8, 1, 0.05, 0xffd90f, 0.9, 17.4, 0, false);
+      sSign(m, "TOWN HALL", 9, 1.4, "#f3e7c9", "#3a2a1c", 0, 9.9, 8.6); return 18.5;
+    }
+    case "etsy": {  // Kwik-E-Mart
+      sStore(m, W, D, 5, 0x2bb3a3, null, "", "", { trim: 0xff8a1f, door: 0x9be3ff });
+      for (let i = 0; i < 3; i++) sBox(m, W + 0.32, 0.35, D + 0.32, [0xffd90f, 0xff8a1f, 0xe33b2e][i], 0, 3.6 + i * 0.4, 0, false);
+      sMesh(m, new THREE.CylinderGeometry(0.25, 0.25, 9), 0x888888, W / 2 + 1.5, 4.5, D / 2, false);
+      sSign(m, "KWIK-E-MART", 9, 2.4, "#e33b2e", "#ffd90f", W / 2 + 1.5, 9.5, D / 2 + 0.3); return 11;
+    }
+    case "gumroad": {  // Krusty Burger: red diner + giant burger on a pole
+      sStore(m, W, D, 5, 0xe33b2e, "KRUSTY BURGER", "#ffd90f", "#e33b2e", { trim: 0xffd90f, door: 0xffffff });
+      const y = 11; sMesh(m, new THREE.CylinderGeometry(0.25, 0.25, 6), 0x888888, -W / 2 - 1.5, 8, 0, false);
+      [[0xd9902f, 1.2, 0.8, 0], [0x4caf50, 1.5, 0.25, 0.75], [0x5a2e1a, 1.45, 0.6, 1.1], [0xffd90f, 1.5, 0.2, 1.5], [0xd9902f, 1.2, 1.0, 2.0]].forEach(([c, r, h, dy]) =>
+        sMesh(m, new THREE.CylinderGeometry(r, r, h, 20), c, -W / 2 - 1.5, y + dy, 0)); return 14;
+    }
+    case "kdp": sStore(m, W, D, 6, 0xb5523b, "BOOKS", "#2f6b3a", "#fff6d0", { awning: 0x2f6b3a }); return 9;
+    case "showroom": sStore(m, W + 2, D, 8, 0xffe08a, "SPRINGFIELD MALL", "#3a7bd5", "#ffffff", { awning: 0x3a7bd5 }); return 11;
+    case "contra": sStore(m, Math.min(W, 7), D, 5, 0x5a3a22, "MOE'S", "#2b1a10", "#ff4d6d", { noWin: true, trim: 0x2b1a10 }); return 8;
+    case "lab": {  // Lard Lad Donuts: giant donut on the roof
+      sStore(m, W + 1, D + 1, 4.5, 0xf6a5c0, "LARD LAD", "#ffffff", "#e33b2e", { trim: 0x8b5a3c });
+      const dn = sMesh(m, new THREE.TorusGeometry(2.4, 1.1, 14, 32), 0xd9902f, 0, 9.5, 0, false);
+      const fr = sMesh(m, new THREE.TorusGeometry(2.4, 1.15, 14, 32, Math.PI * 2), 0xff6fae, 0, 9.5, 0.25, false); fr.scale.set(1, 1, 0.55);
+      for (let i = 0; i < 16; i++) { const a = i / 16 * 6.28; sBox(m, 0.5, 0.15, 0.15, [0xffd90f, 0x2bb3a3, 0xffffff, 0x7d5cff][i % 4], Math.cos(a) * 2.5, 9.4 + Math.sin(a) * 2.5, 1.05, false); }
+      dn.rotation.x = fr.rotation.x = 0; return 13;
+    }
+    case "rose": {  // 742 Evergreen Terrace style family house
+      sBox(m, 9, 6, 7, 0xf2a7a0, 0, 0, 0); sRoof(m, 9, 7, 3, 0x8b5a3c, 6);
+      sBox(m, 5, 3.5, 6, 0xf2a7a0, -6.5, 0, 0.5); sBox(m, 5.4, 0.4, 6.4, 0x8b5a3c, -6.5, 3.5, 0.5);
+      sBox(m, 4, 2.8, 0.12, 0xffffff, -6.5, 0, 3.55); sBox(m, 1.4, 2.4, 0.15, 0x7d5cff, 0.5, 0, 3.55);
+      sWindows(m, 8, 5, 3.56, 2, 3, 1.2); sBox(m, 2, 1.2, 1.2, 0xe33b2e, 2.8, 6.2, 0, true); return 10;
+    }
+    case "fb": {  // Channel 6 TV with a red-and-white mast
+      sStore(m, W, D, 10, 0x3a7bd5, "CHANNEL 6", "#ffffff", "#e33b2e", { trim: 0xffffff });
+      for (let i = 0; i < 6; i++) sMesh(m, new THREE.CylinderGeometry(0.5 - i * 0.07, 0.55 - i * 0.07, 3.5, 6), i % 2 ? 0xffffff : 0xe33b2e, 0, 10.5 + i * 3.5 + 1.75, 0);
+      const bl = sMesh(m, new THREE.SphereGeometry(0.45, 10, 8), 0xff3b3b, 0, 32, 0, false); anim.push((dt, t) => bl.visible = Math.sin(t * 4) > 0); return 33;
+    }
+    case "army": {  // Springfield Elementary: brick school + bell tower
+      sStore(m, W + 4, D, 7, 0xc8553d, "ELEMENTARY", "#ffffff", "#c8553d", { trim: 0xeeeeee });
+      sBox(m, 3, 6, 3, 0xc8553d, 0, 7, 0); sRoof(m, 3, 3, 2, 0x5a3a22, 13); sBox(m, 1.6, 1.6, 3.1, 0xffffff, 0, 9, 0, false); return 16;
+    }
+    case "pinterest": sStore(m, W, D, 5, 0xffb3d1, "FLOWERS", "#ffffff", "#e0457b", { awning: 0xe0457b }); return 8;
+    case "zoho": { sStore(m, W, D, 6, 0xdcdcdc, "POST OFFICE", "#2b4c9b", "#ffffff", { trim: 0x2b4c9b });
+      sMesh(m, new THREE.CylinderGeometry(0.1, 0.1, 9), 0x999999, W / 2 + 1, 4.5, D / 2, false); sBox(m, 2, 1.2, 0.05, 0x2b4c9b, W / 2 + 2, 7.6, D / 2, false); return 10; }
+    case "krypto": { sStore(m, W, D, 6, 0xe8dcc0, "BANK", "#1f6b3a", "#ffd90f", { trim: 0xc8b98f });
+      for (let i = 0; i < 4; i++) sMesh(m, new THREE.CylinderGeometry(0.3, 0.3, 5.5, 10), 0xffffff, -W / 2 + 1 + i * (W - 2) / 3, 2.75, D / 2 + 0.6); return 9; }
+    case "kalshi": { sStore(m, W + 1, D + 1, 7, 0x7d3cff, "CASINO", "#ffd90f", "#7d3cff", { trim: 0xffd90f, noWin: true });
+      const bulbs = []; for (let i = 0; i < 10; i++) bulbs.push(sMesh(m, new THREE.SphereGeometry(0.22, 8, 6), 0xffffaa, -(W + 1) / 2 + 0.5 + i * (W / 9), 6.3, (D + 1) / 2 + 0.2, false));
+      anim.push((dt, t) => bulbs.forEach((x, i) => x.visible = Math.sin(t * 6 + i) > -0.3)); return 10; }
+    case "poly": sStore(m, W + 1, D + 1, 6, 0x9fd3c7, "STOCKS", "#111111", "#3dffa8", { trim: 0x111111 }); return 9;
+    case "longshot": { sStore(m, W + 1, D + 1, 4.5, 0x2bb3a3, "BOWLARAMA", "#e33b2e", "#ffffff", { trim: 0xffffff });
+      sMesh(m, new THREE.SphereGeometry(1, 16, 12), 0xffffff, 0, 8.5, 0); sMesh(m, new THREE.CylinderGeometry(0.6, 1.1, 3, 16), 0xffffff, 0, 6.6, 0); sMesh(m, new THREE.SphereGeometry(0.62, 12, 8), 0xffffff, 0, 10, 0);
+      sMesh(m, new THREE.TorusGeometry(0.62, 0.12, 8, 20), 0xe33b2e, 0, 9.4, 0, false).rotation.x = Math.PI / 2; return 12; }
+    case "github": sStore(m, W, D, 5, 0x3d6b4f, "COMIC SHOP", "#ffd90f", "#111111", { awning: 0xffd90f }); return 8;
+    case "rnd": { sStore(m, W, D, 6, 0xeeeeee, "LAB", "#111111", "#3dffa8", {}); sMesh(m, new THREE.SphereGeometry(2.8, 20, 10, 0, 6.28, 0, Math.PI / 2), 0xbfbfbf, 0, 6.5, 0);
+      sBox(m, 0.7, 0.8, 3.4, 0x333333, 0, 8.2, 0.6, false); return 10; }
+    case "whdig": case "whpod": {
+      sBox(m, b.w, b.h, b.d, 0x9b5a3c, 0, 0, 0); sMesh(m, new THREE.CylinderGeometry(b.d / 2, b.d / 2, b.w, 20, 1, false, 0, Math.PI), 0x8d8d8d, 0, b.h, 0).rotation.z = Math.PI / 2;
+      sBox(m, b.w * 0.35, b.h * 0.7, 0.15, 0x666666, 0, 0, b.d / 2 + 0.05);
+      sSign(m, b.id === "whdig" ? "DIGITAL WAREHOUSE" : "PRINT WAREHOUSE", b.w * 0.8, 1.6, "#ffffff", "#333333", 0, b.h - 1.2, b.d / 2 + 0.1);
+      if (b.id === "whpod") {  // the eternal tire fire out back
+        for (let i = 0; i < 9; i++) sMesh(m, new THREE.TorusGeometry(0.7, 0.3, 8, 16), 0x222222, -3 + (i % 3) * 1.6, 0.3 + Math.floor(i / 3) * 0.5, -b.d / 2 - 3 + (i % 2) * 0.4, false).rotation.x = Math.PI / 2;
+        const fl = [0, 1, 2].map(i => sMesh(m, new THREE.ConeGeometry(0.9 - i * 0.2, 2.6, 8), [0xff8a1f, 0xffd90f, 0xe33b2e][i], -1.4 + i * 1.4, 2.4, -b.d / 2 - 3, false));
+        anim.push((dt, t) => fl.forEach((x, i) => x.scale.y = 0.8 + 0.35 * Math.sin(t * 9 + i * 2)));
+      }
+      return b.h + b.d / 2;
+    }
+    default: sStore(m, W, D, Math.min(8, b.h), b.color, (b.short || "").slice(0, 12), "#ffffff", "#111111", {}); return 10;
+  }
+}
+function springVault() {  // the Vault = Springfield Nuclear Power Plant (money = power)
+  const g = new THREE.Group(); g.userData.b = { id: "vault" };
+  sBox(g, 10, 5, 7, 0xa8a8a8, 0, 0, 2); sBox(g, 10.4, 0.5, 7.4, 0x777777, 0, 5, 2);
+  sSign(g, "NUCLEAR POWER PLANT", 9, 1.3, "#ffffff", "#2b4c9b", 0, 4, 5.6);
+  const prof = []; for (let i = 0; i <= 10; i++) { const t = i / 10; prof.push(new THREE.Vector2(3.4 - 1.6 * Math.sin(t * Math.PI * 0.85), t * 11)); }
+  [-4.2, 4.2].forEach(x => { sMesh(g, new THREE.LatheGeometry(prof, 28), 0xd6d6d6, x, 0, -4, false);
+    sMesh(g, new THREE.TorusGeometry(2.6, 0.12, 6, 28), 0x888888, x, 11, -4, false).rotation.x = Math.PI / 2; });
+  const puffs = [...Array(10)].map((_, i) => sMesh(g, new THREE.SphereGeometry(1.4, 12, 8), 0xffffff, i % 2 ? 4.2 : -4.2, 12, -4, false));
+  anim.push((dt, t) => puffs.forEach((p, i) => { const k = ((t * 0.25 + i / 10) % 1); p.position.y = 11.5 + k * 9; p.scale.setScalar(0.6 + k * 1.6); p.material.opacity = 1 - k; p.material.transparent = true; }));
+  const rod = sMesh(g, new THREE.CylinderGeometry(0.35, 0.35, 2.2, 10), 0x7dff4a, 0, 6.2, 2, false); rod.material = new THREE.MeshBasicMaterial({ color: 0x7dff4a });
+  anim.push((dt, t) => rod.scale.setScalar(1 + 0.08 * Math.sin(t * 5)));
+  const el = document.createElement("div"); el.className = "tag vaultTag"; el.style.setProperty("--c", "#ffd166"); el.onclick = () => focus("vault");
+  const lab = new CSS2DObject(el); lab.position.y = 22; g.add(lab); g.userData.el = el;
+  g.traverse(o => { if (o.isMesh) { o.userData.bid = "vault"; picks.push(o); } });
+  g.position.set(VAULT[0], 0, VAULT[1]); groups.vault = g; scene.add(g);
+}
+function springWorld() {
+  scene.background = new THREE.Color(0x70c5ff); scene.fog = new THREE.FogExp2(0xcfeeff, 0.0016);
+  renderer.toneMappingExposure = 1.0; if (bloom) bloom.strength = 0.0; renderer.domElement.style.filter = "";
+  scene.traverse(o => { if (o.isHemisphereLight) { o.color.set(0xffffff); o.groundColor.set(0x8fbf5a); o.intensity = 1.5; } if (o.isDirectionalLight) { o.color.set(0xfff6d0); o.intensity = 1.8; } });
+  const d = new THREE.Object3D(), col = new THREE.Color();
+  const grass = new THREE.Mesh(new THREE.PlaneGeometry(900, 900), toon(0x7ccf4a)); grass.rotation.x = -Math.PI / 2; scene.add(grass);
+  const park = new THREE.Mesh(new THREE.BoxGeometry(PARK * 2, 0.3, PARK * 2), toon(0x8edb5a)); park.position.y = 0.15; scene.add(park);
+  const roadM = toon(0x8d8d8d), R = STREETS[0], RW = 10;
+  [[0, -R, 2 * R + RW, RW], [0, R, 2 * R + RW, RW], [-R, 0, RW, 2 * R + RW], [R, 0, RW, 2 * R + RW]].forEach(([x, z, w, dd]) => {
+    const r = new THREE.Mesh(new THREE.BoxGeometry(w, 0.1, dd), roadM); r.position.set(x, 0.05, z); scene.add(r); });
+  const dash = new THREE.InstancedMesh(new THREE.BoxGeometry(2.4, 0.05, 0.35), new THREE.MeshBasicMaterial({ color: 0xffd90f }), 4 * 34); let n = 0;
+  for (const s of [-1, 1]) for (let k = -16; k <= 16; k += 1) { if (n >= 4 * 34) break;
+    d.position.set(k * 5.3, 0.13, s * R); d.rotation.set(0, 0, 0); d.updateMatrix(); dash.setMatrixAt(n++, d.matrix);
+    d.position.set(s * R, 0.13, k * 5.3); d.rotation.set(0, Math.PI / 2, 0); d.updateMatrix(); dash.setMatrixAt(n++, d.matrix); }
+  dash.count = n; scene.add(dash);
+  // suburbs: pastel houses with brown roofs on every side, beyond the ring road
+  const houses = [], P = [0xf2a7a0, 0xffe08a, 0x9fd3c7, 0xc9b3ff, 0xffc58a, 0xb8e08a, 0xa8d8ff];
+  for (const side of [0, 1, 2, 3]) for (let row = 0; row < 3; row++) for (let k = -7; k <= 7; k++) {
+    const along = k * 17 + (row % 2) * 8, out = R + 18 + row * 20;
+    const [x, z] = side === 0 ? [along, -out] : side === 1 ? [along, out] : side === 2 ? [-out, along] : [out, along];
+    if (Math.random() < 0.15) continue; houses.push([x, z, side]); }
+  const body = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), toon(0xffffff), houses.length);
+  const roof = new THREE.InstancedMesh(new THREE.ConeGeometry(0.75, 1, 4), toon(0xffffff), houses.length);
+  houses.forEach(([x, z, side], i) => { const w = rnd(7, 10), h = rnd(4, 6.5), dd = rnd(6, 8), ry = side < 2 ? 0 : Math.PI / 2;
+    d.position.set(x, h / 2, z); d.rotation.set(0, ry, 0); d.scale.set(w, h, dd); d.updateMatrix(); body.setMatrixAt(i, d.matrix); body.setColorAt(i, col.set(pick(P)));
+    d.position.set(x, h + 1.4, z); d.rotation.set(0, ry + Math.PI / 4, 0); d.scale.set(w * 0.95, 2.8, dd * 0.95); d.updateMatrix(); roof.setMatrixAt(i, d.matrix); roof.setColorAt(i, col.set(pick([0x8b5a3c, 0x6b4a3a, 0xa0522d]))); });
+  scene.add(body, roof);
+  // round cartoon trees between the houses
+  const T = 160, trunk = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.3, 0.4, 2.4, 6), toon(0x8b5a3c), T), crown = new THREE.InstancedMesh(new THREE.SphereGeometry(2, 10, 8), toon(0xffffff), T);
+  for (let i = 0; i < T; i++) { const a = Math.random() * 6.28, r = rnd(R + 10, R + 75), x = Math.cos(a) * r, z = Math.sin(a) * r, s = rnd(0.8, 1.4);
+    d.rotation.set(0, 0, 0); d.scale.set(1, s, 1); d.position.set(x, 1.2 * s, z); d.updateMatrix(); trunk.setMatrixAt(i, d.matrix);
+    d.scale.setScalar(s); d.position.set(x, 3.4 * s, z); d.updateMatrix(); crown.setMatrixAt(i, d.matrix); crown.setColorAt(i, col.set(pick([0x3fa34d, 0x4caf50, 0x5cbf3a]))); }
+  scene.add(trunk, crown);
+  // the hill with the SPRINGFIELD sign, far behind the Library
+  const hill = new THREE.Mesh(new THREE.SphereGeometry(120, 32, 16, 0, 6.28, 0, Math.PI / 2), toon(0x6bbf45)); hill.scale.set(2.2, 0.45, 0.6); hill.position.set(0, -6, -330); scene.add(hill);
+  const word = sSign(scene, "SPRINGFIELD", 120, 18, "rgba(0,0,0,0)", "#ffffff", 0, 30, -268); word.rotation.x = -0.15; word.material.transparent = true;
+  // puffy clouds drifting
+  const clouds = [...Array(14)].map(() => { const c = new THREE.Group(); for (let k = 0; k < 5; k++) { const p = new THREE.Mesh(new THREE.SphereGeometry(rnd(5, 9), 12, 8), new THREE.MeshBasicMaterial({ color: 0xffffff }));
+      p.position.set(k * 6 - 12, rnd(-2, 2), rnd(-3, 3)); c.add(p); } c.position.set(rnd(-300, 300), rnd(120, 160), -rnd(160, 320)); scene.add(c); return c; });
+  anim.push(dt => clouds.forEach(c => { c.position.x += dt * 3; if (c.position.x > 340) c.position.x = -340; }));
+  cars([-R, R]);
+}
+function themePicker() {
+  const el = $("#skins");
+  el.innerHTML = `<h4>🎨 City look</h4><p>Rebuilds the whole city in a different world. Cartoon Network and 1970s small town are next.</p>
+    <div class="g">${THEMES.map(k => `<button class="sk${k.id === THEME ? " on" : ""}" data-th="${k.id}"><div class="sw" style="background:linear-gradient(120deg,${k.swatch.join(",")})"></div>
+      <span class="nm">${esc(k.name)}</span></button>`).join("")}</div>`;
+  el.querySelectorAll("[data-th]").forEach(b => b.onclick = () => { THEME = b.dataset.th; set("city-theme", THEME); el.hidden = true; reload(); });
 }
 
 // ---------- City skins ----------
@@ -1799,17 +1995,6 @@ const SKINS = [
   { id: "day", name: "Sunny Day", price: 1, swatch: ["#7cc8ff", "#ffffff", "#4caf50"],
     bg: 0x8fd0ff, fog: 0xbfe4ff, fogD: 0.0011, hemi: [0xffffff, 0x6b8f5a, 1.6], sun: [0xfff3d6, 2.0], bloom: 0.12, exposure: 1.0,
     tint: { sat: 0.85, light: 1.1 }, ground: { asphalt: 0x3a3f4a, grass: 0x4caf50 }, weather: { kind: "none" } },
-  // Retro skins (owner 2026-10-08, "anemoia"): flat cartoon colours with black ink outlines, and a faded 1970s small town
-  { id: "springfield", name: "Springfield (Simpsons)", price: 1, swatch: ["#70c5ff", "#ffd90f", "#f58bb8"],
-    bg: 0x70c5ff, fog: 0xbfe6ff, fogD: 0.0012, hemi: [0xffffff, 0x8fbf5a, 1.7], sun: [0xfff6d0, 2.0], bloom: 0.05, exposure: 1.05,
-    tint: { hue: 0.14, hue2: 0.92, hueMix: 0.55, sat: 1.35, light: 1.2 }, ground: { asphalt: 0x6e6e78, grass: 0x6fcf3a }, edges: 0x111111, weather: { kind: "none" } },
-  { id: "cartoon", name: "Cartoon Network", price: 1, swatch: ["#000000", "#ffffff", "#ff2fa0"],
-    bg: 0xfff3c4, fog: 0xffffff, fogD: 0.001, hemi: [0xffffff, 0xbdbdbd, 1.8], sun: [0xffffff, 1.8], bloom: 0.0, exposure: 1.0,
-    tint: { sat: 1.6, light: 1.25 }, ground: { asphalt: 0x1a1a1a, grass: 0x4ade3a }, edges: 0x000000, filter: "contrast(1.15) saturate(1.2)", weather: { kind: "none" } },
-  { id: "seventies", name: "1970s Small Town", price: 1, swatch: ["#e8b878", "#b5651d", "#7a8a3a"],
-    bg: 0xe2b77e, fog: 0xd9a86a, fogD: 0.0022, hemi: [0xffe0b0, 0x5a4030, 1.35], sun: [0xffc58a, 1.5], bloom: 0.15, exposure: 1.0,
-    tint: { hue: 0.07, hue2: 0.19, hueMix: 0.75, sat: 0.6, light: 0.95, gray: 0.12 }, ground: { asphalt: 0x4a3b2e, grass: 0x7d8a3c }, edges: 0x5a3a1e,
-    filter: "sepia(0.35) contrast(1.05) saturate(0.9)", weather: { kind: "snow", color: 0xffe2b0, speed: 0.05, len: 0.15, opacity: 0.25 } },
 ];
 const OWNED = window.CITY_SKINS_OWNED || null;  // kit buyers: list of unlocked skin ids (null = all, as in our own city and the demo preview)
 let SKIN = SKINS.find(k => k.id === get("city-skin")) || SKINS[0];
@@ -1867,7 +2052,7 @@ function skinPicker() {
   el.querySelectorAll("[data-sk]").forEach(b => b.onclick = () => own(b.dataset.sk) ? applySkin(b.dataset.sk)
     : window.CITY_SKIN_SHOP ? window.open(window.CITY_SKIN_SHOP, "_blank") : alert("This skin is $1 on the Side Hustle City page (link in your order email). Then add its id to skins.js."));
 }
-$("#skinbtn").onclick = () => { const el = $("#skins"); el.hidden = !el.hidden; if (!el.hidden) skinPicker(); };
+$("#skinbtn").onclick = () => { const el = $("#skins"); el.hidden = !el.hidden; if (!el.hidden) (DEMO ? skinPicker() : themePicker()); };
 async function reload() {
   try { D = await decrypt(PW); } catch (e) { return; }
   await services();
