@@ -14,11 +14,11 @@
 <link rel="preload" as="image" href="img/granny_dance.jpg">
 <script>
 /* ===== EDIT HERE (everything the owner may change) ===== */
-const HANDLES = {
-  granny: "grannymae.kitchen",   // live
-  ollie:  "poshollie",           // live
-  rose:   "rose.companion",      // live
-  nobody: "mrnobodyfc",          // live
+const HANDLES = {                // owner 2026-10-08: hidden until the accounts have traction; fill in to show a Follow button
+  granny: "",   // grannymae.kitchen
+  ollie:  "",   // poshollie
+  rose:   "",   // rose.companion
+  nobody: "",   // mrnobodyfc
 };
 const HIGGSFIELD_REFERRAL = "";  // paste the Higgsfield referral link here; empty = goes to higgsfield.ai
 const BUY = {                    // checkout links per button (data-buy="...")
@@ -347,7 +347,7 @@ document.querySelectorAll("[data-buy]").forEach(a => {
 document.querySelectorAll("[data-handle]").forEach(a => {
   const h = (HANDLES[a.dataset.handle] || "").replace(/^@/, "");
   if (h) { a.href = "https://www.instagram.com/" + h + "/"; a.textContent = "Follow"; a.title = "@" + h; a.parentNode.querySelector("b").insertAdjacentHTML("afterend", "<span>@" + h + "</span>"); a.target = "_blank"; a.rel = "noopener"; }
-  else { a.textContent = "Coming soon"; a.classList.add("soon"); a.removeAttribute("href"); }
+  else a.remove();
 });
 // referral
 if (HIGGSFIELD_REFERRAL) document.getElementById("refLink").href = HIGGSFIELD_REFERRAL;
