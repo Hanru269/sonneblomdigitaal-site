@@ -81,9 +81,9 @@ function model(D) {
     { id: "mail", name: "Mail Room · 2 inboxes", short: "MAIL ROOM", icon: "📧", color: 0xec4899, pos: [28, 46], w: 9, d: 7, h: 11, kind: "mail", status: "ok", today: 0, total: 0,
       tag: [`${ml.handled_today} emails handled`, `${ml.drafts} drafts for you`],
       board: { title: "MAIL ROOM", main: String(ml.handled_today), mainLabel: "emails sorted and answered today",
-        rows: [[ml.box1, `${ml.unread1} unread`], [ml.box2, `${ml.unread2} unread`], ["Drafts waiting for you", ml.drafts], ["Avg reply time", ml.reply_min + " min"]] },
-      sheet: () => sheetHTML("Mail Room", "Both business inboxes in one place. EMMA reads, sorts by client and service, answers the simple ones and drafts the rest for you.", ml.handled_today, "emails handled today",
-        [[ml.box1 + " unread", ml.unread1], [ml.box2 + " unread", ml.unread2], ["Drafts waiting for your OK", ml.drafts], ["Auto-answered today", ml.auto], ["Documents filed from email", ml.attachments], ["Avg reply time", ml.reply_min + " min"]],
+        rows: [[ml.box1.split("@")[0] + "@", `${ml.unread1} unread`], [ml.box2.split("@")[0] + "@", `${ml.unread2} unread`], ["Drafts waiting for you", ml.drafts], ["Avg reply time", ml.reply_min + " min"]] },
+      sheet: () => sheetHTML("Mail Room", "megan@ and admin@primepathconsulting.co.za in one place. EMMA reads, sorts by client and service, answers the simple ones and drafts the rest for you.", ml.handled_today, "emails handled today",
+        [[ml.box1.split("@")[0] + "@ unread", ml.unread1], [ml.box2.split("@")[0] + "@ unread", ml.unread2], ["Drafts waiting for your OK", ml.drafts], ["Auto-answered today", ml.auto], ["Documents filed from email", ml.attachments], ["Avg reply time", ml.reply_min + " min"]],
         (ml.latest || []).map(x => [`${x.from} · ${x.subject}`, x.action]), "Latest emails", "", "Anything about money, a complaint or a new client always waits for you. EMMA never sends those on her own.") },
     { id: "billing", name: "Billing", short: "BILLING", icon: "🧾", color: 0xeab308, pos: [-28, -36], w: 7, d: 7, h: 14, kind: "coin", status: "ok", today: bi.paid_today || 0, total: bi.paid_month || 0,
       tag: [`R${num(bi.outstanding)} outstanding`, `${bi.overdue} overdue`],
@@ -103,7 +103,7 @@ function model(D) {
       tag: [`${num(web.visits)} visits`, `${web.leads} new enquiries`],
       board: { title: "WEBSITE & LEADS", main: String(web.leads), mainLabel: "new client enquiries this month",
         rows: [["Website visits", num(web.visits)], ["Most asked", web.top], ["Google reviews", `${web.reviews} (${web.stars}★)`], ["Quotes sent", web.quotes]] },
-      sheet: () => sheetHTML("Website & Leads", "Website contact form, Google Business profile and Facebook. LEXI answers new enquiries within minutes and books calls.", web.leads, "new enquiries this month",
+      sheet: () => sheetHTML("Website & Leads", "primepathconsulting.co.za contact form, Google Business profile and Facebook. LEXI answers new enquiries within minutes and books calls.", web.leads, "new enquiries this month",
         [["Website visits", num(web.visits)], ["Quotes sent", web.quotes], ["New clients signed", web.signed], ["Most asked for", web.top], ["Google reviews", `${web.reviews} (${web.stars}★)`], ["Calls booked", web.calls]],
         (web.latest || []).map(x => [x.who, x.what]), "Latest enquiries", "") },
     { id: "docs", name: "Document Room", short: "DOCUMENTS", icon: "🗂️", color: 0x14b8a6, pos: [60, 24], w: 12, d: 9, h: 8, kind: "warehouse", status: "ok", today: 0, total: 0, fill: pct(dc.received, dc.requested) / 100,
@@ -445,7 +445,7 @@ function skyCars() {
 
 function slides() {
   const r = M.s.diary || {};
-  return [{ color: 0xff4fa3, status: "ok", board: { title: "CONSULTING CITY", main: usd(M.day), mainLabel: "fees collected today", rows: [["This month", usd(M.tot)], ["Invoices", num(M.sales)], ["AI staff", ((M.s.staff || {}).staff || []).length - 1], ["Buildings", M.B.length]] } },
+  return [{ color: 0xff4fa3, status: "ok", board: { title: "PRIMEPATH CONSULTING", main: usd(M.day), mainLabel: "fees collected today", rows: [["This month", usd(M.tot)], ["Invoices", num(M.sales)], ["AI staff", ((M.s.staff || {}).staff || []).length - 1], ["Buildings", M.B.length]] } },
     ...M.B.filter(b => b.board).map(b => ({ ...b, title: b.board.title }))];
 }
 function timesSquare(screens) {
@@ -1184,56 +1184,8 @@ function todoSync(ticks) {
 }
 $("#askbar").onclick = () => DEMO ? focus("library") : openTerm();
 
-function creditsBubble(c) {
-  const el = $("#credits");
-  if (DEMO || GUEST || !c) return (el.hidden = true);
-  const h = c.higgsfield || {}, f = c.fal || {}, cl = c.claude || {};
-  const fal = f.error ? "?" : f.usd != null ? "$" + Number(f.usd).toFixed(2) : f.ok ? "✓" : "empty";
-  const pc = v => v == null ? "?" : `<span class="${v < 20 ? "lo" : ""}">${v}%</span>`;
-  const t = s => s ? new Date(s).toLocaleString("en-ZA", { weekday: "short", hour: "2-digit", minute: "2-digit" }) : "?";
-  el.hidden = false;
-  el.innerHTML = el.classList.contains("open")
-    ? `⚡ <b>Higgsfield</b> ${num(h.left)} credits${h.plan ? " · " + esc(h.plan) : ""}${h.renews ? " · renews " + esc(h.renews) : ""} (checked ${esc(h.checked || "?")})<br>` +
-      `🎨 <b>fal.ai</b> ${f.error ? "couldn't check" : f.usd != null ? "$" + Number(f.usd).toFixed(2) + " (" + esc(f.usd_at || "") + ")" : f.ok ? '<span class="ok">has credit</span>' : '<span class="lo">out of credit</span>'}<br>` +
-      `🧠 <b>Claude</b> ${cl.error ? "couldn't check" : `${pc(cl.left_5h)} of 5-hour limit left (resets ${t(cl.reset_5h)}) · ${pc(cl.left_week)} of the week left`}`
-    : `⚡ <b>${num(h.left)}</b> · 🎨 <b>${fal === "empty" ? '<span class="lo">0</span>' : fal}</b> · 🧠 <b>${cl.error ? "?" : pc(cl.left_5h)}</b>`;
-  el.title = "Higgsfield credits · fal.ai · Claude plan left (5-hour)";
-  el.onclick = () => { el.classList.toggle("open"); creditsBubble(c); };
-}
-
-const INF_C = { rose: "#ff4f8b", granny: "#ffd166", ollie: "#38bdf8", nobody: "#3dffa8" };
-function infHTML(d) {
-  const A = (d.accounts || []), ok = A.filter(a => !a.error);
-  const sg = v => v == null ? "" : v > 0 ? `<span class="up">+${num(v)}</span>` : v < 0 ? `<span class="dn">${num(v)}</span>` : "±0";
-  const race = (label, key) => { const max = Math.max(1, ...ok.map(a => a[key] || 0));
-    return `<div class="race"><div class="lt">${label}</div>${[...ok].sort((x, y) => (y[key] || 0) - (x[key] || 0)).map(a =>
-      `<div class="r"><span>${a.emoji} ${esc(a.name)}</span><div class="bar"><i style="width:${100 * (a[key] || 0) / max}%;background:${INF_C[a.id] || "#a78bfa"}"></i></div><b>${num(a[key] || 0)}</b></div>`).join("")}</div>`; };
-  const thumb = x => `<a href="${esc(x.url || "#")}" target="_blank" rel="noopener">${x.img ? `<img loading="lazy" src="${esc(x.img)}" alt="">` : `<img alt="">`}<span>▶ ${num(x.views)}</span></a>`;
-  const card = a => `<div class="card" style="--c:${INF_C[a.id] || "#a78bfa"}">
-    <h3><span>${a.emoji} ${esc(a.name)}</span>${a.username ? `<a href="https://www.instagram.com/${esc(a.username)}/" target="_blank" rel="noopener">@${esc(a.username)} ↗</a>` : ""}</h3>
-    ${a.error ? `<div class="none">Not connected: ${esc(a.error)}</div>` : `
-    ${a.stale ? `<span class="st" title="${esc(a.stale)}">⚠ last good numbers, token needs renewing</span>` : ""}
-    <div class="fol">${num(a.followers)}<small>followers · ${sg(a.gained_24h)} 24h · ${sg(a.gained_7d)} 7d</small></div>
-    <div class="kvs"><div><b>${num(a.views)}</b><span>views</span></div><div><b>${num(a.views_24h)}</b><span>views 24h</span></div><div><b>${num(a.reach)}</b><span>reach</span></div>
-      <div><b>${num(a.likes)}</b><span>likes</span></div><div><b>${num(a.comments)}</b><span>comments</span></div><div><b>${num(a.shares)}</b><span>shares</span></div>
-      <div><b>${num(a.saved)}</b><span>saves</span></div><div><b>${num(a.posts)}</b><span>posts · ${num(a.posts_7d)} this wk</span></div>
-      <div><b>${a.eng == null || (a.reach || 0) < 50 ? "–" : a.eng + "%"}</b><span>engagement</span></div></div>
-    ${a.top ? `<div class="lt">Best post</div><a class="top" href="${esc(a.top.url || "#")}" target="_blank" rel="noopener">${a.top.img ? `<img loading="lazy" src="${esc(a.top.img)}" alt="">` : ""}<span>${esc(a.top.text || "(no caption)")}<br><b>▶ ${num(a.top.views)}</b> · ❤ ${num(a.top.likes)} · 💬 ${num(a.top.comments)}</span></a>` : ""}
-    ${(a.recent || []).length ? `<div class="lt">Latest posts</div><div class="thumbs">${a.recent.map(thumb).join("")}</div>` : ""}`}</div>`;
-  return `<div class="wrap"><div class="itop"><h2>📊 AI Influencers</h2><button id="infclose">✕ Close</button></div>
-    <div class="sub">Instagram · updates with Rose's stats every 30 min${M.s.ts ? " · " + ago(M.s.ts) : ""} · engagement = likes+comments+shares+saves ÷ reach</div>
-    <div class="tot"><div><b>${num(d.followers)}</b><span>followers</span></div><div><b>${sg(d.gained_24h) || "±0"}</b><span>followers 24h</span></div>
-      <div><b>${num(d.views)}</b><span>views</span></div><div><b>${num(d.views_24h)}</b><span>views 24h</span></div><div><b>${num(d.likes)}</b><span>likes</span></div><div><b>${num(d.comments)}</b><span>comments</span></div></div>
-    ${race("VIEWS · ALL TIME", "views")}${race("FOLLOWERS", "followers")}
-    <div class="cards">${A.map(card).join("")}</div></div>`;
-}
-function openInf() {
-  const el = $("#inf"), d = M.s.influencers;
-  if (!d || d.error) return;
-  el.innerHTML = infHTML(d); el.hidden = false;
-  $("#infclose").onclick = () => (el.hidden = true);
-}
-window.openInf = openInf;
+function creditsBubble() { $("#credits").hidden = true; }
+function openInf() {}
 
 function liveStrip(p) {
   const el = $("#livestats"), st = (M.s.consult || {}).live;
