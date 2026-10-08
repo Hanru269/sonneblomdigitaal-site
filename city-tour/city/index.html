@@ -11,8 +11,8 @@
 <link rel="apple-touch-icon" href="../apple-touch-icon.png">
 <link rel="icon" href="../icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="city.css?v=c1f51810">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@400;700&family=Caveat:wght@500;700&family=Permanent+Marker&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="city.css?v=9273a82d">
 <script type="importmap">
 {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.161.0/examples/jsm/"}}
 </script>
@@ -36,9 +36,13 @@
 <div id="hud" hidden>
   <a id="demobar" href="../">Demo · all numbers are made up · ← how it works</a>
   <header>
+    <div class="brandcol">
     <div class="brand">SONNEBLOM <b>CITY</b> <span class="live">● DEMO</span> <span id="clock"></span></div>
+    <button id="credits" type="button" hidden></button>
+    </div>
     <div class="acts">
       <button id="bananas" title="Go Bananas: refresh every number in the city">🍌 Go Bananas</button>
+      <button id="officebtn" title="Virtual office: whiteboard, staff, background jobs">🏢</button>
       <button id="skinbtn" title="City skins: switch the look">🎨</button>
       <button id="home" title="Overview">⌂</button>
       <button id="lockbtn" title="Lock">🔒</button>
@@ -54,10 +58,13 @@
   <div id="updown" hidden><button id="up">▲</button><button id="dn">▼</button></div>
   <button id="staffbtn">👥 STAFF</button>
   <div id="staff" hidden></div>
+<div id="inf" hidden></div>
   <button id="payrollbtn">PAYROLL · TODAY</button>
   <div id="payroll" hidden></div>
   <div id="hint">Drag to look around · pinch or scroll to zoom · two fingers / right-drag to move · tap a building</div>
 </div>
+
+<section id="office" hidden></section>
 
 <section id="sheet" hidden>
   <div class="grab"></div>
@@ -78,6 +85,6 @@
   </form>
 </section>
 
-<script type="module" src="city.js?v=30a3502e"></script>
+<script type="module" src="city.js?v=5233490a"></script>
 </body>
 </html>

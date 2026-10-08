@@ -25,7 +25,7 @@ const isToday = ts => new Date(ts).toDateString() === new Date().toDateString();
 let PW = null, D = null, M = null, svc = null;
 const DEMO = !!window.CITY_DEMO;  // public demo (/city-tour/city/): sample numbers from demo.json, no password, no private links
 const GKEY = DEMO ? null : new URLSearchParams(location.hash.slice(1)).get("g"), GUEST = !!GKEY;
-const GUEST_QA = "https://chat.sonneblomdigitaal.co.za/guest/?k=" + encodeURIComponent(GKEY || "");
+const GUEST_QA = "" + encodeURIComponent(GKEY || "");
 const scrub = t => t;
 
 const b64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
@@ -188,6 +188,7 @@ function armyHTML(a) {
       `<div><span>${t.done ? "✅" : t.who === "you" ? "🙋" : "🤖"} ${esc(t.t)}</span><span>${t.cr ? "⚡" + t.cr : ""}</span></div>`).join("")}</div>`; }).join("");
   const costs = (a.costs || []).map(([k, v]) => `<div><span>${esc(k)}</span><span>${esc(v)}</span></div>`).join("");
   return `<h2>AI Influencer Army</h2><div class="sub">${esc(a.headline || "Five AI influencers, one at a time, built in Higgsfield")} · updated ${esc((a.updated || "").slice(0, 16).replace("T", " "))}</div>
+    ${M.s.influencers?.accounts ? `<div class="links"><button class="infopen" onclick="openInf()">📊 Open the influencer overview (followers, views, best posts)</button></div>` : ""}
     <div class="big">${num(cr.left)}<small>Higgsfield credits left · ${esc(cr.plan || "plan ?")}${cr.renews ? " · renews " + esc(cr.renews) : ""}</small></div>
     <div class="grid"><div class="kv"><b>${num(budget)}</b><span>credits budgeted</span></div><div class="kv"><b>${num(spent)}</b><span>credits used</span></div>
       <div class="kv"><b>${A.filter(x => x.status === "live").length}/${A.length}</b><span>avatars live</span></div><div class="kv"><b>${num(cr.monthly)}</b><span>credits / month</span></div></div>
@@ -1178,10 +1179,61 @@ function todoNote(t) {
 }
 function todoSync(ticks) {
   if (DEMO || GUEST || !PW) return;
-  fetch("https://chat.sonneblomdigitaal.co.za/api/hq-todo", { method: "POST", headers: { "Content-Type": "application/json" },
+  fetch("", { method: "POST", headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ pw: PW, ticks }) }).catch(() => {});
 }
 $("#askbar").onclick = () => DEMO ? focus("library") : openTerm();
+
+function creditsBubble(c) {
+  const el = $("#credits");
+  if (DEMO || GUEST || !c) return (el.hidden = true);
+  const h = c.higgsfield || {}, f = c.fal || {}, cl = c.claude || {};
+  const fal = f.error ? "?" : f.usd != null ? "$" + Number(f.usd).toFixed(2) : f.ok ? "✓" : "empty";
+  const pc = v => v == null ? "?" : `<span class="${v < 20 ? "lo" : ""}">${v}%</span>`;
+  const t = s => s ? new Date(s).toLocaleString("en-ZA", { weekday: "short", hour: "2-digit", minute: "2-digit" }) : "?";
+  el.hidden = false;
+  el.innerHTML = el.classList.contains("open")
+    ? `⚡ <b>Higgsfield</b> ${num(h.left)} credits${h.plan ? " · " + esc(h.plan) : ""}${h.renews ? " · renews " + esc(h.renews) : ""} (checked ${esc(h.checked || "?")})<br>` +
+      `🎨 <b>fal.ai</b> ${f.error ? "couldn't check" : f.usd != null ? "$" + Number(f.usd).toFixed(2) + " (" + esc(f.usd_at || "") + ")" : f.ok ? '<span class="ok">has credit</span>' : '<span class="lo">out of credit</span>'}<br>` +
+      `🧠 <b>Claude</b> ${cl.error ? "couldn't check" : `${pc(cl.left_5h)} of 5-hour limit left (resets ${t(cl.reset_5h)}) · ${pc(cl.left_week)} of the week left`}`
+    : `⚡ <b>${num(h.left)}</b> · 🎨 <b>${fal === "empty" ? '<span class="lo">0</span>' : fal}</b> · 🧠 <b>${cl.error ? "?" : pc(cl.left_5h)}</b>`;
+  el.title = "Higgsfield credits · fal.ai · Claude plan left (5-hour)";
+  el.onclick = () => { el.classList.toggle("open"); creditsBubble(c); };
+}
+
+const INF_C = { rose: "#ff4f8b", granny: "#ffd166", ollie: "#38bdf8", nobody: "#3dffa8" };
+function infHTML(d) {
+  const A = (d.accounts || []), ok = A.filter(a => !a.error);
+  const sg = v => v == null ? "" : v > 0 ? `<span class="up">+${num(v)}</span>` : v < 0 ? `<span class="dn">${num(v)}</span>` : "±0";
+  const race = (label, key) => { const max = Math.max(1, ...ok.map(a => a[key] || 0));
+    return `<div class="race"><div class="lt">${label}</div>${[...ok].sort((x, y) => (y[key] || 0) - (x[key] || 0)).map(a =>
+      `<div class="r"><span>${a.emoji} ${esc(a.name)}</span><div class="bar"><i style="width:${100 * (a[key] || 0) / max}%;background:${INF_C[a.id] || "#a78bfa"}"></i></div><b>${num(a[key] || 0)}</b></div>`).join("")}</div>`; };
+  const thumb = x => `<a href="${esc(x.url || "#")}" target="_blank" rel="noopener">${x.img ? `<img loading="lazy" src="${esc(x.img)}" alt="">` : `<img alt="">`}<span>▶ ${num(x.views)}</span></a>`;
+  const card = a => `<div class="card" style="--c:${INF_C[a.id] || "#a78bfa"}">
+    <h3><span>${a.emoji} ${esc(a.name)}</span>${a.username ? `<a href="https://www.instagram.com/${esc(a.username)}/" target="_blank" rel="noopener">@${esc(a.username)} ↗</a>` : ""}</h3>
+    ${a.error ? `<div class="none">Not connected: ${esc(a.error)}</div>` : `
+    ${a.stale ? `<span class="st" title="${esc(a.stale)}">⚠ last good numbers, token needs renewing</span>` : ""}
+    <div class="fol">${num(a.followers)}<small>followers · ${sg(a.gained_24h)} 24h · ${sg(a.gained_7d)} 7d</small></div>
+    <div class="kvs"><div><b>${num(a.views)}</b><span>views</span></div><div><b>${num(a.views_24h)}</b><span>views 24h</span></div><div><b>${num(a.reach)}</b><span>reach</span></div>
+      <div><b>${num(a.likes)}</b><span>likes</span></div><div><b>${num(a.comments)}</b><span>comments</span></div><div><b>${num(a.shares)}</b><span>shares</span></div>
+      <div><b>${num(a.saved)}</b><span>saves</span></div><div><b>${num(a.posts)}</b><span>posts · ${num(a.posts_7d)} this wk</span></div>
+      <div><b>${a.eng == null || (a.reach || 0) < 50 ? "–" : a.eng + "%"}</b><span>engagement</span></div></div>
+    ${a.top ? `<div class="lt">Best post</div><a class="top" href="${esc(a.top.url || "#")}" target="_blank" rel="noopener">${a.top.img ? `<img loading="lazy" src="${esc(a.top.img)}" alt="">` : ""}<span>${esc(a.top.text || "(no caption)")}<br><b>▶ ${num(a.top.views)}</b> · ❤ ${num(a.top.likes)} · 💬 ${num(a.top.comments)}</span></a>` : ""}
+    ${(a.recent || []).length ? `<div class="lt">Latest posts</div><div class="thumbs">${a.recent.map(thumb).join("")}</div>` : ""}`}</div>`;
+  return `<div class="wrap"><div class="itop"><h2>📊 AI Influencers</h2><button id="infclose">✕ Close</button></div>
+    <div class="sub">Instagram · updates with Rose's stats every 30 min${M.s.ts ? " · " + ago(M.s.ts) : ""} · engagement = likes+comments+shares+saves ÷ reach</div>
+    <div class="tot"><div><b>${num(d.followers)}</b><span>followers</span></div><div><b>${sg(d.gained_24h) || "±0"}</b><span>followers 24h</span></div>
+      <div><b>${num(d.views)}</b><span>views</span></div><div><b>${num(d.views_24h)}</b><span>views 24h</span></div><div><b>${num(d.likes)}</b><span>likes</span></div><div><b>${num(d.comments)}</b><span>comments</span></div></div>
+    ${race("VIEWS · ALL TIME", "views")}${race("FOLLOWERS", "followers")}
+    <div class="cards">${A.map(card).join("")}</div></div>`;
+}
+function openInf() {
+  const el = $("#inf"), d = M.s.influencers;
+  if (!d || d.error) return;
+  el.innerHTML = infHTML(d); el.hidden = false;
+  $("#infclose").onclick = () => (el.hidden = true);
+}
+window.openInf = openInf;
 
 function liveStrip(p) {
   const el = $("#livestats"), st = (M.s.consult || {}).live;
@@ -1206,6 +1258,7 @@ const names = { vault: "Fees", coida: "COIDA", ufiling: "uFiling", nappi: "NAPPI
   $("#chips").innerHTML = list.join("");
   M.need = id => id === "vault" ? att.vault || [] : why(B.find(x => x.id === id) || {});
   liveStrip(s.pulse);
+  creditsBubble(s.credits); if ($("#infbtn")) $("#infbtn").onclick = openInf;
   staffPanel();
   todoNote(s.todo);
   document.querySelectorAll("[data-id]").forEach(x => x.onclick = () => focus(x.dataset.id));
@@ -1418,7 +1471,7 @@ $("#sheetbody").addEventListener("click", e => { const b = e.target.closest("but
 $("#tstop").onclick = () => api("/stop", { method: "POST", body: "{}" });
 $("#tnew").onclick = async () => { if (tBusy) return; await api("/new", { method: "POST", body: "{}" }); tlog().innerHTML = ""; tAdd("sys", "New conversation. Claude still has its memory notes."); };
 
-const OFFICE_API = "https://chat.sonneblomdigitaal.co.za/api/hq-office";
+const OFFICE_API = "";
 let oTimer = null, oLive = null;
 async function officeCall(body = {}) {
   try { const r = await fetch(OFFICE_API, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ pw: PW, ...body }) }); return r.ok ? r.json() : null; }
@@ -1497,11 +1550,9 @@ function districts() {
   });
 }
 
-let THEME = get("city-theme") || "neon";
-const THEMES = [{ id: "neon", name: "Neon Night (classic)", swatch: ["#0a0420", "#ff2bd6", "#00f0ff"] },
-  { id: "springfield", name: "Springfield", swatch: ["#70c5ff", "#ffd90f", "#f48fb1"] },
-  { id: "cartoon", name: "Cartoon Network", swatch: ["#111111", "#ffffff", "#ff3fa4"] },
-  { id: "seventies", name: "1970s Small Town", swatch: ["#f5c98a", "#c8622a", "#7c8a3a"] }];
+let THEME = get("consult-theme") || "neon";
+const THEMES = [{ id: "neon", name: "Classic city", swatch: ["#ffb3d9", "#ff4fa3", "#ffffff"] },
+  { id: "bratz", name: "Bratz Fashion Mall", swatch: ["#ff3fa4", "#b06cff", "#ffc93a"] }];
 let WLD = null, WS = null, WGEN = 0, ENV = null;   // active world definition, its runtime state (roads, lots, decor)
 const SEG = MOBILE ? 2 : 3, MATS = new Map(), TEX = new Map();
 const hx = c => typeof c === "number" ? c : new THREE.Color(c).getHex();
@@ -1960,7 +2011,7 @@ function world3DText(text, opts, place) {  // 3D letters (font loads async; skip
   });
 }
 function build() {
-  M = model(D); VAULT[0] = 0; VAULT[1] = 6; solids.length = 0; WLD = !DEMO && WORLDS[THEME] || null;
+  M = model(D); VAULT[0] = 0; VAULT[1] = 6; solids.length = 0; WLD = WORLDS[THEME] || null;
   if (WLD) { worldLayout(); worldEnv(); WS.dec = new THREE.Group(); scene.add(WS.dec); worldVault(); }
   else { scene.environment = null; renderer.shadowMap.enabled = false; if (bloom) bloom.enabled = true; filmGrain(false); ground(); vault(); }
   M.B.forEach(building);
@@ -1973,564 +2024,6 @@ function build() {
 
 const WORLDS = {};
 
-const SFP = [0xf6c2c2, 0xbfe0ff, 0xfff1a8, 0xc9f2c7, 0xe3cdf7, 0xffd8a8, 0xf4a97f, 0xa8e0d8];
-const SF_ROOF = [0x7a5a48, 0x8a5a44, 0x6d6f73, 0x9c4f3a, 0x5d6b7a];
-const SF_CAR = { w: 2.0, h: 0.78, l: 4.4, r: 0.32, ch: 0.62, cl: 2.3, cr: 0.26 };
-function lardLad(m, x, z) {  // the giant Lard Lad statue holding his donut
-  rbox(m, 2.2, 0.8, 2.2, 0xd8d0c0, x, 0, z, 0.25);
-  for (const s of [-1, 1]) cyl(m, 0.38, 0.32, 2.8, 0x3a6fd8, x + s * 0.45, 0.8, z, 16);
-  lathe(m, [[0, 0], [1.05, 0], [1.15, 1.1], [1.0, 2.3], [0.55, 2.7], [0, 2.75]], 0xffffff, x, 3.5, z);
-  ball(m, 0.85, 0xffd9a8, x, 7.0, z); const hair = ball(m, 0.88, 0x6b3a1a, x, 7.35, z - 0.1); hair.scale.set(1, 0.55, 1);
-  const arm = cyl(m, 0.22, 0.22, 2.4, 0xffffff, x + 1.2, 5.6, z, 12); arm.rotation.z = -0.35;
-  put(m, new THREE.TorusGeometry(0.8, 0.35, 14, 28), 0xff7eb6, x + 1.75, 8.6, z);
-}
-function jebediah(m, x, z) {  // Jebediah Springfield statue on its plinth
-  rbox(m, 4.2, 0.5, 4.2, 0xc9c1b1, x, 0, z, 0.2); rbox(m, 3.0, 2.6, 3.0, 0xddd5c5, x, 0.5, z, 0.25);
-  const br = wm(0x8c6b3e, { metalness: 0.6, roughness: 0.35 });
-  for (const s of [-1, 1]) cyl(m, 0.3, 0.26, 2.0, br, x + s * 0.4, 3.1, z, 14);
-  lathe(m, [[0, 0], [1.0, 0], [0.95, 1.1], [0.75, 2.3], [0.35, 2.6], [0, 2.6]], br, x, 4.6, z);
-  ball(m, 0.52, br, x, 7.7, z); cyl(m, 0.56, 0.6, 0.55, br, x, 7.95, z, 18); cyl(m, 0.13, 0.08, 1.4, br, x, 7.0, z - 0.75, 8).rotation.x = 0.4;
-  const arm = cyl(m, 0.17, 0.17, 2.3, br, x + 0.9, 5.9, z, 10); arm.rotation.z = -0.6;
-}
-function sfHouse(g, i, lot) {
-  const r = (i * 7919 + 13) % 97, garage = r % 3 !== 0, w = 8.5 + (r % 3), x = garage ? 2.4 : 0;
-  house(g, { w, d: 7.5, st: r % 4 === 0 ? 1 : 2, x, wall: SFP[r % SFP.length], roof: SF_ROOF[r % SF_ROOF.length], door: [0x7a4a2a, 0xd8342b, 0x3f6fb5][r % 3], garage, porch: r % 2 === 0, sh: r % 2 ? 0x5d7f9a : null, dx: x + w * 0.22 });
-  if (garage && r % 2) car(g, x - w / 2 - 2.7, 3.75 + 2.6, 0, pick(WLD.style.carCols), SF_CAR);
-  return { dx: x + w * 0.22 };
-}
-function sfShop(g, i) {
-  const names = ["KING TOOT'S", "THE LEFTORIUM", "COPY JALOPY", "NOISELAND ARCADE", "SPRINGFIELD TIRE", "PHARMACY", "BARBER", "COFFEE", "SKATEBOARDS", "HOBBY SHOP"];
-  const c = [0xf3d9b1, 0x9fd3c7, 0xf6c2c2, 0xc9b3ff, 0xffe08a, 0xb8e08a][i % 6];
-  store(g, { w: 9, d: 8, h: 5 + (i % 3), wall: c, trim: 0xfaf6ee, awn: [0x2f6b3a, 0xd8342b, 0x3a7bd5, 0xe0457b][i % 4], sign: names[i % names.length], sbg: "#fff6e0", sfg: "#3a2a1c" });
-  return { dx: 0 };
-}
-WORLDS.springfield = {
-  sky: { top: 0x3d97e6, hor: 0xc4e6ff, low: 0xa9d2ee, fog: 0.0011, hemi: [0xe4f3ff, 0x6f9a52, 1.0], sun: [0xfff3da, 2.9], sunPos: [90, 165, 120], grass: 0x6dbb45, hill: 0x4c9a38, exp: 1.0 },
-  style: { asphalt: 0x56595f, walk: 0xcfcac0, dash: 0xffd23a, leaves: [0x4caf50, 0x5cbf3a, 0x3f9f45, 0x6cc644], hillLeaves: [0x3d8f3e, 0x4a9c3c, 0x2f7f36],
-    skin: [0xffd90f], shirts: [0xffffff, 0xff6b35, 0x3a7bd5, 0x7cc243, 0xd8342b, 0x8e5bd8, 0x2aa8a0, 0xffd23a], pants: [0x3a5fa8, 0x6b4a33, 0x3d3d3d, 0x8a7a5a],
-    carCols: [0xf48fb1, 0xff7a45, 0x4f7fd0, 0xd8342b, 0x8bc34a, 0xffe08a, 0xf2f2f2, 0x9575cd], car: SF_CAR, lamp: "cobra" },
-  roads: [
-    { pts: [[-150, 26], [-110, 22], [-70, 12], [-30, 4], [0, 2], [30, 6], [55, 4], [75, -2], [98, -10], [150, -22]], w: 10, sw: 3, cars: 12, lamps: true },   // Main Street
-    { pts: [[-40, 5], [-44, 26], [-58, 46], [-80, 58], [-96, 76], [-98, 92]], w: 8, sw: 2.4, cars: 4, poles: 1, bulb: true },                                    // Evergreen Terrace
-    { pts: [[12, 4], [16, 32], [34, 60], [44, 90], [50, 150]], w: 9, cars: 4, poles: -1 },                                                                        // industrial strip
-    { pts: [[-72, 12], [-76, -20], [-66, -52], [-80, -84], [-100, -150]], w: 9, cars: 4, poles: 1 },                                                              // school road
-    { pts: [[38, 6], [34, -24], [44, -56], [36, -86], [28, -150]], w: 9, cars: 3 }],                                                                              // Burns road
-  rivers: [{ pts: [[78, -150], [74, -100], [64, -50], [72, 0], [66, 50], [76, 100], [82, 150]], w: 13 }],
-  bumps: [[-10, -152, 30, 75, 22]],
-  lots: { lab: [0, -100, 10], zoho: [0, -54, -2], kdp: [0, -40, -4], pinterest: [0, -27, -4], library: [0, 0, -10, 14], contra: [0, 18, -4], github: [0, 54, -4],
-    gumroad: [0, -100, 32], etsy: [0, -84, 26], krypto: [0, -60, 20], poly: [0, -22, 14], fb: [0, 33, 18], showroom: [2, 0, 36],
-    army: [3, -95, -30, 4], longshot: [3, -55, -35], kalshi: [4, 56, -40], rnd: [4, 20, -60], rose: [1, -70, 64, 4], whdig: [2, 52, 60], whpod: [2, 58, 90] },
-  spare: [[2, 20, 100, 0], [3, -60, -100, 0]],
-  size: { library: [24, 16], etsy: [12, 9], gumroad: [11, 9], contra: [7, 8], lab: [10, 9], fb: [11, 9], army: [18, 10], longshot: [13, 10], github: [8, 8],
-    krypto: [11, 9], kalshi: [13, 10], showroom: [20, 13], zoho: [10, 8], kdp: [8, 8], pinterest: [8, 7], rnd: [10, 9], poly: [9, 9], whdig: [15, 10], whpod: [15, 10], rose: [16, 8.5] },
-  vault: { lot: [0, 98, -30, 2], d: 22, r: 14, tag: 24, model(g) {  // Springfield Nuclear Power Plant (money = power)
-    rbox(g, 27, 0.14, 22, wm(0xffffff, { map: noiseTex(0xbdb8ad, 0.06, 3) }), 0, 0, 0, 0.05);
-    rbox(g, 15, 7, 8, 0xc9ccd1, -2, 0, 6, 0.4); rbox(g, 15.5, 0.5, 8.5, 0x9aa0a6, -2, 6.8, 6, 0.2); wrow(g, 13, 10.05, 5, 3.6, 1.3, 1.4, 0x9aa0a6);
-    g.children.slice(-15).forEach(o => o.position.x -= 2);
-    sign(g, "SPRINGFIELD NUCLEAR POWER PLANT", 12, 1.15, "#ffffff", "#1f4a8a", -2, 2.4, 10.25);
-    cyl(g, 4, 4, 5, 0xd7d9dc, 8, 0, 4); dome(g, 4, 0xd7d9dc, 8, 5, 4);
-    const prof = []; for (let i = 0; i <= 14; i++) { const t = i / 14; prof.push([4.6 - 2.1 * Math.sin(t * Math.PI * 0.86), t * 15]); }
-    for (const x of [-7, 3]) { lathe(g, prof, wm(0xe1e2e4, { side: THREE.DoubleSide, roughness: 0.8 }), x, 0, -5.5); put(g, new THREE.TorusGeometry(prof[14][0], 0.14, 8, 32).rotateX(Math.PI / 2), 0x9aa0a6, x, 15, -5.5); }
-    for (let i = 0; i < 5; i++) cyl(g, 0.75, 0.8, 3.4, i % 2 ? 0xffffff : 0xd8342b, -12, i * 3.4, 3, 16);
-    for (let i = 0; i < 3; i++) cyl(g, 0.5, 0.5, 1.1, 0xe8c21a, 4 + i * 1.2, 0, 10.4, 16);
-    const puffs = []; for (const x of [-7, 3]) for (let i = 0; i < 6; i++) { const p = dyn(ball(g, 2, new THREE.MeshStandardMaterial({ color: 0xffffff, transparent: true, roughness: 1, depthWrite: false }), x, 16, -5.5)); p.castShadow = false; puffs.push([p, i / 6, x]); }
-    anim.push((dt, t) => puffs.forEach(([p, k0, x]) => { const k = (t * 0.12 + k0) % 1; p.position.set(x + k * 4, 15.5 + k * 16, -5.5 - k * 2); p.scale.setScalar(0.8 + k * 2.2); p.material.opacity = 0.85 * (1 - k); }));
-  } },
-  models: {
-    library(m, b) {  // Springfield Town Hall + Jebediah square in front
-      const c = 0xf1e6cc; b.noFore = true;
-      rbox(m, 22, 9, 12, c, 0, 0, -2, 0.35); rbox(m, 22.6, 0.7, 12.6, 0xe0d2b0, 0, 8.7, -2, 0.25);
-      rbox(m, 16, 0.8, 4.6, 0xe7dcc2, 0, 0, 6, 0.2); rbox(m, 14, 0.4, 6, 0xe7dcc2, 0, 0, 6.5, 0.15);
-      for (let i = 0; i < 6; i++) cyl(m, 0.45, 0.52, 7.2, 0xffffff, -6.25 + i * 2.5, 0.8, 7.2, 20);
-      rbox(m, 16.4, 0.9, 4.8, 0xe0d2b0, 0, 8, 6.1, 0.2); groof(m, 4.6, 16, 2.4, 0xe7dcc2, 8.9, 0, 6.1, 0.3).rotation.y = Math.PI / 2;
-      for (const s of [-1, 1]) for (const y of [1.4, 5]) win(m, s * 9.3, y, 4.05, 1.2, 2.2, 0xffffff);
-      cyl(m, 4, 4.2, 3, c, 0, 9.4, -2, 32); dome(m, 4.1, wm(0x7cc4b4, { metalness: 0.35, roughness: 0.4 }), 0, 12.4, -2);
-      cyl(m, 0.8, 0.8, 1.6, c, 0, 16.2, -2, 16); ball(m, 0.5, wm(0xd4af37, { metalness: 0.8, roughness: 0.3 }), 0, 18.3, -2);
-      sign(m, "SPRINGFIELD TOWN HALL", 9.5, 0.75, "#e0d2b0", "#4a3b28", 0, 8.45, 8.55);
-      const sq = b.sb, z0 = 8.3;  // the square: paving, Jebediah, flower beds, benches
-      rbox(m, 22, 0.16, sq, wm(0xffffff, { map: noiseTex(0xd9d0bf, 0.07, 3) }), 0, 0.02, z0 + sq / 2, 0.06);
-      jebediah(m, 0, z0 + sq / 2);
-      for (const s of [-1, 1]) { rbox(m, 5, 0.5, 3, 0x7a5a3a, s * 7.5, 0, z0 + sq / 2, 0.2); for (let k = 0; k < 9; k++) ball(m, 0.35, [0xff4f8a, 0xffd23a, 0xffffff][k % 3], s * 7.5 - 1.8 + (k % 3) * 1.8, 0.75, z0 + sq / 2 - 0.9 + (k / 3 | 0) * 0.9);
-        rbox(m, 2.2, 0.45, 0.7, 0x7c4a2a, s * 4.2, 0.35, z0 + sq - 2, 0.12); }
-      flag(m, -10, z0 + 2, 10); return 18.8;
-    },
-    etsy(m, b) {  // Kwik-E-Mart
-      store(m, { w: 12, d: 9, h: 5.4, wall: 0xe9e3cf, trim: 0x2aa8a0, door: 0x9fd6e6 });
-      [0xffc61a, 0xff7a1a, 0xd8342b].forEach((c, i) => rbox(m, 12.5, 0.42, 9.5, c, 0, 3.55 + i * 0.45, 0, 0.18));
-      cyl(m, 0.22, 0.26, 8.4, 0x9a9a9a, 4.6, 0, 5.4, 12); sign(m, "KWIK-E-MART", 6.6, 2, "#d8342b", "#ffd21a", 4.6, 9.4, 5.6, { font: 900 });
-      rbox(m, 1.8, 1.2, 0.9, 0xffffff, -4.3, 0, 5.1, 0.2); return 10.6;
-    },
-    gumroad(m, b) {  // Krusty Burger with the burger on a pole
-      store(m, { w: 11, d: 9, h: 5, wall: 0xd8342b, trim: 0xffc61a, door: 0xffffff, sign: "KRUSTY BURGER", sbg: "#ffc61a", sfg: "#d8342b", so: { font: 900 } });
-      const x = -4.3, z = 5.6; cyl(m, 0.25, 0.3, 7, 0xb0b0b0, x, 0, z, 12);
-      lathe(m, [[0, 0], [1.6, 0], [1.75, 0.3], [1.6, 0.6], [0, 0.6]], 0xd99a3c, x, 7, z); cyl(m, 1.85, 1.85, 0.2, 0x5cbf3a, x, 7.6, z, 24);
-      cyl(m, 1.72, 1.72, 0.5, 0x5a2e1a, x, 7.8, z, 24); rbox(m, 3.2, 0.12, 3.2, 0xffc61a, x, 8.3, z, 0.05).rotation.y = 0.5;
-      lathe(m, [[0, 0], [1.75, 0], [1.75, 0.4], [1.35, 1.1], [0.7, 1.45], [0, 1.5]], 0xd99a3c, x, 8.42, z); return 10.5;
-    },
-    contra(m) {  // Moe's Tavern
-      store(m, { w: 7, d: 8, h: 6, brick: "#6b4a35", trim: 0x3a2a20, door: 0x2a1a12, fw: 3.2, base: 0x3a2a20 });
-      sign(m, "MOE'S", 4.2, 1.3, "#2a1a12", "#ff4d6d", 0, 4.4, 4.25, { glow: "#ff2d55" }); sign(m, "DUFF", 1.8, 0.7, "#2a1a12", "#ffd21a", 2.6, 2.8, 4.25, { glow: "#ffcc00" }); return 6.2;
-    },
-    lab(m, b) {  // Lard Lad Donuts: the giant donut + Lard Lad himself
-      const top = store(m, { w: 10, d: 9, h: 5, wall: 0xf7b6c8, trim: 0x8b5a3c, sign: "LARD LAD DONUTS", sbg: "#ffffff", sfg: "#d8342b" });
-      const y = top + 2.6; put(m, new THREE.TorusGeometry(2.3, 0.95, 20, 40), 0xd99a3c, 0, y, -1.5); const fr = put(m, new THREE.TorusGeometry(2.3, 0.97, 20, 40, Math.PI * 2), 0xff7eb6, 0, y, -1.3); fr.scale.set(1, 1, 0.75);
-      for (let i = 0; i < 18; i++) { const a = i / 18 * 6.28; rbox(m, 0.5, 0.15, 0.15, [0xffd90f, 0x2bb3a3, 0xffffff, 0x7d5cff][i % 4], Math.cos(a) * 2.4, y - 0.1 + Math.sin(a) * 2.4, -0.5, 0.05).rotation.z = a * 2; }
-      for (const s of [-1, 1]) cyl(m, 0.15, 0.15, 2.4, 0x8b5a3c, s * 1.2, top - 0.6, -1.5, 8);
-      lardLad(m, -3.6, 5.4); return y + 3.3;
-    },
-    fb(m, b) {  // Channel 6 with its red-and-white mast and dish
-      const h = store(m, { w: 11, d: 9, h: 9, wall: 0x3f78c8, trim: 0xffffff, sign: "CHANNEL 6", sbg: "#ffffff", sfg: "#d8342b", so: { font: 900 } });
-      for (let i = 0; i < 6; i++) cyl(m, 0.5 - i * 0.06, 0.56 - i * 0.06, 3, i % 2 ? 0xffffff : 0xd8342b, 3, 9 + i * 3, -2, 12);
-      const dish = put(m, new THREE.SphereGeometry(1.6, 24, 12, 0, Math.PI * 2, 0, 1.0), wm(0xeeeeee, { side: THREE.DoubleSide }), -3, 10.6, -1); dish.rotation.x = -0.9;
-      const bl = dyn(ball(m, 0.4, new THREE.MeshStandardMaterial({ color: 0xff3b3b, emissive: 0xff0000, emissiveIntensity: 1 }), 3, 27.3, -2)); anim.push((dt, t) => bl.visible = Math.sin(t * 4) > 0);
-      b._by = h; return 27.8;
-    },
-    army(m, b) {  // Springfield Elementary: brick, bell tower, flag, yellow bus
-      const top = store(m, { w: 18, d: 10, h: 8, brick: "#b5523b", trim: 0xf3eee4, door: 0x2a6fb5, sign: "SPRINGFIELD ELEMENTARY", sbg: "#f3eee4", sfg: "#7a2a1a" });
-      rbox(m, 3.4, 4.5, 3.4, brick("#b5523b"), 0, 8, -2, 0.2); rbox(m, 1.8, 1.8, 3.5, 0xf3eee4, 0, 9.6, -2, 0.1); hroof(m, 3.4, 3.4, 2.4, 0x5a3a2a, 12.5, 0, -2);
-      flag(m, -8, 6.5, 10); bus(m, 5, b.d / 2 + b.sb - 1.8, Math.PI / 2); return Math.max(top, 15);
-    },
-    longshot(m) {  // Bowlarama: giant pin + ball on the roof
-      const h = store(m, { w: 13, d: 10, h: 6, wall: 0x2aa8a0, trim: 0xffffff, sign: "BOWLARAMA", sbg: "#d8342b", sfg: "#ffffff", so: { font: 900 } });
-      lathe(m, [[0, 0], [0.9, 0], [1.25, 1.2], [1.1, 2.4], [0.55, 3.4], [0.5, 3.9], [0.75, 4.6], [0.6, 5.3], [0, 5.5]], 0xffffff, 4.3, 6, -1.5);
-      put(m, new THREE.TorusGeometry(0.53, 0.1, 8, 24).rotateX(Math.PI / 2), 0xd8342b, 4.3, 9.7, -1.5);
-      ball(m, 1.15, wm(0x22305a, { metalness: 0.3, roughness: 0.2 }), -4.3, 7.15, -1.5); return Math.max(h, 11.5);
-    },
-    github: m => store(m, { w: 8, d: 8, h: 5.5, wall: 0x3d7a56, trim: 0xffd21a, awn: 0xffd21a, sign: "ANDROID'S DUNGEON", sbg: "#ffd21a", sfg: "#1a1a1a" }),
-    krypto(m) {  // First Bank of Springfield
-      const h = store(m, { w: 11, d: 9, h: 7, wall: 0xe9dfc5, trim: 0xd6c8a4, door: 0x3a2a1a, sign: "BANK OF SPRINGFIELD", sbg: "#1f5a3a", sfg: "#ffd21a" });
-      for (let i = 0; i < 4; i++) cyl(m, 0.32, 0.36, 5.8, 0xffffff, -4 + i * 8 / 3, 0.4, 5.3, 16);
-      rbox(m, 10, 0.6, 1.4, 0xe9dfc5, 0, 6.2, 5.3, 0.15); return h;
-    },
-    kalshi(m) {  // Mr Burns' Casino with blinking marquee bulbs
-      const h = store(m, { w: 13, d: 10, h: 8, wall: 0x6a3fc8, trim: 0xffc61a, door: 0xffc61a, sign: "MR. BURNS' CASINO", sbg: "#ffc61a", sfg: "#4a1a8a", so: { font: 900 } });
-      const A = new THREE.MeshStandardMaterial({ color: 0xfff1a8, emissive: 0xffc94a, emissiveIntensity: 1 }), B = A.clone();
-      for (let i = 0; i < 16; i++) ball(m, 0.2, i % 2 ? A : B, -6 + i * 0.8, 3.9, 5.25);
-      anim.push((dt, t) => { A.emissiveIntensity = Math.sin(t * 6) > 0 ? 1.2 : 0.1; B.emissiveIntensity = Math.sin(t * 6) > 0 ? 0.1 : 1.2; }); return h;
-    },
-    showroom(m, b) {  // Springfield Mall
-      const h = store(m, { w: 20, d: 13, h: 7, wall: 0xf2d9a6, trim: 0x3a7bd5, awn: 0x3a7bd5, sign: b.short === "SHC" ? "SIDE HUSTLE MALL" : "SPRINGFIELD MALL", sbg: "#3a7bd5", sfg: "#ffffff" });
-      rbox(m, 7, 2.4, 6, GLASS(), 0, 7, -1, 1.1); for (const s of [-1, 1]) flag(m, s * 9, 7.2, 4, 0xd8342b); return h;
-    },
-    zoho(m) { const h = store(m, { w: 10, d: 8, h: 6, wall: 0xf1efe9, trim: 0x2b4c9b, door: 0x2b4c9b, sign: "U.S. POST OFFICE", sbg: "#2b4c9b", sfg: "#ffffff" });
-      flag(m, 4.2, 5, 8); rbox(m, 0.9, 1.1, 0.7, 0x2b4c9b, -3.6, 0, 5.1, 0.3); return h; },
-    kdp: m => store(m, { w: 8, d: 8, h: 6, brick: "#b5523b", trim: 0xf3eee4, awn: 0x2f6b3a, sign: "BOOKS", sbg: "#2f6b3a", sfg: "#fff6d0" }),
-    pinterest(m) { const h = store(m, { w: 8, d: 7, h: 5, wall: 0xffc2d6, trim: 0xffffff, awn: 0xe0457b, sign: "FLOWERS", sbg: "#ffffff", sfg: "#e0457b" });
-      for (const s of [-1, 1]) { rbox(m, 2.2, 0.7, 0.9, 0x8b5a3c, s * 2.6, 0, 4.4, 0.15); for (let k = 0; k < 6; k++) ball(m, 0.3, [0xff4f8a, 0xffd23a, 0xffffff, 0xb57bff][k % 4], s * 2.6 - 0.8 + (k % 3) * 0.8, 0.95, 4.2 + (k / 3 | 0) * 0.4); } return h; },
-    rnd(m) {  // Professor Frink's lab: observatory dome + antenna
-      const h = store(m, { w: 10, d: 9, h: 6, wall: 0xeef1f4, trim: 0x6b7a8a, sign: "FRINK LABS", sbg: "#1a1a1a", sfg: "#3dffa8" });
-      cyl(m, 2.6, 2.6, 1.2, 0xbfc5cc, -2, 6, -1.5, 28); dome(m, 2.6, wm(0xd5dae0, { metalness: 0.6, roughness: 0.3 }), -2, 7.2, -1.5);
-      cyl(m, 0.08, 0.08, 4, 0x777777, 3, 6, -2, 8); ball(m, 0.45, wm(0x3dffa8, { emissive: 0x3dffa8, emissiveIntensity: 0.6 }), 3, 10.3, -2); return Math.max(h, 10.8);
-    },
-    poly(m) { const h = store(m, { w: 9, d: 9, h: 10, wall: 0x9fc6d6, trim: 0x2c3e50, sign: "STOCK EXCHANGE", sbg: "#111111", sfg: "#3dffa8" });
-      sign(m, "▲ POLY +2.4%  ▲ SPFLD +0.8%", 8.4, 0.6, "#111111", "#3dffa8", 0, 4.3, 4.75, { glow: "#3dffa8" }); return h; },
-    whdig: (m, b) => sfWarehouse(m, b, "SPRINGFIELD DIGITAL"),
-    whpod: (m, b) => sfWarehouse(m, b, "PRINT & SHIP", true),
-    rose(m, b) {
-      b.noFore = true; const x = 2.6;
-      const top = house(m, { w: 10, d: 7.5, x, wall: 0xf4a97f, roof: 0x6e5a4e, door: 0xd0603a, garage: true, porch: false, dx: x + 1.4, chimC: 0xb04a3a });
-      rbox(m, 4.6, 0.12, b.sb + 0.3, wm(0xffffff, { map: noiseTex(0xc9c2b4, 0.06, 2) }), x - 7.7, 0.02, 3.75 + b.sb / 2, 0.04);
-      car(m, x - 7.7, 3.75 + 2.8, 0, 0xf48fb1, SF_CAR); yard(m, 3.75, b.sb, x + 1.4, { fence: 0xffffff });
-      sign(m, "742", 1.2, 0.5, "#ffffff", "#3a2a1c", x + 3.2, 2.6, 3.95); return top;
-    },
-    _: (m, b) => store(m, { w: b.w, d: b.d, h: 6, wall: 0xf3d9b1, trim: 0xffffff, sign: b.short, sbg: "#ffffff", sfg: "#333333" }),
-  },
-  decor() {
-    const gem = M.B.find(b => b.id === "_none");
-    if (rose) for (const dk of [12, -12]) { const R = WS.R[1], L = lotAt(R, rose.lot.k + dk, rose.lot.side, 8, 5); if (!free(L.x, L.z, 6)) continue;
-      const g = new THREE.Group(); g.position.set(L.x, 0, L.z); g.rotation.y = Math.atan2(L.face[0], L.face[1]); WS.dec.add(g);
-      house(g, { w: 10, d: 7.5, wall: 0xcfd9a8, roof: 0x5a6b4a, door: 0x6b4a2a, porch: true, sh: 0x4a6b3a, dx: 1.8 }); yard(g, 3.75, 6.2, 1.8, { fence: 0xffffff });
-      WS.occ.push({ x: L.x, z: L.z, r: 6.2 }); WS.solids.push({ x: L.x, z: L.z, r: 5, h: 10 }); break; }
-    lineRoad(1, { make: sfHouse, yard: { fence: 0xffffff }, step: 15 });
-    lineRoad(3, { make: sfHouse, yard: { fence: 0xffffff }, s0: 30 });
-    lineRoad(4, { make: sfHouse, yard: { fence: 0xf3eee4 }, s0: 30 });
-    lineRoad(2, { make: sfHouse, yard: { fence: 0xffffff }, s0: 40, sides: [-1] });
-    lineRoad(0, { make: sfShop, step: 13, sb: 0, d: 8, r: 5.6, s0: 10 });
-    lineRoad(0, { make: sfHouse, yard: { fence: 0xffffff }, step: 17 });
-    world3DText("SPRINGFIELD", { size: 8.5, depth: 1.4 }, (m, i, bb) => { const x = -58 + i * 10.6, z = -128 + Math.sin(i * 1.3) * 1.5, y = hgt(x, z) - 0.6;
-      m.position.set(x, y, z); m.rotation.set(-0.12, Math.sin(i * 2.1) * 0.06, Math.sin(i * 1.7) * 0.05); });
-    const bl = new THREE.Group(); const env = ball(bl, 1, 0xd9dde2); env.scale.set(4, 4, 11);
-    for (const s of [-1, 1]) sign(bl, "DUFF", 6, 2.4, "#d8342b", "#ffffff", s * 4.05, 0, 0, { font: 900 }).rotation.y = s * Math.PI / 2;
-    bl.children.filter(o => o.geometry?.type === "RoundedBoxGeometry").forEach((o, i) => { o.rotation.y = Math.PI / 2; o.position.x = (i ? 1 : -1) * 3.85; });
-    for (const r of [0, Math.PI / 2]) { const f = rbox(bl, 0.3, 4, 3, 0xd8342b, 0, -2, -10, 0.12); f.rotation.z = r; f.position.y = 0; }
-    rbox(bl, 1.4, 1, 3, 0x555b62, 0, -4.6, 0, 0.35); bake(bl); bl.children.forEach(o => o.castShadow = false); scene.add(bl);
-    anim.push((dt, t) => { const a = t * 0.03; bl.position.set(Math.cos(a) * 95, 62, Math.sin(a) * 70 - 10); bl.rotation.y = -a; });
-  },
-};
-function sfWarehouse(m, b, label, fire) {  // brick warehouse with a barrel roof; the print one has the eternal tire fire out back
-  const w = b.w, d = b.d, h = 6.5;
-  rbox(m, w, h, d, brick("#9b5a3c"), 0, 0, 0, 0.3);
-  put(m, new THREE.CylinderGeometry(d / 2 + 0.3, d / 2 + 0.3, w + 0.4, 28, 1, false, 0, Math.PI).rotateZ(Math.PI / 2), wm(0x8d9399, { metalness: 0.55, roughness: 0.45 }), 0, h, 0);
-  for (const s of [-1, 1]) rbox(m, 3.4, 4.2, 0.3, 0x7a8288, s * 3.6, 0, d / 2 + 0.05, 0.1);
-  rbox(m, w * 0.85, 1.0, 1.8, 0x9a948a, 0, 0, d / 2 + 0.9, 0.12);
-  sign(m, label, w * 0.62, 1.2, "#f3eee4", "#4a3b28", 0, h - 0.9, d / 2 + 0.25);
-  if (fire) {
-    const z = -d / 2 - 2.6;
-    for (let i = 0; i < 12; i++) put(m, new THREE.TorusGeometry(0.7, 0.32, 10, 20).rotateX(Math.PI / 2), 0x1e1e1e, -3 + (i % 4) * 1.6, 0.32 + (i / 4 | 0) * 0.55, z + ((i % 2) - 0.5) * 0.6);
-    const fl = [0, 1, 2, 3].map(i => dyn(put(m, new THREE.ConeGeometry(0.9 - i * 0.12, 2.8, 10), new THREE.MeshStandardMaterial({ color: [0xff8a1f, 0xffd23a, 0xe33b2e, 0xff6a00][i], emissive: [0xff6a00, 0xffb000, 0xd02000, 0xff4a00][i], emissiveIntensity: 1.2 }), -2.4 + i * 1.6, 2.6, z)));
-    const smoke = [...Array(6)].map((_, i) => { const p = dyn(ball(m, 1.3, new THREE.MeshStandardMaterial({ color: 0x2a2a2a, transparent: true, depthWrite: false, roughness: 1 }), 0, 4, z)); p.castShadow = false; return [p, i / 6]; });
-    anim.push((dt, t) => { fl.forEach((x, i) => x.scale.y = 0.75 + 0.4 * Math.sin(t * 9 + i * 2));
-      smoke.forEach(([p, k0]) => { const k = (t * 0.1 + k0) % 1; p.position.set(Math.sin(k * 5) * 1.5 + k * 3, 4 + k * 20, z - k * 4); p.scale.setScalar(0.8 + k * 3); p.material.opacity = 0.7 * (1 - k); }); });
-  }
-  return h + d / 2 + 0.3;
-}
-
-const CNP = [0xff3fa4, 0xffd21a, 0x2fd3ff, 0x8a4dff, 0x7ee03a, 0xff7a1a, 0x22e0b0, 0xff4d4d];
-const CN_CAR = { w: 2.1, h: 0.95, l: 3.9, r: 0.45, ch: 0.8, cl: 2.1, cr: 0.38 };
-const CN_FONT = { font: 900, fam: "'Arial Black', Sora, Arial, sans-serif" };
-function bendy(p, o) {  // squash-and-stretch toon tower: a lathe with a bulging waist and a leaning, domed top
-  const { r = 3.5, h = 14, c, lean = 1, bulge = 0.16, sq = 0.92, ph = 0 } = o;
-  const R = t => r * (1 + bulge * Math.sin(t * Math.PI * 1.25 + ph) - 0.14 * t), L = t => lean * t * t * r, pts = [];
-  for (let i = 0; i <= 16; i++) { const t = i / 16; pts.push(new THREE.Vector2(R(t), t * h)); }
-  for (let i = 1; i <= 6; i++) { const a = i / 6 * Math.PI / 2; pts.push(new THREE.Vector2(Math.max(0.01, R(1) * Math.cos(a)), h + R(1) * 0.55 * Math.sin(a))); }
-  const geo = new THREE.LatheGeometry(pts, 40), pa = geo.attributes.position;
-  for (let i = 0; i < pa.count; i++) { const t = Math.min(1, pa.getY(i) / h); pa.setX(i, pa.getX(i) + L(t)); pa.setZ(i, pa.getZ(i) * sq); }
-  geo.computeVertexNormals(); put(p, geo, wm(c, { roughness: 0.45 }), o.x || 0, 0, o.z || 0);
-  return { R, L, sq, h, top: h + R(1) * 0.55, x: o.x || 0, z: o.z || 0 };
-}
-function porthole(p, T, t, a) {  // round window on a bendy tower's surface
-  const y = t * T.h, rr = T.R(t), x = T.x + T.L(t) + rr * Math.sin(a), z = T.z + rr * Math.cos(a) * T.sq;
-  const ring = put(p, new THREE.TorusGeometry(0.62, 0.14, 10, 24), 0xffffff, x, y, z); ring.rotation.y = a;
-  const gl = put(p, new THREE.CylinderGeometry(0.58, 0.58, 0.2, 24).rotateX(Math.PI / 2), GLASS(), x, y, z); gl.rotation.y = a;
-}
-function cnTower(m, b, i, o = {}) {
-  const c = o.c ?? CNP[i % CNP.length], c2 = o.c2 ?? CNP[(i + 3) % CNP.length], r = Math.min(b.w, b.d) / 2 - 0.5, h = o.h ?? 10 + (i * 5) % 9;
-  const T = bendy(m, { r, h, c, lean: ((i % 3) - 1) * 0.3, bulge: 0.1 + (i % 4) * 0.05, ph: i * 0.7, sq: 0.92 });
-  const band = put(m, new THREE.CylinderGeometry(1, 1, 1.1, 40, 1, true), wm(0xffffff, { map: chk(10, 1), roughness: 0.5 }), T.L(0.3), 0.3 * h, 0);
-  band.scale.set(T.R(0.3) + 0.05, 1, (T.R(0.3) + 0.05) * T.sq);
-  for (let y = 4.6; y < h - 1.2; y += 2.7) for (const a of [-0.55, 0.55]) if (Math.abs(y - 0.3 * h) > 1.2) porthole(m, T, y / h, a);
-  const fz = T.R(0.05) * T.sq;
-  rbox(m, 1.8, 2.7, 1.2, c2, 0, 0, fz - 0.2, 0.5); rbox(m, 1.2, 2.2, 0.3, GLASS(), 0, 0.1, fz + 0.4, 0.1);
-  rbox(m, 3, 0.35, 1.8, c2, 0, 2.9, fz + 0.3, 0.15);
-  sign(m, o.sign ?? b.short, Math.min(6.5, b.w * 0.75), 1.4, "#ffffff", css(c), 0, 4.2, fz + 0.8, { ...CN_FONT, bd: css(c2) });
-  const tx = T.L(1), ty = T.top;
-  switch (i % 4) {
-    case 0: ball(m, 1.3, c2, tx, ty + 0.9, 0); break;
-    case 1: put(m, new THREE.ConeGeometry(1.6, 3.4, 24), c2, tx, ty + 1.4, 0).rotation.z = -0.25; break;
-    case 2: put(m, new THREE.TorusGeometry(1.4, 0.35, 12, 28), c2, tx, ty + 1.8, 0); ball(m, 0.6, 0xffffff, tx, ty + 1.8, 0); break;
-    default: cyl(m, 0.12, 0.12, 3.5, 0xffffff, tx, ty - 0.3, 0, 8); ball(m, 0.5, 0xff3fa4, tx, ty + 3.4, 0);
-  }
-  return ty + 3.6;
-}
-function cnHouse(g, i) {
-  const r = (i * 7919 + 5) % 97, garage = r % 2 === 0, x = garage ? 2.4 : 0;
-  house(g, { w: 8.5, d: 7.5, st: r % 3 ? 2 : 1, x, wall: [0xffb3d9, 0xb3ecff, 0xfff27a, 0xc9ffb3, 0xffcc99, 0xd9c2ff][r % 6], roof: [0x7d4bd8, 0xff4d4d, 0x2a8bd8, 0x23b26d][r % 4], r: 0.7, rh: 3.4,
-    door: CNP[r % CNP.length], garage, porch: r % 3 === 0, dx: x + 1.8, trim: 0xffffff });
-  return { dx: x + 1.8 };
-}
-WORLDS.cartoon = {
-  toon: true, ink: 0.09,
-  sky: { top: 0x1fa8ff, hor: 0xb8f0ff, low: 0x9fe0ff, fog: 0.001, hemi: [0xf0fbff, 0x6fd06a, 1.15], sun: [0xffffff, 3.0], sunPos: [70, 170, 100], grass: 0x58d65a, hill: 0x2fb84a, exp: 1.05, filter: "saturate(1.18)" },
-  style: { asphalt: 0x3f3b56, walk: "chk", dash: 0xffffff, kerb: 0xffffff, leaves: [0x3fe05a, 0x7ee03a, 0x22c06a, 0xb6f03a], hillLeaves: [0x22b04a, 0x3fd06a],
-    skin: [0xffd9b8, 0xf1c27d, 0x8d5524, 0xffe0bd, 0xc68642], shirts: [0xff3fa4, 0x2fd3ff, 0xffd21a, 0x7ee03a, 0x8a4dff, 0xff7a1a, 0xffffff, 0x111111], pants: [0x111111, 0x2a3fa8, 0xffffff, 0x8a4dff],
-    carCols: CNP, car: CN_CAR, lamp: "lolly", cloudGlow: 0x9aa8c0 },
-  roads: [
-    { pts: [[-150, -10], [-105, -28], [-65, -12], [-25, 14], [15, 20], [55, 2], [90, -22], [150, -34]], w: 10, sw: 3, cars: 12, lamps: true },  // Toon Boulevard
-    { pts: [[-45, 3], [-52, 30], [-40, 56], [-54, 78]], w: 8, sw: 2.4, cars: 3, bulb: true, lamps: true },                                         // Peach Creek cul-de-sac (Ed's)
-    { pts: [[30, 18], [26, -15], [42, -45], [30, -78], [22, -150]], w: 9, cars: 4, lamps: true },                                                   // City Hall Avenue
-    { pts: [[60, -2], [68, 35], [88, 62], [98, 95], [105, 150]], w: 7, sw: 1.6, cars: 2, poles: -1 },                                              // road to Nowhere (Courage's farm)
-    { pts: [[-72, -12], [-84, -45], [-62, -75], [-78, -105], [-90, -150]], w: 8, cars: 3, lamps: true }],                                          // Lab Lane
-  bumps: [[0, -150, 26, 60, 22]],
-  lots: { library: [0, -2, -10, 13], fb: [0, -100, -40], kdp: [0, -84, -38], gumroad: [0, -52, -24], contra: [0, -36, -10], lab: [0, 48, -14], krypto: [0, 66, -24], kalshi: [0, 84, -38],
-    poly: [0, -100, -10], longshot: [0, -84, -4], github: [0, -66, 4], etsy: [0, -28, 30], pinterest: [0, -10, 34], showroom: [0, 10, 40], zoho: [0, 30, 34], whdig: [0, 44, 22], whpod: [0, 80, 4],
-    rose: [1, -40, 86, 2], rnd: [4, -100, -45, 2], army: [4, -60, -50] },
-  spare: [[2, 10, -60, 0], [2, 10, -100, 0]],
-  size: { library: [24, 16], rnd: [17, 10], rose: [14, 8.5], showroom: [16, 12], whdig: [13, 10], whpod: [14, 10], army: [12, 10] },
-  vault: { lot: [2, 70, -45, 3], d: 26, r: 15, tag: 30, model(g) {  // Mojo Jojo's observatory on its dormant volcano
-    lathe(g, [[14, 0], [13, 1.5], [10.5, 5], [7.5, 10], [5.2, 13.5], [4.6, 14], [0, 14]], wm(0x7a5a4a, { roughness: 0.95 }), 0, 0, 0, undefined, 48);
-    for (let i = 0; i < 5; i++) { const a = i / 5 * 6.28 + 0.4, s = put(g, new THREE.CylinderGeometry(0.35, 1.1, 11, 10), wm(0xff6a1a, { emissive: 0xff4a00, emissiveIntensity: 0.6 }), Math.sin(a) * 9.5, 7, Math.cos(a) * 9.5); s.lookAt(0, 22, 0); s.rotateX(Math.PI / 2); s.scale.set(1, 1, 0.4); }
-    cyl(g, 3.4, 4, 6, 0x6a3fc8, 0, 13.5, 0, 32); put(g, new THREE.TorusGeometry(4.1, 0.4, 12, 40).rotateX(Math.PI / 2), 0xffffff, 0, 14, 0);
-    dome(g, 4.6, wm(0xf4f1ff, { roughness: 0.35 }), 0, 19.4, 0); cyl(g, 4.8, 4.8, 0.5, 0x6a3fc8, 0, 19.2, 0, 40);
-    const tel = cyl(g, 0.7, 0.9, 5, 0xbfc5cc, 1.6, 21, 1.6, 16); tel.rotation.x = 0.7; tel.rotation.z = -0.5;
-    for (let i = 0; i < 8; i++) { const a = i / 8 * 6.28; porthole(g, { h: 6, R: () => 3.75, L: () => 0, sq: 1, x: 0, z: 0 }, 0.5 + 15.5 / 6, a); }
-    g.children.slice(-16).forEach(o => o.position.y += 0); sign(g, "MOJO JOJO", 6, 1.3, "#6a3fc8", "#7ee03a", 0, 3.6, 13.2, CN_FONT);
-  } },
-  models: {
-    library(m, b) {  // Townsville City Hall with a checkerboard plaza
-      b.noFore = true;
-      rbox(m, 22, 8.5, 11, 0xf4f1ff, 0, 0, -2, 0.9); rbox(m, 22.6, 0.8, 11.6, 0x2fd3ff, 0, 8.2, -2, 0.35);
-      for (let i = 0; i < 6; i++) cyl(m, 0.5, 0.6, 7, 0xffffff, -6.25 + i * 2.5, 0.6, 5, 20);
-      rbox(m, 16, 0.6, 4, 0xe6e3f5, 0, 0, 4.6, 0.25); rbox(m, 16.6, 0.9, 3, 0x2fd3ff, 0, 7.6, 4.8, 0.3);
-      for (const s of [-1, 1]) for (const y of [1.4, 4.8]) win(m, s * 9, y, 3.55, 1.3, 2, 0xffffff);
-      cyl(m, 3.6, 3.8, 7, 0xf4f1ff, 0, 8.6, -2, 40); put(m, new THREE.TorusGeometry(3.75, 0.3, 10, 40).rotateX(Math.PI / 2), 0xff3fa4, 0, 12, -2);
-      lathe(m, [[3.9, 0], [4.3, 1.4], [3.7, 3.4], [2.2, 5.2], [0.8, 6.3], [0.2, 7]], wm(0x2fd3ff, { roughness: 0.35, metalness: 0.2 }), 0, 15.5, -2);
-      cyl(m, 0.12, 0.12, 3, 0xffffff, 0, 22.4, -2, 8); ball(m, 0.45, 0xffd21a, 0, 25.6, -2);
-      sign(m, "TOWNSVILLE CITY HALL", 10, 0.9, "#ffffff", "#ff3fa4", 0, 8.05, 6.4, CN_FONT);
-      rbox(m, 24, 0.16, b.sb, wm(0xffffff, { map: chk(12, Math.max(2, Math.round(b.sb / 2))) }), 0, 0.02, 6.5 + b.sb / 2, 0.06);
-      cyl(m, 2.2, 2.6, 0.8, 0xffffff, 0, 0, 6.5 + b.sb / 2, 32); ball(m, 1, 0xff3fa4, 0, 1.6, 6.5 + b.sb / 2); return 26;
-    },
-    rnd(m) {  // Dexter's house with the secret lab dome behind
-      house(m, { w: 9, d: 7.5, x: -3.6, wall: 0xf2efe6, roof: 0x4a6fa5, r: 0.6, door: 0xff7a1a, dx: -2.4 });
-      dome(m, 4.4, wm(0xb9c4d6, { metalness: 0.7, roughness: 0.25 }), 4.4, 0, -0.5);
-      put(m, new THREE.TorusGeometry(4.45, 0.22, 10, 48).rotateX(Math.PI / 2), wm(0x2fd3ff, { emissive: 0x2fd3ff, emissiveIntensity: 0.8 }), 4.4, 0.9, -0.5);
-      cyl(m, 0.1, 0.1, 3.5, 0xdddddd, 4.4, 4.2, -0.5, 8); const dish = put(m, new THREE.SphereGeometry(1.1, 20, 10, 0, 6.28, 0, 1.1), wm(0xffffff, { side: THREE.DoubleSide }), 4.4, 8, -0.5); dish.rotation.x = -0.7;
-      sign(m, "DEXTER'S LAB", 4.2, 0.9, "#2fd3ff", "#ffffff", 4.4, 2.4, 3.95, CN_FONT); return 9.5;
-    },
-    rose(m, b) { b.noFore = true; const t = cnHouse(m, 3); yard(m, 3.75, b.sb, t.dx, { fence: 0xffffff, box: 0xff3fa4 }); sign(m, "ROSE", 1.6, 0.6, "#ff3fa4", "#ffffff", 2.4 + 3, 2.6, 3.95, CN_FONT); return 10; },
-    etsy(m) {  // the candy store with a giant striped jawbreaker
-      const h = store(m, { w: 11, d: 9, h: 5.5, wall: 0xff7ac8, trim: 0xffffff, awn: 0x2fd3ff, sign: "CANDY STORE", sbg: "#ffffff", sfg: "#ff3fa4", r: 1.2, so: CN_FONT });
-      const jt = ctex("jaw", 256, 128, g => { ["#ff3fa4", "#ffd21a", "#2fd3ff", "#7ee03a", "#8a4dff", "#ff7a1a", "#ffffff", "#ff4d4d"].forEach((c, i) => { g.fillStyle = c; g.fillRect(i * 32, 0, 32, 128); }); });
-      put(m, new THREE.SphereGeometry(2.4, 40, 24), wm(0xffffff, { map: jt, roughness: 0.25 }), 0, h + 2.6, -1); return h + 5;
-    },
-    army(m, b) { return cnTower(m, b, 5, { h: 11, sign: "AI ARMY" }); },
-    showroom(m, b) { const h = cnTower(m, { ...b, w: 11, d: 11 }, 2, { h: 14, sign: b.short });
-      bendy(m, { r: 2.4, h: 8, c: 0xffd21a, lean: -0.4, x: -6, z: -1 }); bendy(m, { r: 2.2, h: 10, c: 0xff3fa4, lean: 0.4, x: 6, z: -1.5 }); return h; },
-    whdig: m => cnWarehouse(m, 0x2fd3ff, "DIGITAL"),
-    whpod: m => cnWarehouse(m, 0xff7a1a, "PRINT"),
-    _: (m, b) => cnTower(m, b, M.B.indexOf(b)),
-  },
-  decor() {
-    lineRoad(1, { make: cnHouse, yard: { fence: 0xffffff, box: 0xff3fa4 }, step: 14 });
-    const R1 = WS.R[1];  // houses round Ed's cul-de-sac
-    if (R1.bulbAt) { const [cx, cz, rr] = R1.bulbAt; for (let a = -1.2; a <= 1.25; a += 0.8) { const dir = Math.atan2(R1.TX[R1.n], R1.TZ[R1.n]) + a, o = rr + R1.sw + 10;
-      const x = cx + Math.sin(dir) * o, z = cz + Math.cos(dir) * o; if (!free(x, z, 6)) continue;
-      const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = dir + Math.PI; WS.dec.add(g); const t = cnHouse(g, Math.round(a * 10 + 40)); yard(g, 3.75, 5.5, t.dx, { fence: 0xffffff, box: 0x2fd3ff });
-      WS.occ.push({ x, z, r: 6.2 }); WS.solids.push({ x, z, r: 5, h: 10 }); } }
-    lineRoad(4, { make: cnHouse, yard: { fence: 0xffffff }, s0: 20 });
-    lineRoad(2, { make: (g, i) => (cnTower(g, { w: 9, d: 9, short: ["TOONS", "PIZZA", "ARCADE", "COMICS"][i % 4] }, i + 2, { h: 9 + (i % 3) * 3 }), { dx: 0 }), step: 14, sb: 0, d: 9, r: 5.5, s0: 30 });
-    lineRoad(0, { make: (g, i) => (cnTower(g, { w: 8, d: 8, short: ["TOONS", "SODA", "ARCADE", "PIZZA", "TOYS", "BURGERS"][i % 6] }, i, { h: 8 + (i % 4) * 2.5 }), { dx: 0 }), step: 13, sb: 0, d: 8, r: 5.2, s0: 6 });
-    const R3 = WS.R[3], L = lotAt(R3, Math.round(R3.n * 0.62), -1, 10, 6);
-    if (free(L.x, L.z, 7)) { const g = new THREE.Group(); g.position.set(L.x, 0, L.z); g.rotation.y = Math.atan2(L.face[0], L.face[1]); WS.dec.add(g);
-      rbox(g, 22, 0.08, 20, 0xd9c08a, 0, 0, -2, 0.04);
-      house(g, { w: 8, d: 7, wall: 0xf3d1d8, roof: 0x5a5a6a, door: 0x7a4a2a, porch: true, dx: 1.5, chimC: 0x8a5a4a });
-      const mill = new THREE.Group(); mill.position.set(-8, 0, -4); g.add(mill); cyl(mill, 0.5, 1.3, 11, 0x8a8a8a, 0, 0, 0, 6);
-      const rot = dyn(new THREE.Group()); rot.position.set(0, 11, 0.9); mill.add(rot);
-      for (let i = 0; i < 8; i++) { const bl = rbox(rot, 0.5, 3.4, 0.08, 0xdddddd, 0, 0, 0, 0.04); bl.geometry.translate(0, 1.7, 0); bl.position.set(0, 0, 0); bl.rotation.z = i / 8 * 6.28; }
-      anim.push(dt => rot.rotation.z += dt * 1.6);
-      WS.occ.push({ x: L.x, z: L.z, r: 11 }); WS.solids.push({ x: L.x, z: L.z, r: 6, h: 10 }); }
-    world3DText("CN", { size: 16, depth: 3 }, (m, i) => { const x = -10 + i * 22, z = -130, y = hgt(x, z) + 2; m.position.set(x, y, z + 1.8); m.material = wm(i ? 0x111111 : 0xffffff, { roughness: 0.4 });
-      const blk = new THREE.Mesh(new RoundedBoxGeometry(21, 21, 3, 3, 1.2), wm(i ? 0xffffff : 0x111111, { roughness: 0.4 })); blk.position.set(x, y + 8, z); blk.castShadow = true; scene.add(blk); });
-  },
-};
-function cnWarehouse(m, c, label) {  // bubbly squashed warehouse with a checker roof stripe
-  rbox(m, 13, 6, 10, c, 0, 0, 0, 2.2); rbox(m, 13.2, 0.9, 10.2, wm(0xffffff, { map: chk(14, 1) }), 0, 4.2, 0, 0.45);
-  for (const s of [-1, 1]) rbox(m, 3, 3.8, 0.6, 0xffffff, s * 3.4, 0, 4.9, 0.4);
-  sign(m, label, 6, 1.4, "#ffffff", css(c), 0, 7.2, 4.4, CN_FONT); return 8.5;
-}
-
-const S7 = { mustard: 0xd9a531, orange: 0xc8622a, avocado: 0x7c8a3a, brown: 0x6b4423, cream: 0xf1e3c4, gold: 0xe1a82f, teal: 0x3a8a86, rust: 0xa0432a, tan: 0xd8b98a };
-const S7_CAR = { w: 2.15, h: 0.8, l: 5.3, r: 0.14, ch: 0.62, cl: 2.9, cr: 0.12, chrome: true, wood: true };
-const S7_FONT = { font: 900, fam: "Georgia, 'Times New Roman', serif" };
-const S7_RETRO = { font: 900, fam: "'Arial Black', Sora, Arial, sans-serif" };
-function wagon(p, x, z, ry, color) { return car(p, x, z, ry, color, S7_CAR); }
-function s7House(g, i) {  // single-storey ranch house, low roof, carport with a wood-panel station wagon
-  const r = (i * 7919 + 29) % 97, w = 11 + (r % 3), x = 1.8;
-  house(g, { w, d: 7.5, st: 1, x, rh: 1.9, wall: [S7.tan, S7.cream, 0xe8c99a, 0xc9b48a, 0xd9c7a0, 0xb8a27a][r % 6], roof: [S7.brown, 0x5a4a3a, 0x7a5a3a, 0x4a3a2a][r % 4],
-    door: [S7.orange, S7.avocado, S7.mustard, S7.brown][r % 4], sh: [S7.brown, S7.avocado, 0x4a3a2a][r % 3], chimC: 0x8a5a44, dx: x + w * 0.2, base: 0x8a7a66 });
-  const cx = x - w / 2 - 2.6; rbox(g, 4.6, 0.18, 6.4, S7.brown, cx, 2.8, 0.4, 0.08); for (const s of [-1, 1]) cyl(g, 0.1, 0.1, 2.8, 0xeeeeee, cx + s * 2.0, 0, 3.3, 8);
-  if (r % 3) wagon(g, cx, 1.2, 0, [S7.mustard, S7.orange, S7.avocado, 0xeadfc8, 0x8ab4c8, S7.rust][r % 6]);
-  return { dx: x + w * 0.2 };
-}
-function s7Shop(g, i) {
-  const names = ["SODA FOUNTAIN", "BARBER", "RECORDS", "LAUNDROMAT", "SHOES", "TAVERN", "PIZZA", "DRUGSTORE", "PAWN", "TAILOR"];
-  store(g, { w: 9, d: 8, h: 5.5 + (i % 3), brick: ["#a0522d", "#b5653b", "#8a4a2a"][i % 3], trim: S7.cream, awn: [S7.orange, S7.avocado, S7.mustard, S7.brown][i % 4],
-    sign: names[i % names.length], sbg: ["#f1e3c4", "#3a2a1c", "#e1a82f"][i % 3], sfg: ["#7a2a1a", "#f1c45a", "#3a2a1c"][i % 3], so: S7_FONT });
-  return { dx: 0 };
-}
-function poleSign(m, x, z, h, text, w, sh, bg, fg, o) {  // tall roadside pole sign
-  cyl(m, 0.2, 0.25, h, 0x9a9a9a, x, 0, z, 10); return sign(m, text, w, sh, bg, fg, x, h + sh / 2, z + 0.2, o);
-}
-function bulbs(m, n, x0, x1, y, z, A) { for (let i = 0; i < n; i++) dyn(ball(m, 0.16, i % 2 ? A[0] : A[1], x0 + (x1 - x0) * i / (n - 1), y, z)); }
-function blinkPair() {
-  const A = new THREE.MeshStandardMaterial({ color: 0xfff1a8, emissive: 0xffc94a, emissiveIntensity: 1 }), B = A.clone();
-  anim.push((dt, t) => { const on = Math.sin(t * 5) > 0; A.emissiveIntensity = on ? 1.3 : 0.1; B.emissiveIntensity = on ? 0.1 : 1.3; }); return [A, B];
-}
-WORLDS.seventies = {
-  sky: { top: 0x6fa3c9, hor: 0xf3d3a0, low: 0xe8c08a, fog: 0.0019, hemi: [0xffe6c0, 0x7a6a3a, 1.05], sun: [0xffd9a0, 2.6], sunPos: [-110, 120, 90], grass: 0x9aa64a, hill: 0x7c8a3a, exp: 1.02,
-    filter: "sepia(0.28) saturate(1.2) contrast(1.06) brightness(1.02)" },
-  grain: true,
-  style: { asphalt: 0x4a4744, walk: 0xcbbfa8, dash: 0xe1a82f, kerb: 0xd2c6ae, leaves: [0x7c8a3a, 0x8a9a3a, 0x6b7a2a, 0xa0a03a, 0xc8862a], hillLeaves: [0x6b7a2a, 0x5a6a2a, 0x8a7a2a],
-    skin: [0xffd9b8, 0xf1c27d, 0x8d5524, 0xe0ac69, 0xc68642], shirts: [S7.orange, S7.mustard, S7.avocado, S7.brown, 0xeadfc8, S7.teal, S7.rust, 0x8ab4c8], pants: [0x3a4a6a, S7.brown, 0x6b5a3a, 0x2a2a2a, 0xa08a5a],
-    carCols: [S7.mustard, S7.orange, S7.avocado, 0xeadfc8, S7.brown, 0x8ab4c8, S7.rust, 0x2e5a3a], car: S7_CAR, lamp: "globe", cloudGlow: 0xc8a080 },
-  roads: [
-    { pts: [[-150, 4], [-90, 2], [0, 0], [90, -2], [150, -4]], w: 11, sw: 3.2, cars: 12, lamps: true },                         // 0 Main Street
-    { pts: [[-30, 1], [-32, -40], [-26, -80], [-34, -150]], w: 8, sw: 2.2, cars: 3, poles: 1 },                                   // 1 Elm Street (north)
-    { pts: [[90, -2], [96, 30], [108, 60], [150, 82]], w: 10, sw: 0, cars: 5, poles: -1 },                                         // 2 Route 66 out to the drive-in
-    { pts: [[-46, 2], [-48, 40], [-62, 72], [-70, 150]], w: 8, sw: 2.2, cars: 3, poles: 1 },                                       // 3 Oak Street (south)
-    { pts: [[48, -1], [52, -40], [62, -80], [70, -150]], w: 9, sw: 2.2, cars: 3, lamps: true },                                   // 4 Station Road
-    { pts: [[-150, -96], [0, -102], [150, -110]], rail: true, w: 4, sw: 0 }],                                                     // 5 the railroad
-  bumps: [[-40, -150, 26, 60, 22]],
-  lots: { fb: [0, -104, -10], pinterest: [0, -90, -4], kdp: [0, -78, -4], github: [0, -65, -4], lab: [0, -51, -4], library: [0, 0, -10, 14], krypto: [0, 21, -4], kalshi: [0, 35, -4],
-    army: [0, 68, -4], longshot: [0, 86, -4], gumroad: [0, -104, 10, 3], contra: [0, -90, 10], zoho: [0, -78, 10], etsy: [0, -63, 10], poly: [0, -28, 10, 1], showroom: [0, -4, 10, 8], rnd: [0, 22, 10, 7],
-    rose: [3, -54, 50, 4], whdig: [4, 62, -66, 1], whpod: [4, 44, -78, 1] },
-  spare: [[3, -40, 90, 2], [1, -20, -60, 2]],
-  size: { library: [22, 14], fb: [10, 8], pinterest: [8, 7], kdp: [9, 8], github: [10, 8], lab: [10, 8], krypto: [11, 9], kalshi: [11, 9], army: [14, 11], longshot: [16, 11],
-    gumroad: [13, 8], contra: [8, 8], zoho: [10, 8], etsy: [12, 9], poly: [13, 10], showroom: [20, 11], rnd: [13, 9], rose: [16, 8.5], whdig: [15, 10], whpod: [14, 10] },
-  vault: { lot: [0, 52, 10, 2], d: 11, r: 10, tag: 18, model(g) {  // Sunflower Savings & Loan with the giant round vault door on the facade
-    rbox(g, 17, 0.14, 13, wm(0xffffff, { map: noiseTex(0xcbbfa8, 0.06, 3) }), 0, 0, 1, 0.05);
-    rbox(g, 15, 7, 10, 0xe9dcc0, 0, 0, -0.5, 0.3); rbox(g, 15.6, 0.8, 10.6, 0xc9b48a, 0, 6.8, -0.5, 0.25); rbox(g, 15.4, 0.5, 10.4, 0x8a7a66, 0, 0, -0.5, 0.12);
-    const gold = wm(0xc9a24a, { metalness: 0.85, roughness: 0.3 });
-    put(g, new THREE.CylinderGeometry(2.6, 2.6, 0.5, 40).rotateX(Math.PI / 2), 0x7a7470, 0, 3.4, 4.6);
-    put(g, new THREE.CylinderGeometry(2.3, 2.3, 0.5, 40).rotateX(Math.PI / 2), gold, 0, 3.4, 4.85);
-    for (let i = 0; i < 3; i++) rbox(g, 3.2, 0.25, 0.25, gold, 0, 3.27, 5.25, 0.08).rotation.z = i * Math.PI / 3;
-    cyl(g, 0.45, 0.45, 0.4, 0x7a7470, 0, 3.0, 5.2, 16).rotation.x = Math.PI / 2;
-    for (const s of [-1, 1]) win(g, s * 5.2, 1.4, 4.55, 2.2, 3, 0xc9b48a);
-    sign(g, "SUNFLOWER SAVINGS & LOAN", 12, 1.1, "#3a2a1c", "#e1a82f", 0, 6.1, 4.8, S7_FONT);
-    poleSign(g, -7.6, 5.5, 8, "$ TIME 7:45 · 72°F $", 5, 1.6, "#e1a82f", "#3a2a1c", S7_RETRO);
-  } },
-  models: {
-    library(m, b) {  // county courthouse with the clock tower = Public Library
-      b.noFore = true; const br = brick("#9b4a2a");
-      rbox(m, 22, 9, 11, br, 0, 0, -2, 0.3); rbox(m, 22.6, 0.7, 11.6, S7.cream, 0, 8.8, -2, 0.25); rbox(m, 22.4, 0.5, 11.4, 0x8a7a66, 0, 0, -2, 0.12);
-      rbox(m, 12, 0.6, 3.2, S7.cream, 0, 0, 5.2, 0.15); for (let i = 0; i < 4; i++) cyl(m, 0.42, 0.48, 7.2, 0xffffff, -4.5 + i * 3, 0.6, 5.6, 18);
-      rbox(m, 12.6, 0.9, 3.4, S7.cream, 0, 7.8, 5.3, 0.2); groof(m, 3.4, 12.4, 2.0, S7.cream, 8.7, 0, 5.3, 0.3).rotation.y = Math.PI / 2;
-      for (const s of [-1, 1]) for (const x of [6.5, 9.3]) for (const y of [1.4, 5]) win(m, s * x, y, 3.55, 1.1, 2.1, S7.cream);
-      rbox(m, 5.4, 8, 5.4, br, 0, 9.3, -2, 0.2); rbox(m, 5.8, 0.6, 5.8, S7.cream, 0, 17.2, -2, 0.2);
-      for (const [a, x, z] of [[0, 0, 0.75], [Math.PI / 2, 2.75, -2], [-Math.PI / 2, -2.75, -2]]) {
-        const f = put(m, new THREE.CylinderGeometry(1.8, 1.8, 0.22, 36).rotateX(Math.PI / 2), 0xf6f0de, x, 14, z); f.rotation.y = a;
-        const r1 = rbox(m, 0.16, 1.3, 0.1, 0x1a1a1a, x, 13.95, z, 0.04); r1.rotation.y = a; r1.position.x += Math.sin(a) * 0.15; r1.position.z += Math.cos(a) * 0.15;
-        const r2 = rbox(m, 0.16, 0.9, 0.1, 0x1a1a1a, x, 13.95, z, 0.04); r2.rotation.set(0, a, 1.6, "YXZ"); r2.position.x += Math.sin(a) * 0.15; r2.position.z += Math.cos(a) * 0.15; }
-      hroof(m, 5.4, 5.4, 3.2, 0x3a5a4a, 17.8, 0, -2); cyl(m, 0.08, 0.08, 2, 0x555555, 0, 21, -2, 8); ball(m, 0.3, gold7(), 0, 23.1, -2);
-      sign(m, "PUBLIC LIBRARY", 8.5, 0.75, "#f1e3c4", "#5a2a1a", 0, 8.35, 7.05, S7_FONT);
-      const sq = b.sb, z0 = 7.4;  // courthouse lawn: flag, cannon-free bandstand, benches
-      rbox(m, 22, 0.12, sq, wm(0xffffff, { map: noiseTex(0x8a9a3a, 0.08, 3) }), 0, 0.02, z0 + sq / 2, 0.06);
-      rbox(m, 3, 0.14, sq, wm(0xffffff, { map: noiseTex(0xcbbfa8, 0.06, 2) }), 0, 0.05, z0 + sq / 2, 0.05);
-      cyl(m, 3, 3, 0.6, S7.cream, 7, 0, z0 + sq / 2, 8); for (let i = 0; i < 8; i++) { const a = i / 8 * 6.283; cyl(m, 0.1, 0.1, 2.6, 0xffffff, 7 + Math.cos(a) * 2.7, 0.6, z0 + sq / 2 + Math.sin(a) * 2.7, 6); }
-      put(m, new THREE.ConeGeometry(3.3, 1.6, 8), S7.rust, 7, 4.0, z0 + sq / 2);
-      flag(m, -7, z0 + sq / 2, 10); for (const s of [-1, 1]) rbox(m, 2.2, 0.45, 0.7, S7.brown, s * 3.5, 0.35, z0 + sq - 1.5, 0.12);
-      return 23.5;
-    },
-    etsy: m => store(m, { w: 12, d: 9, h: 6.5, brick: "#b5653b", trim: S7.cream, awn: S7.orange, sign: "FIVE & DIME", sbg: "#b8322a", sfg: "#ffe9b0", so: S7_FONT }),
-    gumroad(m, b) {  // stainless-steel streamline diner + EAT pole sign
-      b.noFore = true; const steel = wm(0xd8dde2, { metalness: 0.75, roughness: 0.25 });
-      rbox(m, 13, 0.6, 8, 0x8a7a66, 0, 0, 0, 0.15); rbox(m, 12, 4, 7, steel, 0, 0.5, 0, 1.4);
-      rbox(m, 12.1, 0.5, 7.1, 0xc8322a, 0, 1.4, 0, 0.25); rbox(m, 12.1, 0.25, 7.1, 0xc8322a, 0, 3.6, 0, 0.12);
-      for (let i = 0; i < 7; i++) win(m, -5 + i * 1.65, 1.95, 3.52, 1.25, 1.4, 0xd8dde2);
-      rbox(m, 1.4, 2.6, 1.6, steel, 0, 0.5, 3.9, 0.3); sign(m, "DINER", 6, 1.5, "#c8322a", "#fff6d0", 0, 5.3, 2.5, { font: 900, fam: "'Brush Script MT', 'Comic Sans MS', cursive", glow: "#ff6040" });
-      rbox(m, 14, 0.1, b.sb + 1, wm(0xffffff, { map: noiseTex(0x5a5652, 0.07, 2) }), 0, 0.02, 4 + b.sb / 2, 0.04);
-      const s = poleSign(m, 7.2, 4.5, 7, "EAT", 2.6, 1.4, "#e1a82f", "#c8322a", { ...S7_RETRO, glow: "#ffb040" });
-      put(m, new THREE.ConeGeometry(0.7, 1.4, 3).rotateZ(-Math.PI / 2), 0xc8322a, 8.9, 7.1, 4.7);
-      return 9;
-    },
-    kdp: m => store(m, { w: 9, d: 8, h: 6, wall: S7.gold, trim: S7.brown, awn: S7.avocado, sign: "PAPERBACK BOOKS", sbg: "#6b4423", sfg: "#f1e3c4", so: S7_FONT }),
-    contra(m) {  // photo studio with a giant camera on the roof
-      const h = store(m, { w: 8, d: 8, h: 5.5, wall: S7.teal, trim: S7.cream, awn: S7.mustard, sign: "PHOTO STUDIO", sbg: "#f1e3c4", sfg: "#3a8a86", so: S7_FONT });
-      rbox(m, 4, 2.4, 2.2, 0x2a2a2a, 0, h + 0.1, -1.5, 0.3); rbox(m, 4.05, 0.7, 2.25, 0xb8b8b8, 0, h + 1.8, -1.5, 0.15);
-      cyl(m, 0.8, 0.8, 1.2, 0x1a1a1a, 0, h + 1.3, -0.1, 24).rotation.x = Math.PI / 2; put(m, new THREE.CylinderGeometry(0.55, 0.55, 0.1, 24).rotateX(Math.PI / 2), GLASS(), 0, h + 1.3, 0.55);
-      return h + 3;
-    },
-    zoho(m) { const h = store(m, { w: 10, d: 8, h: 6, brick: "#a0522d", trim: S7.cream, door: 0x2b4c9b, sign: "U.S. POST OFFICE", sbg: "#f1e3c4", sfg: "#2b4c9b", so: S7_FONT });
-      flag(m, 4.4, 5, 8); rbox(m, 0.9, 1.1, 0.7, 0x2b4c9b, -3.6, 0, 5.1, 0.3); return h; },
-    lab(m) {  // TV & radio repair with a giant wood-cabinet TV on the roof
-      const h = store(m, { w: 10, d: 8, h: 5.5, wall: S7.avocado, trim: S7.cream, awn: S7.orange, sign: "TV & RADIO REPAIR", sbg: "#f1e3c4", sfg: "#6b4423", so: S7_FONT });
-      rbox(m, 5, 3.8, 2.6, 0x7a4a2a, 0, h + 0.1, -1, 0.35); rbox(m, 3.4, 2.6, 0.2, wm(0x8ac8b8, { emissive: 0x4aa898, emissiveIntensity: 0.5, roughness: 0.2 }), -0.5, h + 0.7, 0.32, 0.4);
-      for (const s of [0, 1]) ball(m, 0.22, 0xd9a531, 1.85, h + 2.6 - s * 0.9, 0.35);
-      for (const s of [-1, 1]) { const a = cyl(m, 0.05, 0.05, 2.6, 0xcccccc, s * 0.6, h + 3.9, -1, 6); a.rotation.z = -s * 0.5; }
-      return h + 6;
-    },
-    krypto(m) {  // First National Bank: stone, columns, pediment
-      const h = store(m, { w: 11, d: 9, h: 7, wall: 0xe9dcc0, trim: 0xc9b48a, door: 0x3a2a1a, sign: "FIRST NATIONAL BANK", sbg: "#2e5a3a", sfg: "#e1a82f", so: S7_FONT });
-      for (let i = 0; i < 4; i++) cyl(m, 0.32, 0.36, 5.8, 0xffffff, -4 + i * 8 / 3, 0.4, 5.3, 16);
-      rbox(m, 10, 0.6, 1.4, 0xe9dcc0, 0, 6.2, 5.3, 0.15); return h;
-    },
-    kalshi(m) {  // pool hall with a giant 8-ball
-      const h = store(m, { w: 11, d: 9, h: 6, brick: "#6b4423", trim: S7.mustard, door: 0x2e5a3a, fw: 5, sign: "POOL HALL", sbg: "#2e5a3a", sfg: "#f1e3c4", so: { ...S7_RETRO, glow: "#a0ffa0" } });
-      ball(m, 2, wm(0x111111, { roughness: 0.15, metalness: 0.2 }), 0, h + 3.6, -1.5); put(m, new THREE.CircleGeometry(0.9, 24), 0xffffff, 0, h + 3.8, 0.42).rotation.x = -0.1;
-      sign(m, "8", 0.9, 0.9, "none", "#111111", 0, h + 3.8, 0.47, S7_RETRO); return h + 6;
-    },
-    poly(m, b) {  // grain exchange + concrete grain elevator
-      const h = store(m, { w: 7, d: 8, h: 5, wall: S7.cream, trim: S7.brown, sign: "GRAIN EXCHANGE", sbg: "#6b4423", sfg: "#e1a82f", so: S7_FONT, dx: 0 });
-      for (const [x, z] of [[4.6, -1.8], [4.6, 1.8], [8, -1.8], [8, 1.8]]) { cyl(m, 1.7, 1.7, 16, 0xd9d2c4, x - 4.2, 0, z - 1.2, 24); dome(m, 1.7, 0xc9c2b4, x - 4.2, 16, z - 1.2); }
-      rbox(m, 5, 4, 3, S7.rust, 2.3, 16, -1.2, 0.2); sign(m, "SUNFLOWER CO-OP", 4.6, 1, "#f1e3c4", "#a0432a", 2.3, 18.4, 0.35, S7_FONT); return 21;
-    },
-    longshot(m) {  // bowling alley with a Googie star sign
-      const h = store(m, { w: 16, d: 11, h: 6, wall: S7.teal, trim: S7.cream, sign: "LUCKY STRIKE LANES", sbg: "#c8622a", sfg: "#fff6d0", so: S7_RETRO });
-      lathe(m, [[0, 0], [0.9, 0], [1.25, 1.2], [1.1, 2.4], [0.55, 3.4], [0.5, 3.9], [0.75, 4.6], [0.6, 5.3], [0, 5.5]], 0xffffff, 5, 6, -2);
-      put(m, new THREE.TorusGeometry(0.53, 0.1, 8, 24).rotateX(Math.PI / 2), 0xc8322a, 5, 9.7, -2);
-      cyl(m, 0.25, 0.3, 11, 0x9a9a9a, -9, 0, 4.5, 10); const st = put(m, new THREE.OctahedronGeometry(1.4, 0), wm(S7.mustard, { emissive: 0xffa020, emissiveIntensity: 0.5 }), -9, 12, 4.5); st.scale.set(1, 1, 0.3);
-      for (let i = 0; i < 4; i++) { const sp = rbox(m, 0.15, 3.2, 0.15, S7.mustard, -9, 10.4, 4.5, 0.05); sp.rotation.z = i * Math.PI / 4; sp.position.y = 12 - 1.6 + 1.6; }
-      return Math.max(h, 13);
-    },
-    pinterest(m) { const h = store(m, { w: 8, d: 7, h: 5, wall: 0xe8b8a0, trim: S7.cream, awn: S7.orange, sign: "FLOWERS", sbg: "#f1e3c4", sfg: "#c8622a", so: S7_FONT });
-      for (const s of [-1, 1]) { rbox(m, 2.2, 0.7, 0.9, S7.brown, s * 2.6, 0, 4.4, 0.15); for (let k = 0; k < 6; k++) ball(m, 0.3, [S7.orange, S7.mustard, 0xffffff, 0xc8322a][k % 4], s * 2.6 - 0.8 + (k % 3) * 0.8, 0.95, 4.2 + (k / 3 | 0) * 0.4); } return h; },
-    github: m => store(m, { w: 10, d: 8, h: 6, brick: "#8a4a2a", trim: S7.cream, awn: S7.avocado, sign: "HARDWARE", sbg: "#c8322a", sfg: "#ffffff", so: S7_RETRO }),
-    rnd(m, b) {  // full-service gas station: office + 2 bays, canopy over the pumps, round pole sign
-      b.noFore = true;
-      rbox(m, 15, 0.12, b.sb + 9, wm(0xffffff, { map: noiseTex(0x8a8580, 0.07, 3) }), 0, 0.02, b.sb / 2, 0.04);
-      rbox(m, 5, 4.5, 8, 0xf6f2ea, -4.5, 0, -0.5, 0.25); win(m, -4.5, 1.2, 3.55, 3, 2, S7.orange);
-      rbox(m, 7, 4.5, 8, 0xf6f2ea, 1.5, 0, -0.5, 0.25); for (const x of [0, 3]) rbox(m, 2.6, 3.4, 0.2, 0xd8d4cc, x, 0, 3.55, 0.08);
-      rbox(m, 12.4, 0.8, 8.4, S7.orange, -1.5, 4.4, -0.5, 0.25); sign(m, "SERVICE", 6, 0.7, "#c8622a", "#ffffff", 1.5, 4.8, 3.75, S7_RETRO);
-      const cz = 3.5 + b.sb / 2 + 0.6; rbox(m, 10, 0.6, 4.5, 0xf6f2ea, 0, 4.6, cz, 0.2); rbox(m, 10.1, 0.35, 4.6, S7.orange, 0, 4.7, cz, 0.12);
-      for (const s of [-1, 1]) { cyl(m, 0.2, 0.2, 4.6, 0xeeeeee, s * 4, 0, cz, 10); rbox(m, 4, 0.3, 1.2, 0xd8d4cc, s * 1.8, 0, cz, 0.1);
-        for (const k of [-1, 1]) { rbox(m, 0.8, 1.7, 0.6, k > 0 ? 0xc8322a : S7.mustard, s * 1.8 + k * 1.1, 0.3, cz, 0.15); ball(m, 0.3, wm(0xffffff, { emissive: 0xffffff, emissiveIntensity: 0.3 }), s * 1.8 + k * 1.1, 2.3, cz); } }
-      cyl(m, 0.25, 0.3, 9, 0x9a9a9a, 6.5, 0, cz + 1, 10);
-      put(m, new THREE.CylinderGeometry(1.9, 1.9, 0.4, 36).rotateX(Math.PI / 2), S7.orange, 6.5, 10.2, cz + 1); sign(m, "GAS", 2.4, 1.1, "none", "#ffffff", 6.5, 10.2, cz + 1.25, S7_RETRO);
-      return 11;
-    },
-    army(m) {  // the Strand picture house: marquee with chasing bulbs + vertical blade sign
-      const h = store(m, { w: 14, d: 11, h: 10, brick: "#9b4a2a", trim: S7.cream, fw: 6, door: 0x8a1a1a });
-      rbox(m, 11, 1.8, 2.8, S7.cream, 0, 4.2, 6.6, 0.2); sign(m, "NOW SHOWING · AI ARMY", 10, 1.2, "#fff6d0", "#8a1a1a", 0, 5.1, 8.05, S7_RETRO);
-      const A = blinkPair(); bulbs(m, 18, -5.3, 5.3, 6.15, 8.05, A); bulbs(m, 18, -5.3, 5.3, 4.05, 8.05, A);
-      rbox(m, 0.6, 7, 2.4, 0xc8322a, 0, 6.5, 6.4, 0.2);
-      for (const s of [-1, 1]) { const t = sign(m, "STRAND", 6.4, 1.8, "none", "#ffe9a0", s * 0.32, 10, 6.4, { ...S7_RETRO, glow: "#ffcc60" }); t.rotation.set(0, s * Math.PI / 2, Math.PI / 2 * s); }
-      return 13.6;
-    },
-    fb(m) {  // AM radio station with a lattice-look red/white mast
-      const h = store(m, { w: 10, d: 8, h: 5.5, brick: "#b5653b", trim: S7.cream, sign: "K-SUN 1050 AM", sbg: "#e1a82f", sfg: "#6b4423", so: S7_RETRO });
-      for (let i = 0; i < 8; i++) cyl(m, 0.42 - i * 0.04, 0.46 - i * 0.04, 3, i % 2 ? 0xffffff : 0xc8322a, 3, h + i * 3, -2, 6);
-      const bl = dyn(ball(m, 0.4, new THREE.MeshStandardMaterial({ color: 0xff3b3b, emissive: 0xff0000, emissiveIntensity: 1 }), 3, h + 24.4, -2)); anim.push((dt, t) => bl.visible = Math.sin(t * 4) > 0);
-      return h + 25;
-    },
-    showroom(m, b) {  // used-car lot: glass showroom, pennant strings, rows of cars out front
-      b.noFore = true;
-      rbox(m, 20, 0.12, b.sb + 11, wm(0xffffff, { map: noiseTex(0x6a6662, 0.07, 3) }), 0, 0.02, b.sb / 2, 0.04);
-      rbox(m, 12, 5, 7, GLASS(), -3, 0, -1.5, 0.2); rbox(m, 12.6, 0.9, 7.6, S7.mustard, -3, 4.9, -1.5, 0.2);
-      sign(m, b.short === "SHC" ? "SIDE HUSTLE MOTORS" : "BIG DEAL USED CARS", 11, 1.4, "#e1a82f", "#8a1a1a", -3, 6.8, 2.1, S7_RETRO);
-      const C = [S7.mustard, S7.orange, S7.avocado, 0xeadfc8, S7.brown, 0x8ab4c8, S7.rust, 0x2e5a3a];
-      for (let i = 0; i < 6; i++) wagon(m, -7.5 + i * 3, 5.2 + (i % 2) * 0.3, Math.PI, C[i]); for (let i = 0; i < 3; i++) wagon(m, 5 + i * 3, -0.5, 0, C[i + 5]);
-      const pen = []; for (const [x0, x1] of [[-9.5, 9.5]]) for (let i = 0; i <= 24; i++) { const f = i / 24; pen.push([x0 + (x1 - x0) * f, 4.6 - 1.1 * 4 * f * (1 - f), 9]); }
-      for (const s of [-9.5, 9.5]) cyl(m, 0.1, 0.1, 4.8, 0xdddddd, s, 0, 9, 8);
-      pen.forEach(([x, y, z], i) => { if (i % 2) put(m, new THREE.ConeGeometry(0.28, 0.7, 3), [0xc8322a, 0xffffff, 0x2b4c9b, S7.mustard][i % 4], x, y - 0.4, z).rotation.x = Math.PI; });
-      return 8.5;
-    },
-    whdig: (m, b) => s7Shed(m, b, "FREIGHT DEPOT", "#6b4423", "#f1e3c4"),
-    whpod: (m, b) => s7Shed(m, b, "THE DAILY GAZETTE", "#f1e3c4", "#1a1a1a", true),
-    rose(m, b) {
-      b.noFore = true; const t = s7House(m, 1); yard(m, 3.75, b.sb, t.dx, { fence: 0x8a6a4a, box: S7.orange });
-      sign(m, "ROSE", 1.4, 0.5, "#f1e3c4", "#c8622a", 4.2, 2.3, 3.95, S7_FONT); return 7;
-    },
-    _: (m, b) => store(m, { w: b.w, d: b.d, h: 6, brick: "#a0522d", trim: S7.cream, sign: b.short, sbg: "#f1e3c4", sfg: "#6b4423", so: S7_FONT }),
-  },
-  decor() {
-    lineRoad(1, { make: s7House, yard: { fence: 0x8a6a4a }, step: 17, s0: 14 });
-    lineRoad(3, { make: s7House, yard: { fence: 0x8a6a4a }, step: 17, s0: 14 });
-    lineRoad(4, { make: s7House, yard: { fence: 0x8a6a4a }, s0: 50, step: 18 });
-    lineRoad(0, { make: s7Shop, step: 12, sb: 0, d: 8, r: 5.3, s0: 20, s1: 20 });
-    lineRoad(0, { make: s7House, yard: { fence: 0x8a6a4a }, step: 18 });
-    lineRoad(2, { make: s7House, yard: { fence: 0x8a6a4a }, step: 22, s0: 20, sides: [-1] });
-    const spot = (x, z, r, f) => { for (let i = 0; i < 40; i++) { const a = i * 2.4, d = i * 2.2, X = x + Math.cos(a) * d, Z = z + Math.sin(a) * d;
-      if (free(X, Z, r)) { const g = new THREE.Group(); g.position.set(X, 0, Z); WS.dec.add(g); f(g); WS.occ.push({ x: X, z: Z, r }); WS.solids.push({ x: X, z: Z, r: r * 0.7, h: 20 }); return g; } } };
-    spot(-88, -40, 6, g => { for (let i = 0; i < 4; i++) { const a = i / 4 * 6.283 + 0.785, l = cyl(g, 0.25, 0.3, 16, 0x9a9a9a, Math.cos(a) * 3, 0, Math.sin(a) * 3, 8); l.rotation.set(Math.sin(a) * 0.08, 0, -Math.cos(a) * 0.08); }
-      cyl(g, 4.5, 4.5, 5, 0xd8d4cc, 0, 16, 0, 32); put(g, new THREE.ConeGeometry(4.8, 2.4, 32), 0xb8b4ac, 0, 22.2, 0); ball(g, 0.3, 0x9a9a9a, 0, 23.5, 0);
-      const t = sign(g, "SUNFLOWER", 7, 1.6, "none", "#a0432a", 0, 18.5, 4.55, S7_RETRO); g.rotation.y = 0.5; });
-    spot(-80, 35, 8, g => { g.rotation.y = Math.PI / 2; rbox(g, 8, 6, 13, 0xf6f2ea, 0, 0, 0, 0.2); groof(g, 13, 8, 3.6, 0x4a3a2a, 6, 0, 0, 0.5).rotation.y = Math.PI / 2;
-      rbox(g, 3, 9, 3, 0xf6f2ea, 0, 0, 6.5, 0.15); put(g, new THREE.ConeGeometry(2, 7, 4).rotateY(Math.PI / 4), 0x4a3a2a, 0, 12.5, 6.5); rbox(g, 1.4, 2.6, 0.2, 0x7a2a1a, 0, 0, 8.05, 0.08);
-      for (const s of [-1, 1]) for (let k = 0; k < 3; k++) win(g, s * 4.05, 1.6, -3 + k * 3, 1, 2.6, 0xffffff); });
-    spot(30, -90, 7, g => { rbox(g, 14, 4, 6, S7.mustard, 0, 0, 0, 0.2); hroof(g, 14, 6, 2.2, S7.brown, 4); rbox(g, 18, 0.5, 9, 0xb8b0a0, 0, 0, 0.5, 0.1);
-      sign(g, "SUNFLOWER", 6, 0.9, "#f1e3c4", "#6b4423", 0, 3.4, 3.1, S7_FONT); wrow(g, 12, 3, 4, 1.2, 1.1, 1.6, S7.brown); });
-    const R2 = WS.R[2], L = lotAt(R2, Math.round(R2.n * 0.42), 1, 30, 4);
-    { const g = new THREE.Group(); g.position.set(L.x, 0, L.z); g.rotation.y = Math.atan2(L.face[0], L.face[1]); WS.dec.add(g);
-      rbox(g, 34, 0.1, 30, wm(0xffffff, { map: noiseTex(0x7a7068, 0.08, 3) }), 0, 0.03, 0, 0.04);
-      for (const s of [-1, 1]) cyl(g, 0.4, 0.4, 12, 0x6b5a4a, s * 9, 0, -13, 8);
-      rbox(g, 20, 10, 0.6, 0x6b5a4a, 0, 3, -13.4, 0.1); const scr = put(g, new THREE.PlaneGeometry(18.6, 8.6), wm(0xfff6e0, { emissive: 0xfff0d0, emissiveIntensity: 0.25 }), 0, 8, -13.0); scr.castShadow = false;
-      sign(g, "STARLITE DRIVE-IN", 9, 1.3, "#c8622a", "#fff6d0", 0, 14, -13.0, { ...S7_RETRO, glow: "#ffb040" });
-      const C = WLD.style.carCols; for (let r = 0; r < 3; r++) for (let k = 0; k < 6; k++) if ((r * 6 + k) % 4) wagon(g, -10 + k * 4, -4 + r * 6, Math.PI, C[(r * 6 + k) % C.length]);
-      rbox(g, 4, 3, 3, S7.cream, 0, 0, 12, 0.2); sign(g, "SNACKS", 3, 0.7, "#c8322a", "#ffffff", 0, 3.6, 13.6, S7_RETRO);
-      WS.occ.push({ x: L.x, z: L.z, r: 20 }); WS.solids.push({ x: L.x, z: L.z, r: 14, h: 14 }); }
-    spot(-112, 14, 4, g => { g.rotation.y = Math.PI / 2; for (const s of [-1, 1]) cyl(g, 0.2, 0.2, 5, S7.brown, s * 3, 0, 0, 8);
-      sign(g, "WELCOME TO SUNFLOWER · POP. 1975", 9, 2.6, "#e1a82f", "#6b4423", 0, 5.6, 0.2, S7_FONT); });
-    filmGrain(true);
-  },
-};
-function gold7() { return wm(0xd4af37, { metalness: 0.8, roughness: 0.3 }); }
-function s7Shed(m, b, label, bg, fg, press) {  // brick freight shed with loading dock (or the newspaper press hall)
-  const w = b.w, d = b.d, h = press ? 7.5 : 6;
-  rbox(m, w, h, d, brick(press ? "#9b4a2a" : "#8a5a3a"), 0, 0, 0, 0.3);
-  if (press) { rbox(m, w + 0.4, 0.6, d + 0.4, S7.cream, 0, h - 0.3, 0, 0.2); wrow(m, w * 0.8, d / 2, 5, 3.6, 1.1, 2.4, S7.cream); for (let i = 0; i < 2; i++) cyl(m, 0.5, 0.6, 5, 0x6b5a4a, -4 + i * 2, h, -2, 12); }
-  else { groof(m, w, d, 2.4, 0x6a6a6a, h); for (const s of [-1, 1]) rbox(m, 3.4, 4.2, 0.3, 0x7a5a3a, s * 3.6, 0, d / 2 + 0.05, 0.1); rbox(m, w * 0.85, 1.1, 2, 0x9a948a, 0, 0, d / 2 + 1, 0.12); }
-  sign(m, label, Math.min(w * 0.75, 11), 1.3, bg, fg, 0, h + (press ? 1.2 : -1.1), d / 2 + (press ? -0.4 : 0.25), S7_FONT);
-  return h + (press ? 5 : 2.6);
-}
 function filmGrain(on) {  // warm film grain over the canvas (1970s only)
   let el = document.getElementById("grain");
   if (!on) { el?.remove(); return; }
@@ -2546,16 +2039,121 @@ function filmGrain(on) {  // warm film grain over the canvas (1970s only)
   document.body.append(el);
 }
 
+const BZ = { pink: 0xff3fa4, hot: 0xff1f8e, lilac: 0xb06cff, purple: 0x6a2fc8, teal: 0x2fd3ff, gold: 0xffc93a, white: 0xffffff, blush: 0xffd1ec, black: 0x1a1020 };
+const BZ_FONT = { font: "italic 900", fam: "'Arial Black', Sora, Arial, sans-serif" };
+const BZ_CAR = { w: 2.0, h: 0.72, l: 4.3, r: 0.36, ch: 0.5, cl: 1.9, cr: 0.24, chrome: true };
+function bzHeart(p, s, c, x, y, z) {  // puffy 3D heart
+  const h = new THREE.Shape(); h.moveTo(0, -1); h.bezierCurveTo(-1.6, 0.1, -1.1, 1.5, 0, 0.75); h.bezierCurveTo(1.1, 1.5, 1.6, 0.1, 0, -1);
+  const geo = new THREE.ExtrudeGeometry(h, { depth: 0.5, bevelEnabled: true, bevelThickness: 0.25, bevelSize: 0.22, bevelSegments: 4 }); geo.translate(0, 0, -0.25); geo.scale(s, s, s);
+  return put(p, geo, wm(c, { roughness: 0.25, metalness: 0.2, emissive: c, emissiveIntensity: 0.25 }), x, y, z);
+}
+function bzStar(p, s, c, x, y, z) {
+  const st = new THREE.Shape(); for (let i = 0; i < 10; i++) { const r = i % 2 ? 0.45 : 1, a = i / 10 * Math.PI * 2 + Math.PI / 2; i ? st.lineTo(Math.cos(a) * r, Math.sin(a) * r) : st.moveTo(Math.cos(a) * r, Math.sin(a) * r); }
+  const geo = new THREE.ExtrudeGeometry(st, { depth: 0.3, bevelEnabled: true, bevelThickness: 0.12, bevelSize: 0.1, bevelSegments: 2 }); geo.translate(0, 0, -0.15); geo.scale(s, s, s);
+  return put(p, geo, wm(c, { roughness: 0.2, metalness: 0.5, emissive: c, emissiveIntensity: 0.35 }), x, y, z);
+}
+function bzBoutique(m, b, i, o = {}) {  // glam boutique: pastel walls, striped awning, script sign, a heart or star on the roof
+  const walls = [BZ.blush, 0xe9d4ff, 0xc9f4ff, 0xfff0b3, 0xffc2e2, 0xd9ffe6], aw = [BZ.pink, BZ.lilac, BZ.teal, BZ.gold, BZ.hot, BZ.purple];
+  const w = Math.min(b.w, 13), d = Math.min(b.d, 9.5), h = o.h ?? 6.5 + (i % 3) * 1.5;
+  const top = store(m, { w, d, h, wall: walls[i % walls.length], trim: BZ.white, awn: aw[i % aw.length], door: aw[(i + 2) % aw.length], r: 0.6,
+    sign: o.sign ?? b.short, sbg: "#ffffff", sfg: css(aw[i % aw.length]), so: { ...BZ_FONT, bd: css(aw[(i + 1) % aw.length]) }, base: 0xffffff });
+  (i % 2 ? bzStar : bzHeart)(m, 1.3, aw[(i + 1) % aw.length], 0, top + 1.6, 0); return top + 3;
+}
+function bzHouse(g, i) {  // pastel dream house with a pink convertible in the drive
+  const r = (i * 7919 + 17) % 97, x = 2.2, w = 9;
+  house(g, { w, d: 7.5, st: r % 3 ? 2 : 1, x, wall: [0xffd1ec, 0xe9d4ff, 0xc9f4ff, 0xffffff, 0xfff0b3][r % 5], roof: [BZ.pink, BZ.purple, BZ.hot, BZ.lilac][r % 4], r: 0.5, rh: 3.2,
+    door: [BZ.pink, BZ.teal, BZ.gold, BZ.purple][r % 4], sh: [BZ.white, BZ.pink, BZ.lilac][r % 3], porch: r % 2 === 0, chimC: 0xffffff, dx: x + w * 0.2, trim: BZ.white, base: 0xffffff });
+  if (r % 2) car(g, x - w / 2 - 2.4, 3.2, 0, [BZ.pink, BZ.lilac, BZ.white, BZ.teal][r % 4], BZ_CAR);
+  return { dx: x + w * 0.2 };
+}
+WORLDS.bratz = {
+  sky: { top: 0xa86bff, hor: 0xffc2ea, low: 0xffd8f0, fog: 0.0016, hemi: [0xfff0fa, 0xc06bd0, 1.25], sun: [0xfff2f8, 2.7], sunPos: [80, 160, 110], grass: 0x8fe08a, hill: 0x5fc86e, exp: 1.06,
+    filter: "saturate(1.22) contrast(1.03)" },
+  style: { asphalt: 0x4a2a62, walk: 0xffd6ee, dash: 0xff3fa4, kerb: 0xffffff, leaves: [0xff8fd0, 0xffb3e0, 0x7ee07a, 0x4fd06a, 0xffd1ec], hillLeaves: [0x4fd06a, 0x3fb85a, 0xff9fd6],
+    skin: [0xffd9b8, 0xf1c27d, 0x8d5524, 0xffe0bd, 0xc68642], shirts: [BZ.pink, BZ.lilac, BZ.teal, BZ.gold, BZ.black, BZ.white, BZ.hot, BZ.purple], pants: [0x111111, 0x3a2a8a, 0xffffff, BZ.pink, BZ.purple],
+    carCols: [BZ.pink, BZ.lilac, BZ.teal, BZ.gold, BZ.white, BZ.black, BZ.hot], car: BZ_CAR, lamp: "lolly", cloudGlow: 0xffc2ea },
+  roads: [
+    { pts: [[-150, -6], [-100, -12], [-50, -3], [0, 6], [50, -1], [100, -12], [150, -6]], w: 12, sw: 3.2, cars: 12, lamps: true },  // 0 Runway Boulevard
+    { pts: [[0, 6], [-3, -30], [4, -62], [0, -96], [3, -150]], w: 9, sw: 2.6, cars: 4, lamps: true },                                // 1 Glitter Lane (north)
+    { pts: [[-42, -3], [-46, 30], [-32, 58], [-42, 84]], w: 8, sw: 2.4, cars: 3, bulb: true, lamps: true },                            // 2 Dream House Close (south)
+    { pts: [[62, -2], [68, 34], [86, 62], [98, 96], [104, 150]], w: 8, sw: 2.2, cars: 3, lamps: true },                                // 3 Diamond Drive (south-east)
+    { pts: [[-72, -7], [-82, -45], [-64, -80], [-78, -150]], w: 8, sw: 2.2, cars: 3, lamps: true }],                                   // 4 Lipgloss Lane (north-west)
+  lots: { library: [0, 0, 40, 14], coida: [0, -24, 30], ufiling: [0, 25, 30], billing: [0, -26, -30], deadlines: [0, 27, -30], payroll: [0, -52, -30], mail: [0, 52, -30],
+    nappi: [1, -12, -48], docs: [1, 14, -52], web: [4, -90, -55], staffroom: [3, 80, 48] },
+  spare: [[2, -60, 30, 0], [3, 50, 30, 0], [4, -55, -100, 0]],
+  size: { library: [26, 16], coida: [13, 9.5], ufiling: [12, 9], billing: [11, 9], deadlines: [11, 9], payroll: [11, 9], mail: [11, 9], nappi: [11, 10], docs: [14, 10], web: [11, 11], staffroom: [11, 9] },
+  vault: { lot: [1, 16, -100, 3], d: 24, r: 13, tag: 30, model(g) {  // the giant perfume bottle = Fees vault
+    cyl(g, 11, 12, 1.2, BZ.white, 0, 0, 0, 48); cyl(g, 9.5, 10.5, 0.8, BZ.pink, 0, 1.2, 0, 48);
+    lathe(g, [[0, 0], [6.4, 0], [7.2, 1.2], [7.4, 7], [6.6, 11], [3.2, 13.2], [2.2, 13.6], [0, 13.6]], wm(0xff7ac8, { roughness: 0.08, metalness: 0.25, envMapIntensity: 1.8, emissive: 0xff3fa4, emissiveIntensity: 0.18 }), 0, 2, 0, undefined, 48);
+    cyl(g, 2.3, 2.3, 2.2, wm(BZ.gold, { metalness: 0.9, roughness: 0.2 }), 0, 15.4, 0, 32); ball(g, 2.4, wm(BZ.gold, { metalness: 0.9, roughness: 0.2 }), 0, 19.6, 0);
+    const tube = cyl(g, 0.35, 0.35, 4, BZ.gold, 3.2, 17, 0, 12); tube.rotation.z = -1.1; ball(g, 1.1, BZ.pink, 5.5, 17.2, 0);
+    bzHeart(g, 2.2, BZ.white, 0, 9, 7.6); sign(g, "FEES", 6, 1.5, "#ffffff", "#ff1f8e", 0, 3.6, 7.9, { ...BZ_FONT, bd: "#ffc93a" });
+  } },
+  models: {
+    library(m, b) {  // the Fashion Mall on its plaza: pink arcade, glass atrium, glitter dome, a giant heart on the roof
+      b.noFore = true;
+      rbox(m, 24, 9, 12, BZ.pink, 0, 0, -2, 1.2); rbox(m, 24.6, 0.8, 12.6, BZ.white, 0, 8.6, -2, 0.35); rbox(m, 24.4, 0.6, 12.4, BZ.gold, 0, 0, -2, 0.2);
+      put(m, new THREE.CylinderGeometry(5.4, 5.4, 8, 32, 1, false, -Math.PI / 2, Math.PI), wm(0xd6c2ff, { roughness: 0.05, metalness: 0.4, envMapIntensity: 1.6 }), 0, 4.4, 4);
+      for (let i = 0; i < 7; i++) { const a = -Math.PI / 2 + i / 6 * Math.PI; cyl(m, 0.14, 0.14, 8, BZ.white, Math.sin(a) * 5.45, 0.4, 4 + Math.cos(a) * 5.45, 8); }
+      for (const s of [-1, 1]) { for (const y of [1.6, 5]) win(m, s * 8.6, y, 4.05, 1.6, 2, BZ.white, BZ.lilac); awning(m, 6, s * 8.6, 4.6, 4.2, BZ.lilac); }
+      dome(m, 6, wm(BZ.lilac, { roughness: 0.15, metalness: 0.5, emissive: BZ.purple, emissiveIntensity: 0.2 }), 0, 9.3, -2); bzHeart(m, 3.2, BZ.hot, 0, 18.5, -2);
+      sign(m, "FASHION MALL", 13, 1.9, "#ffffff", "#ff1f8e", 0, 10.6, 4.6, { ...BZ_FONT, bd: "#b06cff", glow: "#ff8fd0" });
+      rbox(m, 26, 0.16, b.sb, wm(0xffffff, { map: chk(13, Math.max(2, Math.round(b.sb / 2))) }), 0, 0.02, 6.5 + b.sb / 2, 0.06);  // runway plaza
+      cyl(m, 2.6, 3, 0.8, BZ.white, 0, 0, 6.5 + b.sb / 2, 32); bzStar(m, 1.6, BZ.gold, 0, 3, 6.5 + b.sb / 2); return 22;
+    },
+    nappi(m, b) {  // beauty spa: glass dome with a lipstick tower
+      rbox(m, b.w, 4, b.d, BZ.blush, 0, 0, 0, 0.8); dome(m, Math.min(b.w, b.d) / 2 - 0.3, wm(0xffb3e0, { roughness: 0.05, metalness: 0.3, envMapIntensity: 1.6 }), 0, 4, 0);
+      cyl(m, 1, 1, 4, wm(BZ.gold, { metalness: 0.9, roughness: 0.2 }), b.w / 2 - 1.2, 0, -b.d / 2 + 1.2, 20); lathe(m, [[0.9, 0], [0.9, 2.2], [0.4, 3.2], [0, 3.3]], BZ.hot, b.w / 2 - 1.2, 4, -b.d / 2 + 1.2);
+      sign(m, b.short, 6, 1.3, "#ffffff", "#ff1f8e", 0, 2.4, b.d / 2 + 0.25, { ...BZ_FONT, bd: "#b06cff" }); return 9.5;
+    },
+    web(m, b) {  // glam magazine tower with a cover billboard
+      rbox(m, b.w, 22, b.d, BZ.black, 0, 0, 0, 0.6);
+      for (let y = 2; y < 21; y += 3) rbox(m, b.w + 0.2, 0.35, b.d + 0.2, y % 2 ? BZ.pink : BZ.lilac, 0, y, 0, 0.15);
+      wrow(m, b.w * 0.8, b.d / 2, 3, 3, 1.4, 1.8, BZ.pink); wrow(m, b.w * 0.8, b.d / 2, 3, 9, 1.4, 1.8, BZ.pink); wrow(m, b.w * 0.8, b.d / 2, 3, 15, 1.4, 1.8, BZ.pink);
+      sign(m, "GLAM MAG", b.w * 0.9, 2, "#ff1f8e", "#ffffff", 0, 23.4, 0.2, { ...BZ_FONT, glow: "#ffffff" }); bzStar(m, 1.6, BZ.gold, 0, 26, 0); return 28;
+    },
+    docs(m, b) {  // wardrobe warehouse: wide shed, pink roller doors, hanger sign
+      rbox(m, b.w, 6, b.d, 0xe9d4ff, 0, 0, 0, 1.4); rbox(m, b.w + 0.2, 0.7, b.d + 0.2, BZ.pink, 0, 5.4, 0, 0.3);
+      for (const s of [-1, 1]) rbox(m, 3.4, 4, 0.4, BZ.pink, s * 3.4, 0, b.d / 2 + 0.05, 0.3);
+      sign(m, "WARDROBE · " + b.short, Math.min(12, b.w * 0.9), 1.4, "#ffffff", "#6a2fc8", 0, 7.2, b.d / 2 - 0.2, { ...BZ_FONT, bd: "#ff3fa4" }); return 9;
+    },
+    staffroom(m, b) { const t = bzHouse(m, 5); yard(m, 3.75, b.sb, t.dx, { fence: 0xffffff, box: BZ.pink }); sign(m, "SALON", 3.6, 0.9, "#ff3fa4", "#ffffff", 2.2 + 2, 2.7, 3.95, BZ_FONT); return 11; },
+    _: (m, b) => bzBoutique(m, b, M.B.indexOf(b)),
+  },
+  decor() {
+    lineRoad(2, { make: bzHouse, yard: { fence: 0xffffff, box: BZ.pink }, step: 14 });
+    lineRoad(3, { make: bzHouse, yard: { fence: 0xffffff, box: BZ.lilac }, s0: 26, step: 15 });
+    lineRoad(4, { make: bzHouse, yard: { fence: 0xffffff, box: BZ.teal }, s0: 20, step: 15 });
+    const shops = ["BOUTIQUE", "SHOES", "LIPGLOSS", "NAILS", "DENIM", "BAGS", "SUNNIES", "SMOOTHIES", "PERFUME", "GLITTER"];
+    lineRoad(0, { make: (g, i) => (bzBoutique(g, { w: 10, d: 8, short: shops[i % shops.length] }, i + 3, { h: 6 + (i % 3) }), { dx: 0 }), step: 15, sb: 0, d: 8, r: 6, s0: 6 });
+    lineRoad(1, { make: (g, i) => (bzBoutique(g, { w: 9, d: 8, short: shops[(i + 4) % shops.length] }, i + 1, { h: 6 }), { dx: 0 }), step: 15, sb: 0, d: 8, r: 5.6, s0: 70 });
+    world3DText("GLAM", { size: 13, depth: 3, color: BZ.pink }, (m, i) => { const x = -30 + i * 20, z = -132; m.position.set(x, hgt(x, z) + 1, z); });
+  },
+};
+
+let PB = null;
+const PBF = (dt, t) => { if (PB && PB.parent) PB.children.forEach((p, i) => { p.rotation.y += dt * 1.6; p.position.y = p.userData.y + Math.sin(t * 2 + i) * 0.5; }); };
+function plumbobs(on) {
+  if (PB && PB.parent) PB.parent.remove(PB); PB = null;
+  if (!on) return;
+  PB = new THREE.Group();
+  const mat = new THREE.MeshStandardMaterial({ color: 0x3fe04a, emissive: 0x22c03a, emissiveIntensity: 0.9, roughness: 0.25, metalness: 0.1, transparent: true, opacity: 0.92 });
+  const geo = new THREE.OctahedronGeometry(3, 0); geo.scale(0.75, 1.6, 0.75);
+  Object.values(groups).forEach(g => { if (!g.userData || g.userData.top == null) return;
+    const p = new THREE.Mesh(geo, mat); p.userData.y = g.userData.top + 7; p.position.set(g.position.x, p.userData.y, g.position.z); PB.add(p); });
+  scene.add(PB); if (!anim.includes(PBF)) anim.push(PBF);
+}
+
 function themePicker() {
   const el = $("#skins");
   el.innerHTML = `<h4>🎨 City look</h4><p>Rebuilds the whole city as a different town: new streets, new buildings, same live numbers. Saved on this device.</p>
     <div class="g">${THEMES.map(k => `<button class="sk${k.id === THEME ? " on" : ""}" data-th="${k.id}"><div class="sw" style="background:linear-gradient(120deg,${k.swatch.join(",")})"></div>
       <span class="nm">${esc(k.name)}</span></button>`).join("")}</div>`;
-  el.querySelectorAll("[data-th]").forEach(b => b.onclick = () => { THEME = b.dataset.th; set("city-theme", THEME); el.hidden = true; reload(); });
+  el.querySelectorAll("[data-th]").forEach(b => b.onclick = () => { THEME = b.dataset.th; set("consult-theme", THEME); el.hidden = true; reload(); });
   if (THEME !== "neon") return;  // colour skins (owner wants them back, 2026-10-08) re-tint the classic neon city
   el.insertAdjacentHTML("beforeend", `<h4>🌈 Colour skins</h4><div class="g">${SKINS.map(k => `<button class="sk${k.id === SKIN.id ? " on" : ""}" data-sk="${k.id}"><div class="sw" style="background:linear-gradient(120deg,${k.swatch.join(",")})"></div>
       <span class="nm">${esc(k.name)}</span></button>`).join("")}</div>`);
-  el.querySelectorAll("[data-sk]").forEach(b => b.onclick = () => { set("city-skin", b.dataset.sk); applySkin(b.dataset.sk); });
+  el.querySelectorAll("[data-sk]").forEach(b => b.onclick = () => { set("consult-skin", b.dataset.sk); applySkin(b.dataset.sk); themePicker(); });
 }
 
 const SKINS = [
@@ -2565,6 +2163,9 @@ const SKINS = [
   { id: "boho", name: "Terracotta Boho", price: 0, swatch: ["#c2603e", "#e9c9a8", "#8f9a6a"],
     bg: 0xe8c4a0, fog: 0xe6be98, fogD: 0.0015, hemi: [0xfff1dc, 0x8a4a2a, 1.45], sun: [0xffd9a8, 1.8], bloom: 0.12, exposure: 1.0,
     tint: { hue: 0.04, hue2: 0.2, hueMix: 0.7, sat: 0.7, light: 1.02 }, ground: { asphalt: 0x7a4a35, grass: 0x8f9a6a }, weather: { kind: "none" } },
+  { id: "sims", name: "The Sims", price: 0, swatch: ["#3fd04a", "#8fd3ff", "#ffffff"], plumbob: true,
+    bg: 0x8fd3ff, fog: 0xbfe6ff, fogD: 0.0014, hemi: [0xffffff, 0x6fbf5a, 1.55], sun: [0xfff6e0, 1.9], bloom: 0.15, exposure: 1.05,
+    tint: { hue: 0.33, hue2: 0.58, hueMix: 0.45, sat: 1.05, light: 1.12 }, ground: { asphalt: 0x6b6f78, grass: 0x6fcf4a }, weather: { kind: "none" } },
 ];
 const OWNED = window.CITY_SKINS_OWNED || null;  // kit buyers: list of unlocked skin ids (null = all, as in our own city and the demo preview)
 let SKIN = SKINS.find(k => k.id === get("consult-skin")) || SKINS[0];
@@ -2579,7 +2180,7 @@ function tintColor(c, t) {
   return c;
 }
 function applySkin(id) {
-  SKIN = SKINS.find(k => k.id === id) || SKINS[0];
+  SKIN = SKINS.find(k => k.id === id) || SKINS[0]; plumbobs(!!SKIN.plumbob && !WLD);
   const k = SKIN, base = SKINS[0];
   scene.background = new THREE.Color(k.bg); scene.fog.color.set(k.fog); scene.fog.density = k.fogD;
   renderer.toneMappingExposure = k.exposure; if (bloom) bloom.strength = k.bloom;
@@ -2612,7 +2213,7 @@ function applySkin(id) {
   });
   renderer.domElement.style.filter = k.filter || ""; document.body.dataset.skin = k.id;
   set("consult-skin", SKIN.id);
-  if (!$("#skins").hidden) (DEMO ? skinPicker() : themePicker());
+  if (!$("#skins").hidden) themePicker();
 }
 function skinPicker() {
   const el = $("#skins"), own = id => !OWNED || OWNED.includes(id) || id === "neon";
@@ -2622,7 +2223,7 @@ function skinPicker() {
   el.querySelectorAll("[data-sk]").forEach(b => b.onclick = () => own(b.dataset.sk) ? applySkin(b.dataset.sk)
     : window.CITY_SKIN_SHOP ? window.open(window.CITY_SKIN_SHOP, "_blank") : alert("This skin is $1 on the Side Hustle City page (link in your order email). Then add its id to skins.js."));
 }
-$("#skinbtn").onclick = () => { const el = $("#skins"); el.hidden = !el.hidden; if (!el.hidden) (DEMO ? skinPicker() : themePicker()); };
+$("#skinbtn").onclick = () => { const el = $("#skins"); el.hidden = !el.hidden; if (!el.hidden) themePicker(); };
 async function reload() {
   try { D = await decrypt(PW); } catch (e) { return; }
   await services();
