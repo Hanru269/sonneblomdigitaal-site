@@ -282,3 +282,14 @@ body[data-skin="seventies"]::after{content:"";position:fixed;inset:0;pointer-eve
   text-shadow:0 0 10px var(--c);box-shadow:0 0 18px color-mix(in srgb,var(--c) 40%,transparent);opacity:.8;transition:opacity .4s,transform .4s}
 .dtag.here{opacity:1;background:rgba(10,5,30,.85);transform:scale(1.08)}
 .chip.dchip{background:rgba(10,5,30,.7)}
+/* building chat (owner 2026-10-08) */
+.bchat{margin:4px 0 14px;border:1px solid var(--c,#b388ff);border-radius:12px;background:rgba(10,5,30,.6);padding:10px}
+.bchat .lt{font:800 12px Sora;letter-spacing:.5px;color:var(--c,#b388ff);margin-bottom:6px}
+.bchat .blog{max-height:220px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;margin-bottom:8px}
+.bchat .bm{padding:7px 10px;border-radius:10px;font:500 13px/1.4 Inter;white-space:pre-wrap;word-break:break-word}
+.bchat .bm.me{align-self:flex-end;background:#3b2a7a;color:#fff;max-width:85%}
+.bchat .bm.ai{align-self:flex-start;background:rgba(255,255,255,.07);color:#e9e2ff;max-width:95%}
+.bchat .bm.sys{color:#a99cd6;font-size:12px}
+.bchat form{display:flex;gap:6px}.bchat textarea{flex:1;resize:none;background:#140a33;color:#fff;border:1px solid #3a2f66;border-radius:10px;padding:8px;font:500 14px Inter}
+.bchat form button,.bchat .blogin{background:var(--c,#b388ff);color:#0a0420;border:0;border-radius:10px;padding:0 14px;font:800 13px Sora;cursor:pointer}
+.bchat .blogin{padding:8px 12px}

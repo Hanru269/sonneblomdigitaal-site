@@ -1850,8 +1850,8 @@ function focus(id) {
   const sheet = $("#sheet"); sheet.style.setProperty("--c", id === "vault" ? "#ffd166" : hex(b.color));
   const nd = !DEMO && M.need ? M.need(id) : [];
   $("#sheetbody").innerHTML = (nd.length ? `<div class="needs"><b><i class="blip"></i>NEEDS YOU</b>${nd.map(x => `<div>${esc(x)}</div>`).join("")}</div>` : "") +
-    (id === "vault" ? vaultSheet() : b.sheet()) + staffHTML(id) + actionsHTML(id) + linksHTML(id);
-  sheet.hidden = false; sheet.scrollTop = 0;
+    bchatHTML(id) + (id === "vault" ? vaultSheet() : b.sheet()) + staffHTML(id) + actionsHTML(id) + linksHTML(id);
+  sheet.hidden = false; sheet.scrollTop = 0; bchatInit(id);
 }
 
 function fly(target, pos) {
@@ -1993,6 +1993,47 @@ async function attach(req) {
     if (st && st.busy && st.run === tRun) { aiEl.remove(); document.querySelectorAll("#tlog .cursor").forEach(c => c.remove()); return attach(api(`/stream?from=0`)); }
     setBusy(false); if (!txt) tAdd("sys", "Connection lost. Reopen the Library to see the reply.");
   }
+}
+
+// ---------- Building chat (owner 2026-10-08): talk to Claude from inside a building's panel ----------
+// Same Library session as the big chat (one Claude, one memory). Messages go out as "[In <building>] ..." so Claude knows where
+// you are, and each building only shows its own conversation (filtered from the Library history).
+const bTag = id => `[In ${id === "vault" ? "The Vault" : (M.B.find(b => b.id === id) || {}).name || id}]`;
+const bchatHTML = id => DEMO || GUEST ? "" : `<div class="bchat" data-b="${esc(id)}"><div class="lt">💬 Talk about this building</div><div class="blog"></div>
+  <form class="bform"><textarea rows="1" placeholder="Message Claude about ${esc(bTag(id).slice(4, -1))}…"></textarea><button>Send</button></form></div>`;
+function bAdd(log, cls, text) { const d = document.createElement("div"); d.className = "bm " + cls; d.textContent = text; log.append(d); log.scrollTop = 1e9; return d; }
+async function bchatInit(id) {
+  const box = document.querySelector(`.bchat[data-b="${CSS.escape(id)}"]`); if (!box) return;
+  const log = box.querySelector(".blog"), form = box.querySelector("form"), ta = form.querySelector("textarea"), tag = bTag(id);
+  if (!get(LKEY)) { log.innerHTML = `<button class="blogin">🔑 Unlock the Library to chat here</button>`; log.querySelector("button").onclick = () => libraryLogin(); form.hidden = true; return; }
+  try {
+    const h = await (await api("/history")).json(); let mine = false;
+    h.rows.forEach(r => { if (r.role === "owner") { mine = r.text.startsWith(tag); if (mine) bAdd(log, "me", r.text.slice(tag.length).trim()); } else if (mine && r.role === "claude") bAdd(log, "ai", r.text); });
+    if (!log.childElementCount) bAdd(log, "sys", "Ask or tell Claude anything about this building. The reply lands here.");
+  } catch (e) { bAdd(log, "sys", "Couldn't load the chat."); }
+  ta.oninput = () => { ta.style.height = ""; ta.style.height = Math.min(140, ta.scrollHeight) + "px"; };
+  ta.onkeydown = e => { if (e.key === "Enter" && !e.shiftKey && !MOBILE) { e.preventDefault(); form.requestSubmit(); } };
+  form.onsubmit = async e => {
+    e.preventDefault(); const msg = ta.value.trim(); if (!msg) return;
+    ta.value = ""; ta.style.height = ""; bAdd(log, "me", msg);
+    const ai = bAdd(log, "ai", "…"); let txt = "", buf = "";
+    try {
+      const r = await api("/chat", { method: "POST", body: JSON.stringify({ msg: `${tag} ${msg}` }) });
+      if (!r.ok) { ai.textContent = "Portal error " + r.status; return; }
+      const rd = r.body.getReader(), dec = new TextDecoder();
+      for (;;) {
+        const { value, done } = await rd.read(); if (done) break;
+        buf += dec.decode(value, { stream: true }); let i;
+        while ((i = buf.indexOf("\n")) >= 0) {
+          const line = buf.slice(0, i); buf = buf.slice(i + 1); if (!line.trim()) continue;
+          const ev = JSON.parse(line);
+          if (ev.t === "text") { txt += ev.d; ai.textContent = txt; log.scrollTop = 1e9; }
+          else if (ev.t === "tool" && !txt) ai.textContent = "⚙️ " + ev.d.slice(0, 80);
+          else if (ev.t === "done") { if (!txt) ai.textContent = ev.paused ? "⏸ Paused for a newer message" : "✓ done"; }
+        }
+      }
+    } catch (err) { if (!txt) ai.textContent = "Connection lost: the reply will show here when you reopen the building."; }
+  };
 }
 
 $("#tform").addEventListener("submit", e => {
