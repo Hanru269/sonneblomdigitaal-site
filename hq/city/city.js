@@ -422,6 +422,7 @@ function armyHTML(a) {
       `<div><span>${t.done ? "✅" : t.who === "you" ? "🙋" : "🤖"} ${esc(t.t)}</span><span>${t.cr ? "⚡" + t.cr : ""}</span></div>`).join("")}</div>`; }).join("");
   const costs = (a.costs || []).map(([k, v]) => `<div><span>${esc(k)}</span><span>${esc(v)}</span></div>`).join("");
   return `<h2>AI Influencer Army</h2><div class="sub">${esc(a.headline || "Five AI influencers, one at a time, built in Higgsfield")} · updated ${esc((a.updated || "").slice(0, 16).replace("T", " "))}</div>
+    ${M.s.influencers?.accounts ? `<div class="links"><button class="infopen" onclick="openInf()">📊 Open the influencer overview (followers, views, best posts)</button></div>` : ""}
     <div class="big">${num(cr.left)}<small>Higgsfield credits left · ${esc(cr.plan || "plan ?")}${cr.renews ? " · renews " + esc(cr.renews) : ""}</small></div>
     <div class="grid"><div class="kv"><b>${num(budget)}</b><span>credits budgeted</span></div><div class="kv"><b>${num(spent)}</b><span>credits used</span></div>
       <div class="kv"><b>${A.filter(x => x.status === "live").length}/${A.length}</b><span>avatars live</span></div><div class="kv"><b>${num(cr.monthly)}</b><span>credits / month</span></div></div>
@@ -1442,12 +1443,66 @@ function liveStrip(p) {
   if (DEMO || !st) return (el.hidden = true);
   const v = x => x === null || x === undefined ? "—" : num(x);
   el.hidden = false;
-  el.innerHTML = `<span class="lv">● LIVE</span>` +
+  const inf = M.s.influencers;
+  el.innerHTML = `<span class="lv">● LIVE</span>` + (inf && inf.accounts ? `<button id="infbtn">📊 Influencers <b>${num(inf.followers)}</b>${inf.gained_24h ? ` <em>${inf.gained_24h > 0 ? "+" : ""}${inf.gained_24h}</em>` : ""}</button>` : "") +
     `<button data-id="rose">🌹 Rose users <b>${v(st.rose_users)}</b>${st.rose_new ? ` <em>+${st.rose_new}</em>` : ""}</button>` +
     `<button data-id="showroom">🏙️ SHC visits <b>${v(st.shc_visits)}</b></button>` +
     `<button data-id="etsy" title="from ${esc(st.etsy_src || "")}">🛍️ Etsy visits <b>${v(st.etsy_visits)}</b></button>` +
     `<button data-id="gumroad" title="${st.gumroad_visits === null ? "read from Gumroad via Chrome on Go Bananas (last " + esc(st.gumroad_at || "never") + ")" : ""}">🎨 Gumroad visits <b>${v(st.gumroad_visits)}</b></button>`;
 }
+
+// Credits bubble under the city name (owner 2026-10-08): Higgsfield credits, fal.ai, Claude plan left (collect.py credits()); tap = details
+function creditsBubble(c) {
+  const el = $("#credits");
+  if (DEMO || GUEST || !c) return (el.hidden = true);
+  const h = c.higgsfield || {}, f = c.fal || {}, cl = c.claude || {};
+  const fal = f.error ? "?" : f.usd != null ? "$" + Number(f.usd).toFixed(2) : f.ok ? "✓" : "empty";
+  const pc = v => v == null ? "?" : `<span class="${v < 20 ? "lo" : ""}">${v}%</span>`;
+  const t = s => s ? new Date(s).toLocaleString("en-ZA", { weekday: "short", hour: "2-digit", minute: "2-digit" }) : "?";
+  el.hidden = false;
+  el.innerHTML = el.classList.contains("open")
+    ? `⚡ <b>Higgsfield</b> ${num(h.left)} credits${h.plan ? " · " + esc(h.plan) : ""}${h.renews ? " · renews " + esc(h.renews) : ""} (checked ${esc(h.checked || "?")})<br>` +
+      `🎨 <b>fal.ai</b> ${f.error ? "couldn't check" : f.usd != null ? "$" + Number(f.usd).toFixed(2) + " (" + esc(f.usd_at || "") + ")" : f.ok ? '<span class="ok">has credit</span>' : '<span class="lo">out of credit</span>'}<br>` +
+      `🧠 <b>Claude</b> ${cl.error ? "couldn't check" : `${pc(cl.left_5h)} of 5-hour limit left (resets ${t(cl.reset_5h)}) · ${pc(cl.left_week)} of the week left`}`
+    : `⚡ <b>${num(h.left)}</b> · 🎨 <b>${fal === "empty" ? '<span class="lo">0</span>' : fal}</b> · 🧠 <b>${cl.error ? "?" : pc(cl.left_5h)}</b>`;
+  el.title = "Higgsfield credits · fal.ai · Claude plan left (5-hour)";
+  el.onclick = () => { el.classList.toggle("open"); creditsBubble(c); };
+}
+
+// Influencer overview (owner 2026-10-08): Rose, Granny Mae, Ollie, Mr Nobody side by side (collect.py influencers(), refreshed with Rose's stats)
+const INF_C = { rose: "#ff4f8b", granny: "#ffd166", ollie: "#38bdf8", nobody: "#3dffa8" };
+function infHTML(d) {
+  const A = (d.accounts || []), ok = A.filter(a => !a.error);
+  const sg = v => v == null ? "" : v > 0 ? `<span class="up">+${num(v)}</span>` : v < 0 ? `<span class="dn">${num(v)}</span>` : "±0";
+  const race = (label, key) => { const max = Math.max(1, ...ok.map(a => a[key] || 0));
+    return `<div class="race"><div class="lt">${label}</div>${[...ok].sort((x, y) => (y[key] || 0) - (x[key] || 0)).map(a =>
+      `<div class="r"><span>${a.emoji} ${esc(a.name)}</span><div class="bar"><i style="width:${100 * (a[key] || 0) / max}%;background:${INF_C[a.id] || "#a78bfa"}"></i></div><b>${num(a[key] || 0)}</b></div>`).join("")}</div>`; };
+  const thumb = x => `<a href="${esc(x.url || "#")}" target="_blank" rel="noopener">${x.img ? `<img loading="lazy" src="${esc(x.img)}" alt="">` : `<img alt="">`}<span>▶ ${num(x.views)}</span></a>`;
+  const card = a => `<div class="card" style="--c:${INF_C[a.id] || "#a78bfa"}">
+    <h3><span>${a.emoji} ${esc(a.name)}</span>${a.username ? `<a href="https://www.instagram.com/${esc(a.username)}/" target="_blank" rel="noopener">@${esc(a.username)} ↗</a>` : ""}</h3>
+    ${a.error ? `<div class="none">Not connected: ${esc(a.error)}</div>` : `
+    ${a.stale ? `<span class="st" title="${esc(a.stale)}">⚠ last good numbers, token needs renewing</span>` : ""}
+    <div class="fol">${num(a.followers)}<small>followers · ${sg(a.gained_24h)} 24h · ${sg(a.gained_7d)} 7d</small></div>
+    <div class="kvs"><div><b>${num(a.views)}</b><span>views</span></div><div><b>${num(a.views_24h)}</b><span>views 24h</span></div><div><b>${num(a.reach)}</b><span>reach</span></div>
+      <div><b>${num(a.likes)}</b><span>likes</span></div><div><b>${num(a.comments)}</b><span>comments</span></div><div><b>${num(a.shares)}</b><span>shares</span></div>
+      <div><b>${num(a.saved)}</b><span>saves</span></div><div><b>${num(a.posts)}</b><span>posts · ${num(a.posts_7d)} this wk</span></div>
+      <div><b>${a.eng == null || (a.reach || 0) < 50 ? "–" : a.eng + "%"}</b><span>engagement</span></div></div>
+    ${a.top ? `<div class="lt">Best post</div><a class="top" href="${esc(a.top.url || "#")}" target="_blank" rel="noopener">${a.top.img ? `<img loading="lazy" src="${esc(a.top.img)}" alt="">` : ""}<span>${esc(a.top.text || "(no caption)")}<br><b>▶ ${num(a.top.views)}</b> · ❤ ${num(a.top.likes)} · 💬 ${num(a.top.comments)}</span></a>` : ""}
+    ${(a.recent || []).length ? `<div class="lt">Latest posts</div><div class="thumbs">${a.recent.map(thumb).join("")}</div>` : ""}`}</div>`;
+  return `<div class="wrap"><div class="itop"><h2>📊 AI Influencers</h2><button id="infclose">✕ Close</button></div>
+    <div class="sub">Instagram · updates with Rose's stats every 30 min${M.s.ts ? " · " + ago(M.s.ts) : ""} · engagement = likes+comments+shares+saves ÷ reach</div>
+    <div class="tot"><div><b>${num(d.followers)}</b><span>followers</span></div><div><b>${sg(d.gained_24h) || "±0"}</b><span>followers 24h</span></div>
+      <div><b>${num(d.views)}</b><span>views</span></div><div><b>${num(d.views_24h)}</b><span>views 24h</span></div><div><b>${num(d.likes)}</b><span>likes</span></div><div><b>${num(d.comments)}</b><span>comments</span></div></div>
+    ${race("VIEWS · ALL TIME", "views")}${race("FOLLOWERS", "followers")}
+    <div class="cards">${A.map(card).join("")}</div></div>`;
+}
+function openInf() {
+  const el = $("#inf"), d = M.s.influencers;
+  if (!d || d.error) return;
+  el.innerHTML = infHTML(d); el.hidden = false;
+  $("#infclose").onclick = () => (el.hidden = true);
+}
+window.openInf = openInf;
 
 function hud() {
   const { B, tot, day, roseZar, sales, s } = M;
@@ -1463,6 +1518,7 @@ function hud() {
   $("#chips").innerHTML = list.join("");
   M.need = id => id === "vault" ? att.vault || [] : why(B.find(x => x.id === id) || {});
   liveStrip(s.pulse);
+  creditsBubble(s.credits); if ($("#infbtn")) $("#infbtn").onclick = openInf;
   staffPanel();
   todoNote(s.todo);
   document.querySelectorAll("[data-id]").forEach(x => x.onclick = () => focus(x.dataset.id));
