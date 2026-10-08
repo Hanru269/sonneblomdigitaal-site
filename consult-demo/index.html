@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#ffb3d9">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Consulting City · demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@400;700&family=Caveat:wght@500;700&family=Permanent+Marker&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="city.css?v=25de39ff">
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.161.0/examples/jsm/"}}
+</script>
+<script>window.CITY_DEMO = 1</script>
+<style>#lock,#bananas,#refresh,#lockbtn,.assign,.acts2{display:none!important}#demobar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom) + 112px);z-index:30;background:#ffd166;color:#1a0b3a;font:800 12px Inter,sans-serif;padding:6px 12px;border-radius:99px;white-space:nowrap}</style>
+</head>
+<body>
+<div id="lock">
+  <form id="unlock" autocomplete="on">
+    <div class="logo">CONSULTING<b>CITY</b></div>
+    <p>Private HQ. Enter your HQ password.</p>
+    <input id="pw" type="password" placeholder="Password" autocomplete="current-password" required>
+    <label><input id="remember" type="checkbox" checked> Remember on this device</label>
+    <button>Enter the city</button>
+    <div id="err" hidden>Wrong password</div>
+  </form>
+</div>
+
+<div id="loading" hidden><div class="spin"></div>Building the city…</div>
+
+<div id="hud" hidden>
+  <header>
+    <div class="brand">CONSULTING <b>CITY</b> <span class="live">● DEMO</span> <span id="clock"></span></div>
+    <div class="acts">
+      <button id="bananas" title="Go Bananas: refresh every number in the city">🍌 Go Bananas</button>
+      <button id="officebtn" title="Virtual office: whiteboard, staff, background jobs">🏢</button>
+      <button id="skinbtn" title="City skins: switch the look">🎨</button>
+      <button id="home" title="Overview">⌂</button>
+      <button id="lockbtn" title="Lock">🔒</button>
+    </div>
+  </header>
+  <div id="chips"></div>
+  <div id="livestats" hidden></div>
+  <div id="updated"></div>
+  <button id="askbar" type="button"><span class="mag">🔍</span><span class="ph">Ask your AI team anything…</span><span class="lib">📚</span></button>
+  <aside id="todo"></aside>
+  <div id="skins" hidden></div>
+  <div id="joy" hidden><div id="knob"></div></div>
+  <div id="updown" hidden><button id="up">▲</button><button id="dn">▼</button></div>
+  <button id="staffbtn">👥 STAFF</button>
+  <div id="staff" hidden></div>
+  <button id="payrollbtn">FEES · TODAY</button>
+  <div id="payroll" hidden></div>
+  <div id="hint">Drag to look around · pinch or scroll to zoom · two fingers / right-drag to move · tap a building</div>
+</div>
+
+<section id="office" hidden></section>
+
+<section id="sheet" hidden>
+  <div class="grab"></div>
+  <button class="x" id="sheetx">✕</button>
+  <div id="sheetbody"></div>
+</section>
+
+<section id="term" hidden>
+  <div class="termbar">
+    <span>📚 THE LIBRARY · <b>Claude</b></span>
+    <span class="tacts"><button id="tnew">New chat</button><button id="tstop" hidden>Stop</button><button id="tx">✕</button></span>
+  </div>
+  <div id="tlog"></div>
+  <form id="tform">
+    <span class="prompt">❯</span>
+    <textarea id="tin" rows="1" placeholder="Talk to Claude…" enterkeyhint="send"></textarea>
+    <button id="tsend">Send</button>
+  </form>
+</section>
+
+<script type="module" src="city.js?v=7cd3748a"></script>
+</body>
+</html>
