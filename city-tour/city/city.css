@@ -198,3 +198,4 @@ header{position:absolute;top:0;left:0;right:0;display:flex;justify-content:space
 /* 7 Oct: draggable note / ask bar / Library window; on phones the note stops above the ask bar */
 #todo h4,#askbar,.termbar{touch-action:none}#todo h4{cursor:grab}.termbar{cursor:move}
 @media (max-width:520px){#todo{max-height:calc(100svh - env(safe-area-inset-top) - 150px - 96px)}}
+.lt{color:var(--dim);font-size:12px;font-weight:700;letter-spacing:.04em}

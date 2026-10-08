@@ -64,7 +64,7 @@ function model(D) {
   const place = n => { const i = race.findIndex(r => r.name === n); return i < 0 ? "–" : ["🥇 1st", "🥈 2nd", "🥉 3rd"][i] || (i + 1) + "th"; };  // $25 -> $250 attempt (Polymarket long shots, owner places bets)
   const fb = s.facebook || {}, ro = s.influencer || {}, ig = s.instagram || {}, rs = s.influencer_social || {}, md = s.media || {};
   const rd = s.influencer_diary || {}, ct = s.contra || {}, ox = s.outreach || {};
-  const pi = s.pinterest || {}, gh = s.github || {}, sh = s.showroom || {}, rn = s.rnd || {};
+  const pi = s.pinterest || {}, gh = s.github || {}, sh = s.showroom || {}, rn = s.rnd || {}, av = s.avatars || {};
   const shF = sh.funnel || {};
   const shSt = sh.stages || [], shDone = shSt.filter(x => x.done).length, shNext = shSt.find(x => !x.done);
   const shOpen = ["listing", "checkout"].every(id => (shSt.find(x => x.id === id) || {}).done);  // selling live = an open store, not a building site
@@ -278,6 +278,13 @@ function model(D) {
         shSt.map(x => [(x.done ? "✅ " : "🚧 ") + x.name, x.note || ""]), "Build steps", "",
         "We sell the dashboard, not a money dream: \"I use this to see my side hustles better.\"")) + funnelHTML(shF) },
 
+    ...(DEMO ? [] : [{ id: "army", name: "AI Influencer Army", short: "AI ARMY", icon: "🤖", color: 0xff4fd8, pos: [-62, -47], w: 9, d: 8, h: 22, kind: "army", face: [1, 0],
+      status: av.error ? "stale" : "ok", today: 0, total: 0, crew: (av.avatars || []).map(a => a.status),
+      tag: [`${(av.avatars || []).filter(a => a.status === "live").length}/${(av.avatars || []).length} live`, `${num(av.credits?.left)} credits`],
+      board: { title: "AI INFLUENCER ARMY", main: num(av.credits?.left), mainLabel: `Higgsfield credits left · ${av.credits?.plan || ""}`,
+        rows: (av.avatars || []).slice(0, 5).map(a => [a.emoji + " " + a.short, a.status]) },
+      sheet: () => armyHTML(av) }]),
+
     { id: "library", name: "The Library", short: "LIBRARY", icon: "📚", color: 0xe8a87c, pos: [0, -66], w: 20, d: 12, h: 12, kind: "library",
       status: sv("hq-portal"), today: 0, total: 0,
       tag: ["Claude", "tap to talk"],
@@ -338,6 +345,31 @@ function shelfHTML(title, items) {
   if (!items.length) return "";
   return `<div class="shelf"><div class="lt">${esc(title)} · ${items.length}</div><div class="boxes">${items.map(x =>
     `<a class="box" ${DEMO ? "" : `href="${esc(x.url || "#")}" target="_blank" rel="noopener"`}>${x.img ? `<img loading="lazy" src="${esc(x.img)}" alt="">` : `<i>📦</i>`}<span>${esc((x.title || "").slice(0, 46))}</span><b>${usd(x.price)}</b></a>`).join("")}</div></div>`;
+}
+
+// AI Influencer Army (owner 2026-10-08): the avatar roster, the week-by-week game plan and the Higgsfield credit budget (hq-data/avatars.json)
+function armyHTML(a) {
+  const cr = a.credits || {}, A = a.avatars || [], P = a.phases || [];
+  const col = { live: "#3dffa8", building: "#ffd166", next: "#00e5ff", planned: "#7d74a8", paused: "#ff4d6d" };
+  const spent = A.reduce((t, x) => t + (x.spent || 0), 0), budget = A.reduce((t, x) => t + (x.credits || 0), 0);
+  const bar = (v, max, c) => `<div style="height:6px;border-radius:3px;background:#2a1c5c;margin-top:4px"><div style="height:6px;border-radius:3px;width:${Math.min(100, max ? 100 * v / max : 0)}%;background:${c}"></div></div>`;
+  const roster = A.map(x => `<div class="note" style="border-left:3px solid ${col[x.status] || "#7d74a8"};padding-left:8px">
+      <b>${x.emoji} ${esc(x.name)}</b> <span style="color:${col[x.status] || "#ccc"};font-weight:700">· ${esc(x.status.toUpperCase())}</span><br>${esc(x.niche)}<br>
+      💰 ${esc(x.money)} · 🎯 ${esc(x.goal)}${x.ig ? ` · 📸 ${esc(x.ig)}${x.followers != null ? " (" + num(x.followers) + ")" : ""}` : ""}<br>
+      ⚡ ${num(x.spent || 0)} / ${num(x.credits)} credits · starts ${esc(x.start || "–")}${bar(x.spent || 0, x.credits, col[x.status] || "#7d74a8")}</div>`).join("");
+  const plan = P.map(p => { const d = (p.steps || []).filter(t => t.done).length;
+    return `<div class="list"><div style="color:var(--dim);font-size:12px"><span>🗓️ ${esc(p.name)}</span><span>${d}/${(p.steps || []).length} · ⚡${num(p.credits)}</span></div>${(p.steps || []).map(t =>
+      `<div><span>${t.done ? "✅" : t.who === "you" ? "🙋" : "🤖"} ${esc(t.t)}</span><span>${t.cr ? "⚡" + t.cr : ""}</span></div>`).join("")}</div>`; }).join("");
+  const costs = (a.costs || []).map(([k, v]) => `<div><span>${esc(k)}</span><span>${esc(v)}</span></div>`).join("");
+  return `<h2>AI Influencer Army</h2><div class="sub">${esc(a.headline || "Five AI influencers, one at a time, built in Higgsfield")} · updated ${esc((a.updated || "").slice(0, 16).replace("T", " "))}</div>
+    <div class="big">${num(cr.left)}<small>Higgsfield credits left · ${esc(cr.plan || "plan ?")}${cr.renews ? " · renews " + esc(cr.renews) : ""}</small></div>
+    <div class="grid"><div class="kv"><b>${num(budget)}</b><span>credits budgeted</span></div><div class="kv"><b>${num(spent)}</b><span>credits used</span></div>
+      <div class="kv"><b>${A.filter(x => x.status === "live").length}/${A.length}</b><span>avatars live</span></div><div class="kv"><b>${num(cr.monthly)}</b><span>credits / month</span></div></div>
+    ${(a.unlimited || []).length ? `<div class="note">♾️ Free on this plan: ${a.unlimited.map(esc).join(" · ")}</div>` : ""}
+    <div class="lt" style="margin-top:14px">The army</div>${roster}
+    <div class="lt" style="margin-top:14px">Game plan · 🤖 Claude · 🙋 you</div>${plan}
+    ${costs ? `<div class="list"><div style="color:var(--dim);font-size:12px"><span>What things cost</span></div>${costs}</div>` : ""}
+    ${(a.rules || []).length ? `<div class="note">📏 ${a.rules.map(esc).join("<br>📏 ")}</div>` : ""}`;
 }
 
 // ---------- textures ----------
@@ -785,6 +817,19 @@ function building(b) {
     [[-b.w / 2 + 1, 0], [-b.w / 2 + 2.4, 0], [-b.w / 2 + 1.7, 1.2], [b.w / 2 - 1.2, 0], [b.w / 2 - 1.2, 1.2]].forEach(([x, y]) => {
       const cr = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1.2, 1.2), crate); cr.position.set(x, 0.6 + y, b.d / 2 + 1.6); m.add(cr); });
     top = b.h + 2.2;
+  } else if (b.kind === "army") {  // AI Influencer Army: tall studio tower, 5 hologram influencers on a turning roof stage (lit = live/being built)
+    g.add(tower(b.w, b.h, b.d, c, 55, lit));
+    const stage = new THREE.Group(); stage.position.y = b.h + 0.2;
+    stage.add(new THREE.Mesh(new THREE.CylinderGeometry(4.2, 4.2, 0.35, 40), new THREE.MeshBasicMaterial({ color: 0x2a0a40 })));
+    const rim = new THREE.Mesh(new THREE.TorusGeometry(4.2, 0.12, 8, 64), new THREE.MeshBasicMaterial({ color: c, toneMapped: false })); rim.rotation.x = Math.PI / 2; rim.position.y = 0.2; stage.add(rim);
+    const cols = [0xff9ad5, 0x00e5ff, 0xffd166, 0x9945ff, 0x3dffa8], crew = b.crew || [];
+    const figs = cols.map((fc, i) => { const on = ["live", "building", "next"].includes(crew[i]), f = new THREE.Group(), a = i / 5 * Math.PI * 2;
+      const mat = new THREE.MeshBasicMaterial({ color: fc, toneMapped: false, transparent: true, opacity: on ? 0.95 : 0.25 });
+      const body = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.6, 1.8, 12), mat); body.position.y = 1.1; f.add(body);
+      const head = new THREE.Mesh(new THREE.SphereGeometry(0.42, 14, 10), mat); head.position.y = 2.4; f.add(head);
+      f.position.set(Math.cos(a) * 2.7, 0.2, Math.sin(a) * 2.7); f.userData.on = on; stage.add(f); return f; });
+    g.add(stage); anim.push((dt, t) => { stage.rotation.y += dt * 0.35; figs.forEach((f, i) => { f.position.y = 0.2 + (f.userData.on ? 0.25 * Math.sin(t * 2 + i) : 0); }); });
+    top = b.h + 4;
   } else if (b.kind === "rnd") {  // R&D: low lab with a glass roof and a spinning atom above it
     g.add(tower(b.w, b.h, b.d, c, 97, lit));
     const roof = new THREE.Mesh(new THREE.BoxGeometry(b.w * 0.8, 1.2, b.d * 0.8), new THREE.MeshStandardMaterial({ color: 0x0b3a2a, metalness: 0.9, roughness: 0.1, emissive: c, emissiveIntensity: 0.3, transparent: true, opacity: 0.85 }));
@@ -1352,7 +1397,7 @@ function hud() {
   const why = b => [...(att[b.id] || []), ...(b.status === "down" ? ["Something here is down"] : [])];
   const chip = (id, label, color, w) => `<button class="chip${w.length ? " need" : ""}" data-id="${id}" title="${esc(w.join(" · "))}" style="border-color:${color}88;color:${color}">${w.length ? `<i class="blip"></i>` : ""}${esc(label)}</button>`;
   const names = { vault: "Vault", etsy: "Etsy", fb: "Meta", whdig: "Digital WH", whpod: "Print WH", influencer: "Influencer", contra: "Contra", zoho: "Outreach", gumroad: "Gumroad", kdp: "KDP", lab: "API Lab",
-    krypto: "Krypto", kalshi: "Kalshi", poly: "Polymarket", longshot: "Long Shot", pinterest: "Pinterest", github: "GitHub", rnd: "R&D", showroom: "SHC", library: "Library" };
+    krypto: "Krypto", kalshi: "Kalshi", poly: "Polymarket", longshot: "Long Shot", pinterest: "Pinterest", github: "GitHub", rnd: "R&D", showroom: "SHC", army: "AI Army", library: "Library" };
   const list = [chip("vault", "Vault", "#ffd166", att.vault || [])].concat(B.map(b => chip(b.id, names[b.id] || b.short, hex(b.color), why(b))));
   $("#chips").innerHTML = list.join("");
   M.need = id => id === "vault" ? att.vault || [] : why(B.find(x => x.id === id) || {});
