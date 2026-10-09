@@ -72,7 +72,7 @@ function model(D) {
   const fb = s.facebook || {}, ro = s.rose || {}, ig = s.instagram || {}, rs = s.rose_social || {}, md = s.media || {};
   const rd = s.rose_diary || {}, ct = s.contra || {}, ox = s.outreach || {};
   const ia = (s.influencers || {}).accounts || [];
-  const pi = s.pinterest || {}, gh = s.github || {}, sh = s.showroom || {}, rn = s.rnd || {}, av = s.avatars || {};
+  const pi = s.pinterest || {}, gh = s.github || {}, sh = s.showroom || {}, rn = s.rnd || {}, av = s.avatars || {}, aw = s.aiworks;
   const shF = sh.funnel || {};
   const shSt = sh.stages || [], shDone = shSt.filter(x => x.done).length, shNext = shSt.find(x => !x.done);
   const shOpen = ["listing", "checkout"].every(id => (shSt.find(x => x.id === id) || {}).done);  // selling live = an open store, not a building site
@@ -284,6 +284,14 @@ function model(D) {
         [["Going out today", num(pi.today)], ["Still queued", num(pi.upcoming)], ["Last pin date", pi.last_date || "–"], ["Impressions", num(pi.impressions)], ["Clicks", num(pi.clicks)], ["Upload files", num(pi.files)]], [],
         "", "https://za.pinterest.com/SonneblomDigitaal/", `Pinterest has no API for us, so this counts the pins in our upload files. Impressions/clicks are typed in on Go Bananas${pi.at ? ` (${esc(pi.at)})` : ""}.`) },
 
+    // Sonneblom AI Works HQ (owner 2026-10-09): the 5 AI employees for sale/rent; "Enter the building" walks into /office/
+    ...(aw ? [{ id: "aiworks", name: "Sonneblom AI Works", short: "AI WORKS", icon: "🤖", color: 0xff3fbf, pos: [150, 42], w: 13, d: 11, h: 18, kind: "aiworks", face: [0, -1],
+      status: "ok", today: aw.today || 0, total: aw.actions || 0,
+      tag: [`${aw.live}/5 bots at work`, aw.approvals ? `${aw.approvals} need your yes` : "office open"],
+      board: { title: "AI WORKS HQ", main: `${aw.live}/5`, mainLabel: "AI employees at work",
+        rows: aw.bots.map(b => [b.name, b.live.length ? `${b.live.length} skills` : "training"]) },
+      sheet: () => aiworksHTML(aw) }] : []),
+
     // Warehouses (owner 2026-10-07): every product we sell, stored and viewable by shelf
     { id: "whdig", name: "Digital Warehouse", short: "DIGITAL", icon: "🗂️", color: 0x38bdf8, pos: [130, 22], w: 14, d: 10, h: 8, kind: "warehouse", face: [0, -1],
       status: "ok", today: 0, total: 0,
@@ -397,6 +405,7 @@ const LINKS = {
   github: [["My repos", "https://github.com/RoseCompanion?tab=repositories"], ["Actions", "https://github.com/RoseCompanion/sonneblomdigitaal-site/actions"]],
   army: [["Higgsfield", "https://higgsfield.ai"], ["Soul ID characters", "https://higgsfield.ai/character"], ["AI Influencer", "https://higgsfield.ai/ai-influencer"], ["Instagram", "https://www.instagram.com/"]],
   showroom: [["Gumroad", "https://gumroad.com/products"], ["Instagram", "https://www.instagram.com/"]],
+  aiworks: [["The office (3D)", "/office/"]],
   longshot: [["Polymarket portfolio", "https://polymarket.com/portfolio"], ["Ending soon", "https://polymarket.com/markets?_s=end_date%3Aasc"]],
 };
 // quick-action buttons: each one sends a ready-made task to Claude in the Library (some only show when there's something to do)
@@ -422,6 +431,8 @@ const ACTIONS = {
   longshot: s => [["🎯 How's the $25 run?", "How is the Long Shot paper bot doing? Show the open trades, what it learned, and if it's ready for real money."]],
   pinterest: s => [["📌 Build next week's pins", "Build next week's Pinterest pin file (new products and angles, 6 a day), push it, and send me the upload file link on Telegram."]],
   github: s => [["🧹 Repo check", "Check our GitHub repos: anything broken, failing Pages builds, or old repos to archive? Fix what's safe and tell me the rest."]],
+  aiworks: s => [["🛠️ Build the next skill", "AI Works: read /root/ai-employees/PLAN.md and team.json, build and test the next unfinished bot skill (one at a time), update team.json + PLAN.md, run update.sh and tell me what it can do now."],
+    ["☀️ Demo morning brief", "Run ChiefBot's morning brief for the demo company (Karoo Kitchens) and show it to me."]],
   rnd: s => [["📝 Write a new report", "Write a fresh R&D report: read the latest HQ data for every money method, rewrite /root/sonneblom-site/hq-data/rnd/report.json (headline, each method's numbers, bottleneck and fix, top 3), then run update.sh."],
     ["💡 Pick a new venture", "Look at our results and the ideas backlog and recommend ONE new venture to start next, with a first-week plan. Don't start it until I say go."],
     ["🩺 Fix the #1 bottleneck", "Take the first item of the R&D top 3 and do what you can on it right now. Tell me what needs me."]],
@@ -472,6 +483,19 @@ function shelfHTML(title, items) {
   if (!items.length) return "";
   return `<div class="shelf"><div class="lt">${esc(title)} · ${items.length}</div><div class="boxes">${items.map(x =>
     `<a class="box" ${DEMO ? "" : `href="${esc(x.url || "#")}" target="_blank" rel="noopener"`}>${x.img ? `<img loading="lazy" src="${esc(x.img)}" alt="">` : `<i>📦</i>`}<span>${esc((x.title || "").slice(0, 46))}</span><b>${usd(x.price)}</b></a>`).join("")}</div></div>`;
+}
+
+// AI Works HQ panel: team cards with avatars + the door into the 3D office
+function aiworksHTML(a) {
+  const door = DEMO ? "" : `<a class="go door" href="/office/">🚪 Enter the building →</a>`;
+  return `<h2>Sonneblom AI Works</h2><div class="sub">Our AI employees for rent or sale. ${a.live} of 5 at work · ${num(a.actions)} jobs done · ${num(a.companies)} company brain${a.companies === 1 ? "" : "s"}</div>
+    ${door}
+    <div class="grid"><div class="kv"><b>${a.live}/5</b><span>bots at work</span></div><div class="kv"><b>${num(a.today)}</b><span>jobs today</span></div>
+    <div class="kv"><b>${num(a.approvals)}</b><span>waiting for your yes</span></div></div>
+    <div class="team">${a.bots.map(b => `<div class="bot"><img loading="lazy" src="/office/avatars/${esc(b.id)}.jpg" alt="">
+      <div><b>${esc(b.name)}</b> <i>${esc(b.role)}</i><br>${b.live.map(x => `<span class="sk on">✅ ${esc(x)}</span>`).join("")}${b.next.map(x => `<span class="sk">🛠️ ${esc(x)}</span>`).join("")}
+      <small>${num(b.total)} jobs · ${num(b.today)} today</small></div></div>`).join("")}</div>
+    ${door}`;
 }
 
 // AI Influencer Army (owner 2026-10-08): the avatar roster, the week-by-week game plan and the Higgsfield credit budget (hq-data/avatars.json)
@@ -1142,6 +1166,20 @@ function building(b) {
       f.position.set(Math.cos(a) * 2.7, 0.2, Math.sin(a) * 2.7); f.userData.on = on; stage.add(f); return f; });
     g.add(stage); anim.push((dt, t) => { stage.rotation.y += dt * 0.35; figs.forEach((f, i) => { f.position.y = 0.2 + (f.userData.on ? 0.25 * Math.sin(t * 2 + i) : 0); }); });
     top = b.h + 4;
+  } else if (b.kind === "aiworks") {  // AI Works HQ: candy-striped 2000s startup tower, giant robot head on the roof (eyes glow, antenna blinks)
+    g.add(tower(b.w, b.h, b.d, c, 41, lit));
+    [0xffd23f, 0x28e0ff, 0x3dffa8].forEach((col, i) => { const band = new THREE.Mesh(new THREE.BoxGeometry(b.w + 0.3, 0.7, b.d + 0.3), new THREE.MeshBasicMaterial({ color: col, toneMapped: false }));
+      band.position.y = b.h * (0.3 + i * 0.25); g.add(band); });
+    const head = new THREE.Group(); head.position.y = b.h + 3.2;
+    head.add(new THREE.Mesh(new THREE.BoxGeometry(7, 5, 5.5), new THREE.MeshStandardMaterial({ color: 0x28e0ff, metalness: 0.5, roughness: 0.3 })));
+    const face = new THREE.Mesh(new THREE.PlaneGeometry(5.6, 3.4), new THREE.MeshBasicMaterial({ color: 0x10102a })); face.position.z = 2.76; head.add(face);
+    const eyes = [-1.3, 1.3].map(x => { const e = new THREE.Mesh(new THREE.SphereGeometry(0.6, 16, 12), new THREE.MeshBasicMaterial({ color: 0x3dffa8, toneMapped: false })); e.position.set(x, 0.3, 2.9); head.add(e); return e; });
+    const smile = new THREE.Mesh(new THREE.TorusGeometry(1.1, 0.12, 8, 24, Math.PI), new THREE.MeshBasicMaterial({ color: 0x3dffa8, toneMapped: false })); smile.rotation.z = Math.PI; smile.position.set(0, -0.6, 2.9); head.add(smile);
+    const ant = new THREE.Mesh(new THREE.SphereGeometry(0.5, 12, 8), new THREE.MeshBasicMaterial({ color: 0xffd23f, toneMapped: false })); ant.position.y = 4; head.add(ant);
+    const stick = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 1.5), new THREE.MeshStandardMaterial({ color: 0xcccccc })); stick.position.y = 3.1; head.add(stick);
+    g.add(head);
+    anim.push((dt, t) => { head.rotation.y = Math.sin(t * 0.5) * 0.5; const blink = Math.sin(t * 3) > 0.97 ? 0.1 : 1; eyes.forEach(e => e.scale.y = blink); ant.visible = Math.sin(t * 4) > -0.3; });
+    top = b.h + 8;
   } else if (b.kind === "rnd") {  // R&D: low lab with a glass roof and a spinning atom above it
     g.add(tower(b.w, b.h, b.d, c, 97, lit));
     const roof = new THREE.Mesh(new THREE.BoxGeometry(b.w * 0.8, 1.2, b.d * 0.8), new THREE.MeshStandardMaterial({ color: 0x0b3a2a, metalness: 0.9, roughness: 0.1, emissive: c, emissiveIntensity: 0.3, transparent: true, opacity: 0.85 }));

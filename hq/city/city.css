@@ -293,3 +293,11 @@ body[data-skin="seventies"]::after{content:"";position:fixed;inset:0;pointer-eve
 .bchat form{display:flex;gap:6px}.bchat textarea{flex:1;resize:none;background:#140a33;color:#fff;border:1px solid #3a2f66;border-radius:10px;padding:8px;font:500 14px Inter}
 .bchat form button,.bchat .blogin{background:var(--c,#b388ff);color:#0a0420;border:0;border-radius:10px;padding:0 14px;font:800 13px Sora;cursor:pointer}
 .bchat .blogin{padding:8px 12px}
+
+/* AI Works HQ panel (2026-10-09) */
+.go.door{display:block;text-align:center;background:linear-gradient(90deg,#ff3fbf,#28e0ff);color:#16112e;border:0;font-size:16px;margin:10px 0}
+.team{display:grid;gap:8px;margin-top:10px}
+.team .bot{display:flex;gap:10px;align-items:flex-start;background:#ffffff0d;border-radius:12px;padding:8px}
+.team img{width:64px;height:64px;border-radius:12px;object-fit:cover;flex:none}
+.team i{color:var(--dim);font-size:12px}.team small{display:block;color:var(--dim);font-size:11px;margin-top:3px}
+.team .sk{display:inline-block;font-size:11px;background:#ffffff12;border-radius:8px;padding:1px 6px;margin:2px 3px 0 0;opacity:.6}.team .sk.on{opacity:1}
