@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="robots" content="noindex,nofollow">
+<title>Sonneblom AI Works · the office</title>
+<link rel="stylesheet" href="office.css?v=1">
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.161.0/examples/jsm/"}}
+</script>
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<div id="intro">
+  <div class="card">
+    <div class="logo">SONNEBLOM <b>AI WORKS</b></div>
+    <h1>Welcome to the office</h1>
+    <p>Our AI employees work here. Walk around, meet them, and play a round on the arcade machines.</p>
+    <p class="keys"><b>Phone:</b> left thumb to walk, drag the right side to look, tap the yellow button to interact.<br>
+    <b>Computer:</b> WASD or arrows to walk, drag to look, E to interact.</p>
+    <button id="enter">Walk in →</button>
+  </div>
+</div>
+
+<div id="hud">
+  <div class="tag">SONNEBLOM <b>AI WORKS</b></div>
+  <button id="mapBtn" title="Where is everyone?">🗺️</button>
+</div>
+<div id="prompt"><button id="act">⚡ <span></span></button></div>
+<div id="joy"><div id="knob"></div></div>
+<div id="toast"></div>
+
+<div id="panel" hidden>
+  <button id="close" aria-label="Close">✕</button>
+  <div id="pbody"></div>
+</div>
+
+<script type="module" src="office.js?v=1"></script>
+</body>
+</html>

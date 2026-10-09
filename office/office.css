@@ -1,0 +1,47 @@
+:root{--ink:#16112e;--pk:#ff3fbf;--yel:#ffd23f;--cy:#28e0ff;--mint:#3dffa8;--org:#ff8a1f}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:#000;font:15px/1.45 "Trebuchet MS",Verdana,system-ui,sans-serif;color:#fff;touch-action:none;-webkit-user-select:none;user-select:none}
+#c{position:fixed;inset:0;width:100%;height:100%;display:block}
+#intro{position:fixed;inset:0;display:grid;place-items:center;background:radial-gradient(circle at 30% 20%,#ff3fbf55,transparent 50%),radial-gradient(circle at 80% 80%,#28e0ff55,transparent 50%),#16112ef0;z-index:20;padding:18px}
+.card{max-width:440px;background:#221a48;border:3px solid var(--yel);border-radius:22px;padding:22px;box-shadow:8px 8px 0 var(--pk)}
+.logo{font-weight:900;letter-spacing:2px;color:var(--cy)}.logo b{color:var(--yel)}
+h1{margin:8px 0;font-size:30px;line-height:1.1}
+.keys{font-size:13px;color:#cfc8ff}
+button{font:inherit;cursor:pointer}
+#enter{background:var(--yel);color:var(--ink);border:0;border-radius:14px;padding:12px 20px;font-weight:900;font-size:17px;box-shadow:4px 4px 0 var(--pk)}
+#hud{position:fixed;top:10px;left:10px;right:10px;display:flex;justify-content:space-between;align-items:center;pointer-events:none;z-index:5}
+#hud .tag{background:#16112ecc;border:2px solid var(--cy);border-radius:12px;padding:6px 10px;font-weight:900;font-size:12px;letter-spacing:1px;color:var(--cy)}
+#hud .tag b{color:var(--yel)}
+#mapBtn{pointer-events:auto;background:#16112ecc;border:2px solid var(--yel);border-radius:12px;font-size:18px;padding:4px 8px}
+#prompt{position:fixed;bottom:28px;right:20px;z-index:6;display:none}
+#act{background:var(--yel);color:var(--ink);border:0;border-radius:18px;padding:14px 18px;font-weight:900;font-size:16px;box-shadow:4px 4px 0 var(--pk);animation:bob 1s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-4px)}}
+#joy{position:fixed;left:22px;bottom:26px;width:120px;height:120px;border-radius:50%;background:#ffffff1c;border:2px solid #ffffff55;z-index:6;display:none}
+#knob{position:absolute;left:35px;top:35px;width:50px;height:50px;border-radius:50%;background:var(--cy);box-shadow:0 0 18px var(--cy)}
+body.touch #joy{display:block}
+#toast{position:fixed;top:56px;left:50%;transform:translateX(-50%);background:var(--pk);color:#fff;font-weight:800;border-radius:14px;padding:8px 14px;z-index:9;opacity:0;transition:opacity .3s;pointer-events:none;text-align:center;max-width:90vw}
+#toast.on{opacity:1}
+#panel{position:fixed;z-index:10;left:50%;top:50%;transform:translate(-50%,-50%);width:min(560px,94vw);max-height:86vh;overflow:auto;background:#1d1640;border:3px solid var(--cy);border-radius:22px;padding:18px 18px 20px;box-shadow:8px 8px 0 var(--pk)}
+#close{position:absolute;right:10px;top:10px;background:var(--pk);color:#fff;border:0;border-radius:10px;width:34px;height:34px;font-weight:900}
+#pbody h2{margin:0 40px 6px 0;font-size:24px}
+#pbody .kick{color:var(--yel);font-weight:900;font-size:12px;letter-spacing:1.5px;text-transform:uppercase}
+#pbody p{margin:8px 0}
+.tabs{display:flex;gap:6px;margin:10px 0;flex-wrap:wrap}
+.tabs button{background:#2c2363;color:#fff;border:2px solid #4b3fa0;border-radius:10px;padding:6px 10px;font-weight:800}
+.tabs button.on{background:var(--cy);color:var(--ink);border-color:var(--cy)}
+ul.sk{padding-left:18px;margin:6px 0}ul.sk li{margin:4px 0}
+.pipe{display:grid;gap:6px;margin:10px 0}
+.pipe div{background:#2c2363;border-radius:10px;padding:8px 10px;opacity:.35;transition:opacity .3s}
+.pipe div.on{opacity:1;border-left:6px solid var(--mint)}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:10px 0}
+.stats div{background:#2c2363;border-radius:12px;padding:8px;text-align:center}
+.stats b{display:block;font-size:22px;color:var(--mint)}
+table{width:100%;border-collapse:collapse;font-size:12px;margin-top:8px}
+td,th{padding:4px 5px;border-bottom:1px solid #3a3080;text-align:left;vertical-align:top}
+th{color:var(--yel)}td.n{text-align:right;white-space:nowrap}
+.q{color:#ffb3e6}
+.big{background:var(--yel);color:var(--ink);border:0;border-radius:12px;padding:10px 16px;font-weight:900;box-shadow:3px 3px 0 var(--pk)}
+canvas.game{display:block;margin:10px auto;background:#000;border:3px solid var(--mint);border-radius:8px;max-width:100%;touch-action:none}
+.pad{display:grid;grid-template-columns:repeat(3,56px);gap:6px;justify-content:center;margin-top:6px}
+.pad button{height:48px;border-radius:12px;border:0;background:#2c2363;color:#fff;font-size:20px}
+.dim{color:#a9a0de;font-size:13px}

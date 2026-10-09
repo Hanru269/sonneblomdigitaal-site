@@ -1,0 +1,86 @@
+{
+ "bank": "FNB business account (test statement, fictional company)",
+ "lines": 70,
+ "balanced": true,
+ "auto": 39,
+ "queries": 31,
+ "seconds": 65,
+ "rows": [
+  {
+   "d": "03-01",
+   "desc": "Debit Order Wesbank 5512399 Instal",
+   "amt": -6430,
+   "acc": "5200 Vehicle finance (instalment)",
+   "conf": 0.95
+  },
+  {
+   "d": "03-01",
+   "desc": "Debit Order Santam Ins 9938221",
+   "amt": -1342.18,
+   "acc": "3500 Insurance",
+   "conf": 0.95
+  },
+  {
+   "d": "03-01",
+   "desc": "#Cash Deposit Fee",
+   "amt": -35.5,
+   "acc": "3100 Bank charges",
+   "conf": 0.97
+  },
+  {
+   "d": "03-02",
+   "desc": "Card Purchase Spur Potch 4589*1234",
+   "amt": -560,
+   "acc": "9999 Suspense: ask the client",
+   "conf": 0.6
+  },
+  {
+   "d": "03-02",
+   "desc": "Debit Order Vodacom 82734612",
+   "amt": -899,
+   "acc": "3950 Telephone, cellphone and internet",
+   "conf": 0.95
+  },
+  {
+   "d": "03-03",
+   "desc": "Magtape Credit Botha Bouwerke Inv 1043",
+   "amt": 18400,
+   "acc": "1000 Sales / Turnover",
+   "conf": 0.95
+  },
+  {
+   "d": "03-03",
+   "desc": "FNB App Payment To Salaries Mar",
+   "amt": -14500,
+   "acc": "3850 Salaries and wages",
+   "conf": 0.95
+  },
+  {
+   "d": "03-04",
+   "desc": "Card Purchase Engen Potch 4589*1234",
+   "amt": -780.5,
+   "acc": "3450 Fuel and oil",
+   "conf": 0.92
+  },
+  {
+   "d": "03-04",
+   "desc": "Magtape Credit Van Wyk Prokureurs",
+   "amt": 7600,
+   "acc": "9999 Suspense: ask the client",
+   "conf": 0.6
+  },
+  {
+   "d": "03-04",
+   "desc": "Internet Pmt To SARS Emp201",
+   "amt": -2140.66,
+   "acc": "3860 UIF / SDL / PAYE paid to SARS",
+   "conf": 0.95
+  }
+ ],
+ "questions": [
+  "Was the Spur meal business entertainment or personal?",
+  "What is the R7,600 from Van Wyk Prokureurs for?",
+  "Botha Bouwerke paid Inv 1043 several times; overpayment, deposits or other invoices?",
+  "Multiple 'Salaries Mar' payments; are these separate runs or duplicates?"
+ ]
+}
