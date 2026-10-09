@@ -285,8 +285,8 @@ function model(D) {
         "", "https://za.pinterest.com/SonneblomDigitaal/", `Pinterest has no API for us, so this counts the pins in our upload files. Impressions/clicks are typed in on Go Bananas${pi.at ? ` (${esc(pi.at)})` : ""}.`) },
 
     // Sonneblom AI Works HQ (owner 2026-10-09): the 5 AI employees for sale/rent; "Enter the building" walks into /office/
-    ...(aw ? [{ id: "aiworks", name: "Sonneblom AI Works", short: "AI WORKS", icon: "🤖", color: 0xff3fbf, pos: [150, 42], w: 13, d: 11, h: 18, kind: "aiworks", face: [0, -1],
-      status: "ok", today: aw.today || 0, total: aw.actions || 0,
+    ...(aw ? [{ id: "aiworks", name: "Sonneblom AI Works", short: "AI WORKS", icon: "🤖", color: 0xff3fbf, pos: [150, 42], w: 13, d: 11, h: 18, kind: "aiworks", face: [0, -1], noPay: true,
+      status: "ok", today: 0, total: 0,  // jobs are not money: no payroll row, beam or coins
       tag: [`${aw.live}/5 bots at work`, aw.approvals ? `${aw.approvals} need your yes` : "office open"],
       board: { title: "AI WORKS HQ", main: `${aw.live}/5`, mainLabel: "AI employees at work",
         rows: aw.bots.map(b => [b.name, b.live.length ? `${b.live.length} skills` : "training"]) },
