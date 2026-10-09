@@ -142,13 +142,14 @@ const pods = [
   { id: "chiefbot", x: 0, z: -9, color: "#ffd23f", name: "CHIEFBOT", live: true },
   { id: "finbot", x: -7, z: -9, color: "#28e0ff", name: "FINBOT", live: true },
   { id: "peoplebot", x: 7, z: -9, color: "#3dffa8", name: "PEOPLEBOT", live: true },
-  { id: "growthbot", x: -14, z: -9, color: "#ff3fbf", name: "GROWTHBOT", live: false },
-  { id: "opsbot", x: 14, z: -9, color: "#ff8a1f", name: "OPSBOT", live: false },
+  { id: "growthbot", x: -14, z: -9, color: "#ff3fbf", name: "GROWTHBOT", live: true },
+  { id: "opsbot", x: 14, z: -9, color: "#ff8a1f", name: "OPSBOT", live: true },
 ];
 const bots = {};
 for (const p of pods) {
   desk(p.x, p.z, 0, p.live ? "#ff8a1f" : "#a58cff");
-  const SCREEN = { chiefbot: ["MORNING BRIEF", ["✓ sent 07:00", "#3dffa8"], "1 needs your yes"], peoplebot: ["PAYROLL OCT", ["✓ 3 payslips", "#3dffa8"], "EMP201 ready"] };
+  const SCREEN = { chiefbot: ["MORNING BRIEF", ["✓ sent 07:00", "#3dffa8"], "5 need your yes"], peoplebot: ["PAYROLL OCT", ["✓ 3 payslips", "#3dffa8"], "EMP201 ready"],
+    growthbot: ["NOV CONTENT", ["✓ 24 posts", "#3dffa8"], "quote Q1001 sent"], opsbot: ["STOCK CHECK", ["! hinges low", "#ffd23f"], "PO drafted"] };
   crt(p.x - 0.5, 0.82, p.z - 0.15, 0, !p.live ? screenSoon : SCREEN[p.id] ? textTex(SCREEN[p.id], { w: 256, h: 192, bg: "#0b3d2a", fg: "#b9ffd9", font: "bold 24px Courier New" }) : screenSheet);
   box(0.5, 0.05, 0.18, "#efe6cf", p.x - 0.5, 0.84, p.z + 0.3);
   const r = robot(p.color, p.name);
@@ -157,11 +158,15 @@ for (const p of pods) {
   bots[p.id] = r;
   solids.push([p.x - 0.3, p.z - 1.4, p.x + 0.7, p.z - 0.6]);
   sign(textTex([p.live ? "🟢 AT WORK" : "🛠️ IN TRAINING"], { w: 256, h: 64, bg: p.live ? "#16112e" : "#3a2a6e", fg: p.live ? "#3dffa8" : "#ffd23f", font: "bold 30px Trebuchet MS" }), 1.4, 0.35, p.x, 2.2, p.z - 0.6);
+  // framed avatar portrait on a stand behind the bot
+  box(2.1, 2.1, 0.12, "#16112e", p.x, 3.35, p.z - 2.3);
+  box(0.12, 2.4, 0.12, "#2b2550", p.x, 1.2, p.z - 2.38);
+  new THREE.TextureLoader().load(`avatars/${p.id}.jpg`, (t) => { t.colorSpace = THREE.SRGBColorSpace; sign(t, 1.9, 1.9, p.x, 3.35, p.z - 2.22); });
   // pod rug
   const rug = new THREE.Mesh(new THREE.CircleGeometry(2.4, 40), mat(p.live ? "#3dffa8" : "#d9ccff")); rug.rotation.x = -Math.PI / 2; rug.position.set(p.x, 0.01, p.z + 0.4); scene.add(rug);
 }
 // whiteboard with today's numbers
-sign(textTex([["TODAY ON THE FLOOR", "#16112e"], ["FinBot: 70 lines, 0 errors", "#e0249b"], ["PeopleBot: payroll ready", "#0a8f5a"], ["Growth + Ops: training", "#7b4dff"]], { w: 768, h: 384, bg: "#ffffff", font: "bold 40px Comic Sans MS" }), 4.4, 2.2, 14.5, 2.4, -D + 0.18);
+sign(textTex([["TODAY ON THE FLOOR", "#16112e"], ["FinBot: 70 lines, 0 errors", "#e0249b"], ["PeopleBot: payroll ready", "#0a8f5a"], ["Ops: hinges low, PO drafted", "#7b4dff"]], { w: 768, h: 384, bg: "#ffffff", font: "bold 40px Comic Sans MS" }), 4.4, 2.2, 14.5, 2.4, -D + 0.18);
 box(4.6, 2.4, 0.06, "#c0c0d0", 14.5, 2.4, -D + 0.14);
 
 // ---------- zone: arcade (right wall) ----------
@@ -303,7 +308,7 @@ let toastT;
 function toast(t) { const el = $("#toast"); el.textContent = t; el.classList.add("on"); clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove("on"), 2600); }
 $("#enter").onclick = () => { $("#intro").remove(); toast(touch ? "👈 Walk with your left thumb" : "WASD to walk · drag to look"); };
 $("#mapBtn").onclick = () => openPanel(`<div class="kick">Floor plan</div><h2>Where is everyone?</h2>
-  <ul class="sk"><li>🤖 <b>Back wall:</b> the AI employees. ChiefBot (team lead) in the middle, FinBot and PeopleBot at work beside it, GrowthBot and OpsBot in training on the ends.</li>
+  <ul class="sk"><li>🤖 <b>Back wall:</b> the AI employees. ChiefBot (team lead) in the middle, FinBot and PeopleBot at work beside it, GrowthBot and OpsBot on the ends. All five are at work.</li>
   <li>🕹️ <b>Right wall:</b> the arcade (Snake, Pong, Snake II).</li><li>🛋️ <b>By the windows:</b> lounge, beanbags, lava lamps.</li>
   <li>🏓 <b>Middle:</b> ping pong.</li><li>🥤 <b>Front left:</b> the Fizz-O-Matic and water cooler.</li></ul>`);
 
@@ -330,7 +335,7 @@ function openFinbot(tab = "hi") {
     <p class="dim">Pricing is being finalised. Ask us for early access.</p>
     <a class="big" style="display:inline-block;text-decoration:none" href="mailto:hello@eaafix.com?subject=FinBot%20early%20access">Ask for early access</a>`;
   if (tab === "demo") body = `<div class="pipe" id="pipe"><div>📄 Reading the statement…</div><div>🔢 Checking every running balance…</div><div>🗂️ Allocating to accounts…</div><div>📊 Building the Excel file…</div></div><div id="res"></div>`;
-  openPanel(`<div class="kick">AI employee · Finance</div><h2>FinBot 🤖</h2><div class="tabs">${t("hi", "Hello")}${t("skills", "Skills")}${t("demo", "Demo")}${t("hire", "Hire")}</div>${body}`);
+  openPanel(`<img class="ava" src="avatars/finbot.jpg" alt=""><div class="kick">AI employee · Finance</div><h2>FinBot 🤖</h2><div class="tabs">${t("hi", "Hello")}${t("skills", "Skills")}${t("demo", "Demo")}${t("hire", "Hire")}</div>${body}`);
   $("#pbody").querySelectorAll("[data-t]").forEach((b) => (b.onclick = () => openFinbot(b.dataset.t)));
   if (tab === "demo") runDemo();
 }
@@ -351,21 +356,21 @@ function runDemo() {
 }
 const SOON = { // [name, role, pitch, skills ("✓ " = working today)]
   chiefbot: ["ChiefBot", "Team lead · Your chief of staff", "Runs the team. Every morning it reads what the other four did and sends you one brief: deadlines, money owed, what needs your yes. Nothing leaves the building without your approval.",
-    ["✓ Morning brief from the whole team", "✓ Approval queue: emails, payments, filings wait for your yes", "✓ Audit log of every action", "Email + calendar assistant", "Runs your computer for the boring admin"]],
+    ["✓ Morning brief from all 5 bots", "✓ Approval queue: emails, payments, orders wait for your yes", "✓ Audit log of every action", "Email + calendar assistant", "Runs your computer for the boring admin"]],
   peoplebot: ["PeopleBot", "AI employee · HR, payroll, legal admin, reception", "Your HR office, payroll clerk and front desk in one. Knows the BCEA, LRA, UIF and COIDA rules and keeps your people admin clean.",
-    ["✓ Payroll: PAYE (SARS 2026/27 tables), UIF, SDL", "✓ Payslips (PDF) + EMP201 totals", "Contracts, warnings and leave from BCEA-safe templates", "Receptionist: answers WhatsApp/email, books appointments", "UIF, COIDA and EMP501 admin"]],
+    ["✓ Payroll: PAYE (SARS 2026/27 tables), UIF, SDL", "✓ Payslips (PDF) + EMP201 totals", "✓ Contracts (BCEA + minimum wage check), warnings, leave", "✓ Receptionist: answers in English/Afrikaans, books free slots", "UIF, COIDA and EMP501 admin"]],
   growthbot: ["GrowthBot", "AI employee · Marketing + sales", "Deep social media and SEO know-how plus a sales engine: content, Google profile, leads, quotes and follow-ups.",
-    ["Content calendar, captions, hooks for every platform", "Google Business Profile + AI search visibility", "Finds leads and drafts outreach", "Quotes and follow-ups until a yes or no", "Weekly 'what worked' report"]],
+    ["✓ Month content plan: dates, hooks, captions, hashtags (Excel)", "✓ Quotes (PDF) + day 2/6/13 follow-ups", "✓ AI search check: does ChatGPT-style search name you?", "Finds local leads and drafts outreach", "Google Business Profile posts"]],
   opsbot: ["OpsBot", "AI employee · Operations", "Keeps the work flowing: suppliers, stock, job scheduling, documents and the small IT jobs nobody wants.",
-    ["Stock levels and reorder alerts", "Supplier orders and delivery follow-ups", "Job / project schedule and reminders", "Files every document where it belongs", "Compliance paperwork checklist"]],
+    ["✓ Stock levels + purchase orders when low", "✓ Job schedule with double-booking warnings", "✓ Compliance register: TCS PIN, COIDA, B-BBEE, CIPC, first aid…", "✓ Files any document (PDF/photo) in the right folder", "Supplier delivery follow-ups"]],
 };
 function openSoon(id) {
   const [n, k, d, sk] = SOON[id];
   const live = sk.some((s) => s.startsWith("✓"));
-  openPanel(`<div class="kick">${k}</div><h2>${n} ${live ? "🤖" : "🛠️"}</h2><p>${d}</p><ul class="sk">${sk.map((s) => `<li>${s.startsWith("✓") ? "✅ " + s.slice(2) : "🛠️ " + s}</li>`).join("")}</ul><p class="dim">✅ working today · 🛠️ in training. <a href="mailto:hello@eaafix.com?subject=${n}%20early%20access" style="color:#28e0ff">Ask for early access</a>.</p>`);
+  openPanel(`<img class="ava" src="avatars/${id}.jpg" alt=""><div class="kick">${k}</div><h2>${n} ${live ? "🤖" : "🛠️"}</h2><p>${d}</p><ul class="sk">${sk.map((s) => `<li>${s.startsWith("✓") ? "✅ " + s.slice(2) : "🛠️ " + s}</li>`).join("")}</ul><p class="dim">✅ working today · 🛠️ in training. <a href="mailto:hello@eaafix.com?subject=${n}%20early%20access" style="color:#28e0ff">Ask for early access</a>.</p>`);
 }
 function openBoard() {
-  openPanel(`<div class="kick">Whiteboard</div><h2>Today on the floor</h2><ul class="sk"><li>🤖 FinBot: test statement, 70 lines, balanced to the cent.</li><li>👥 PeopleBot: October payroll, 3 payslips, EMP201 ready.</li><li>☀️ ChiefBot: morning brief sent.</li><li>🛠️ GrowthBot + OpsBot: in training.</li><li>🍕 Friday: pizza for humans.</li></ul>`);
+  openPanel(`<div class="kick">Whiteboard</div><h2>Today on the floor</h2><ul class="sk"><li>🤖 FinBot: test statement, 70 lines, balanced to the cent.</li><li>👥 PeopleBot: October payroll, 3 payslips, EMP201 ready.</li><li>☀️ ChiefBot: morning brief sent.</li><li>📣 GrowthBot: November content plan, quote follow-up queued.</li><li>🦺 OpsBot: hinges low, purchase order waiting for a yes.</li><li>🍕 Friday: pizza for humans.</li></ul>`);
 }
 const DRINKS = ["🍒 Cherry Fizz", "🍋 Lemon Zap", "🫐 Blueberry Blast", "🥭 Mango Mayhem", "☕ Iced Rooibos"];
 function fizz() { toast(`Clunk! You got a ${DRINKS[Math.floor(Math.random() * DRINKS.length)]} (+5 energy)`); }

@@ -45,3 +45,5 @@ canvas.game{display:block;margin:10px auto;background:#000;border:3px solid var(
 .pad{display:grid;grid-template-columns:repeat(3,56px);gap:6px;justify-content:center;margin-top:6px}
 .pad button{height:48px;border-radius:12px;border:0;background:#2c2363;color:#fff;font-size:20px}
 .dim{color:#a9a0de;font-size:13px}
+
+.ava{float:right;width:96px;height:96px;border-radius:16px;object-fit:cover;border:3px solid var(--yel);margin:24px 0 6px 10px}
