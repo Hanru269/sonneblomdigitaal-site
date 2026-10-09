@@ -248,7 +248,7 @@ function model(D) {
       tag: lr.value != null ? [`${usd(lr.value)} REAL · ${pnlU(lr.value, lr.start_real || 19.53)}`, `${(lr.positions || []).length} open · ${lr.trades || 0} done`] : ["not started", ""],
       board: { title: "POLYMARKET LIVE", main: usd(lr.value || 0), mainLabel: "REAL money · " + (lr.style_name || "–") + " style",
         rows: [["Profit", `${pnlU(lr.value, lr.start_real || 19.53)} (${pct(lr.value, lr.start_real || 19.53)})`], ["Open trades", (lr.positions || []).length], ["Trades done", `${lr.trades || 0} (${lr.wins || 0} wins)`], ["Race place", place("Polymarket LIVE")]] },
-      sheet: () => sheetHTML("Polymarket LIVE", "The real-money Polymarket bot (same style as the practice bot). Its profit counts in the Vault; when it's up, a money beam flows to the Vault.",
+      sheet: () => sheetHTML("Polymarket LIVE", "The real-money Polymarket bot (same style as the practice bot). Its profit is NOT counted in the Vault (Vault = sales only).",
         usd(lr.value || 0), "bot value (cash + open trades)",
         [["Started with", usd(lr.start_real || 19.53)], ["Profit", pnlU(lr.value, lr.start_real || 19.53)], ["Profit %", pct(lr.value, lr.start_real || 19.53)], ["Cash", usd(lr.cash || 0)], ["Trades done", `${lr.trades || 0} (${lr.wins || 0} wins)`], ["Status", lr.status || "–"], ["Race place", place("Polymarket LIVE")]]
           .concat((lr.positions || []).map(p => [`${p.q} · ${p.outcome}`, `${usd(p.stake)} @ ${Math.round(p.entry * 100)}c → now ${Math.round((p.mark ?? p.entry) * 100)}c`])),
@@ -372,7 +372,7 @@ function model(D) {
         [["Model", "Claude (Claude Code)"], ["Runs on", "the server, 24/7"], ["Can", "read data, write code, deploy"]], [], "",
         "In the real city this opens a live chat with Claude Code running on the server. The owner asks for changes from a phone and Claude edits the code, refreshes the data and redeploys the city.") },
   ];
-  const tot = eTot + gTot + polyReal, day = eDay + gDay;  // Vault counts the REAL-money Polymarket bot profit (owner 2026-10-07; practice money is not counted)
+  const tot = eTot + gTot, day = eDay + gDay;  // Vault = sales only, no trading-bot figures (owner 2026-10-09)
   const flow = { clicks: (rs.ad_clicks || 0) + (fb.ads?.clicks || 0), views: last7("page_media_view") + (rs.fb_post_views || 0), ads: adsActive };
   const working = (D.working || []).filter(id => B.some(b => b.id === id));
   return { flow, working, B: DEMO ? B.filter(b => !(D.hide || []).includes(b.id)) : B, s, tot, day, roseZar, sales: eS.length + gS.length + (ro.card_paid || 0) };
@@ -1298,7 +1298,7 @@ function flowBeam() {
 }
 
 // money arcs: a thin flowing beam from every money maker to the Vault (bright + sparks when it earned today)
-const MONEY = ["etsy", "gumroad", "kdp", "rose", "contra", "zoho", "lab", "krypto", "kalshi", "polylive"];  // practice bots are not money; the LIVE Polymarket bot only while it is up
+const MONEY = ["etsy", "gumroad", "kdp", "rose", "contra", "zoho", "lab"];  // sales only: no trading bots into the Vault (owner 2026-10-09)
 function moneyBeams() {
   const V = groups.vault; if (!V) return;
   const to = V.position.clone().setY(9.5);
@@ -1798,8 +1798,7 @@ function vaultSheet() {
   const { B, tot, day, roseZar, sales } = M, s = M.s;
   const all = [...(s.etsy?.sales || []).map(x => ({ ...x, channel: "Etsy" })), ...(s.gumroad?.sales || [])].sort((a, b) => b.ts.localeCompare(a.ts));
   return sheetHTML("The Vault", "All money in, across every shop", tot, "revenue all time (USD)",
-    [["Today", usd(day)], ["Sales", sales], ...(DEMO ? [] : [["Rose (card)", "R" + num(roseZar)]]), ...B.filter(b => b.total && b.id !== "rose").map(b => [b.id === "poly" ? "Polymarket bot (real, incl. open)" : b.short, usd(b.total)]),
-     ...(DEMO || !s.lsbot ? [] : [["Polymarket practice (not counted)", ((s.lsbot.value || 0) < 25 ? "-$" : "+$") + Math.abs((s.lsbot.value || 0) - 25).toFixed(2)]])],
+    [["Today", usd(day)], ["Sales", sales], ...(DEMO ? [] : [["Rose (card)", "R" + num(roseZar)]]), ...B.filter(b => b.total && MONEY.includes(b.id) && b.id !== "rose").map(b => [b.short, usd(b.total)])],
     all.slice(0, 8).map(x => [`${x.channel} · ${x.product || x.title || ""}`, `${usd(x.amount)} · ${ago(x.ts)}`]), "Latest sales") + ideasHTML(s.ideas);
 }
 // Future business ideas parked in the Vault (hq-data/ideas.json)
