@@ -1812,7 +1812,7 @@ function hud() {
   const why = b => [...(att[b.id] || []), ...(b.status === "down" ? ["Something here is down"] : [])];
   const chip = (id, label, color, w) => `<button class="chip${w.length ? " need" : ""}" data-id="${id}" title="${esc(w.join(" · "))}" style="border-color:${color}88;color:${color}">${w.length ? `<i class="blip"></i>` : ""}${esc(label)}</button>`;
   const names = { vault: "Vault", etsy: "Etsy", fb: "Meta", ig: "Instagram", copy: "Copy Desk", polylive: "Poly LIVE", poly: "Poly Practice", longshot: "Olympics", newfaces: "Media Board", output: "Output", whdig: "Digital WH", whpod: "Print WH", rose: "Rose", contra: "Contra", zoho: "Outreach", gumroad: "Gumroad", kdp: "KDP", lab: "API Lab",
-    krypto: "Krypto", kalshi: "Kalshi", pinterest: "Pinterest", github: "GitHub", rnd: "R&D", showroom: "SHC", army: "AI Army", library: "Library" };
+    krypto: "Krypto", kalshi: "Kalshi", pinterest: "Pinterest", github: "GitHub", rnd: "R&D", showroom: "SHC", army: "AI Army", library: "Library", aiworks: "AI Works" };
   const list = [chip("vault", "Vault", "#ffd166", att.vault || [])].concat(B.filter(b => !b.home).map(b => chip(b.id, names[b.id] || b.short, hex(b.color), why(b))));
   const dn = { down: "Downtown", media: "Media Hill", trade: "Trading Town", ind: "Industrial", subs: "Suburbs" };
   $("#chips").innerHTML = (WLD ? [] : DIST.map(D => `<button class="chip dchip" data-dist="${D.id}" style="border-color:${hex(D.color)}88;color:${hex(D.color)}">📍 ${dn[D.id]}</button>`)).concat(list).join("");
