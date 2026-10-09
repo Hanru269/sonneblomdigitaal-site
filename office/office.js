@@ -1,7 +1,7 @@
 // Sonneblom AI Works office v2: a compact modern office, every AI employee in its own personalised cubicle,
 // ChiefBot in a glass corner office. Tap a bot to talk to it; it only shows Available / Busy.
 import * as THREE from "three";
-import { setup, W, D, H, TEX, mat, std, glow, rbox, cyl, chair, monitor, plant, labelTex } from "./scene.js?v=4";
+import { setup, W, D, H, TEX, mat, std, glow, rbox, cyl, chair, monitor, plant, labelTex } from "./scene.js?v=6";
 
 const $ = (s) => document.querySelector(s);
 const { renderer, scene, camera, composer } = setup($("#c"));
@@ -36,21 +36,25 @@ for (let x = -6; x <= 6; x += 3) for (let z = -4.5; z <= 4.5; z += 3) {  // rece
 }
 const plaster = new THREE.MeshStandardMaterial({ map: TEX.plaster(), roughness: 0.92 });
 const wall = (w, x, z, ry, m = plaster) => { const p = new THREE.Mesh(new THREE.PlaneGeometry(w, H), m); p.position.set(x, H / 2, z); p.rotation.y = ry; p.receiveShadow = true; scene.add(p); return p; };
-wall(D * 2, -W, 0, Math.PI / 2);                                         // left
+wall(D, -W, D / 2, Math.PI / 2);                                         // left (front half; back half is glass)
 wall(D * 2, W, 0, -Math.PI / 2, std("#2f6f73", { roughness: 0.9 }));      // right accent wall (teal)
 wall(W - 1.4, -(W + 1.4) / 2, D, Math.PI); wall(W, W / 2, D, Math.PI);       // front, door gap at x -1.4..0
 { const l = new THREE.Mesh(new THREE.PlaneGeometry(1.4, H - 2.4), plaster); l.position.set(-0.7, (H + 2.4) / 2, D); l.rotation.y = Math.PI; scene.add(l); }
 // back wall = floor-to-ceiling windows with mullions and a city view
-const sky = new THREE.Mesh(new THREE.PlaneGeometry(40, 14), new THREE.MeshBasicMaterial({ map: TEX.sky() })); sky.position.set(0, 3, -D - 9); scene.add(sky);
+const sky = new THREE.Mesh(new THREE.PlaneGeometry(60, 24), new THREE.MeshBasicMaterial({ map: TEX.sky(0) })); sky.position.set(0, 1.6, -D - 14); scene.add(sky);
 const glass = new THREE.MeshStandardMaterial({ color: "#e8f3ff", roughness: 0.05, metalness: 0.2, transparent: true, opacity: 0.16, depthWrite: false });
 const win = new THREE.Mesh(new THREE.PlaneGeometry(W * 2, H - 0.5), glass); win.position.set(0, (H - 0.5) / 2 + 0.4, -D); scene.add(win);
+const sky2 = new THREE.Mesh(new THREE.PlaneGeometry(40, 24), new THREE.MeshBasicMaterial({ map: TEX.sky(1) })); sky2.position.set(-W - 14, 1.6, -4); sky2.rotation.y = Math.PI / 2; scene.add(sky2);
+const win2 = new THREE.Mesh(new THREE.PlaneGeometry(D, H - 0.5), glass); win2.position.set(-W, (H - 0.5) / 2 + 0.4, -D / 2); win2.rotation.y = Math.PI / 2; scene.add(win2);
 const frameM = std("#2a2d33", { metalness: 0.7, roughness: 0.35 });
 rbox(scene, W * 2, 0.4, 0.18, frameM, 0, 0.2, -D, 0.02, false);
 for (let x = -W; x <= W + 0.01; x += 2) rbox(scene, 0.07, H, 0.1, frameM, x, H / 2, -D, 0.01, false);
+rbox(scene, 0.18, 0.4, D, frameM, -W, 0.2, -D / 2, 0.02, false);
+for (let z = -D + 2; z <= 0.01; z += 2) rbox(scene, 0.1, H, 0.07, frameM, -W, H / 2, z, 0.01, false);
 block(-W - 1, -D - 1, W + 1, -D + 0.12); block(-W - 1, -D - 1, -W + 0.12, D + 1); block(W - 0.12, -D - 1, W + 1, D + 1);
 block(-W - 1, D - 0.12, -1.4, D + 1); block(0, D - 0.12, W + 1, D + 1);
 // skirting
-rbox(scene, 0.03, 0.1, D * 2, std("#d8d4cc"), -W + 0.02, 0.05, 0, 0.005, false);
+rbox(scene, 0.03, 0.1, D, std("#d8d4cc"), -W + 0.02, 0.05, D / 2, 0.005, false);
 
 // ---------- brand wall (left) ----------
 {
@@ -141,9 +145,10 @@ function refreshStatus() {
   }
 }
 
-// ---------- cubicle pod (4 cubicles, 2 x 2) ----------
-const POD = { x0: -6.8, x1: -1.6, z0: -4.4, z1: 0.4 };
-const midX = (POD.x0 + POD.x1) / 2, midZ = (POD.z0 + POD.z1) / 2;
+// ---------- cubicle row (4 cubicles side by side along the window wall, owner 2026-10-09) ----------
+const CW = 2.5; // cubicle width (x); depth 2.4 m from the window
+const ROW = { x0: -7.4, z0: -D + 0.12, z1: -D + 2.52 };
+const ROWX = [0, 1, 2, 3, 4].map((i) => ROW.x0 + i * CW);
 const PH = 1.35; // partition height
 const rail = std("#b9bec6", { metalness: 0.9, roughness: 0.25 });
 const frosted = new THREE.MeshStandardMaterial({ color: "#ffffff", roughness: 0.6, transparent: true, opacity: 0.5, depthWrite: false });
@@ -159,15 +164,9 @@ function partition(x0, z0, x1, z1, fabricHex) {
   return g;
 }
 const FAB = { finbot: "#3d6f8a", peoplebot: "#4f7f62", growthbot: "#8a4f75", opsbot: "#8a6a3d" };
-// outer walls + spine + centre line
-partition(POD.x0, POD.z0, POD.x0, POD.z1, "#5b6270");
-partition(POD.x1, POD.z0, POD.x1, POD.z1, "#5b6270");
-partition(POD.x0, midZ, POD.x1, midZ, "#5b6270");
-partition(midX, POD.z0, midX, POD.z1, "#5b6270");
-// short front walls with a 1.2 m opening into every cubicle
-for (const [zEdge] of [[POD.z0], [POD.z1]]) for (const [a, b] of [[POD.x0, midX], [midX, POD.x1]]) {
-  partition(a, zEdge, a + 0.7, zEdge, "#5b6270"); partition(b - 0.7, zEdge, b, zEdge, "#5b6270");
-}
+// side walls between cubicles (no back wall: the window is the back), short front walls with a 1.1 m opening
+for (const x of ROWX) partition(x, ROW.z0, x, ROW.z1, "#5b6270");
+for (let i = 0; i < 4; i++) { const a = ROWX[i], b = ROWX[i + 1]; partition(a, ROW.z1, a + 0.7, ROW.z1, "#5b6270"); partition(b - 0.7, ROW.z1, b, ROW.z1, "#5b6270"); }
 
 function deskAndProps(id, cx, cz, side, open) {
   // desk against the outer side wall; the bot sits facing that wall, side-on to the opening
@@ -213,12 +212,8 @@ function deskAndProps(id, cx, cz, side, open) {
   return { dx };
 }
 
-const CUBES = [ // id, which quadrant: side = desk wall (-1 west / +1 east), open = opening (-1 back aisle / +1 front aisle)
-  { id: "finbot", cx: (POD.x0 + midX) / 2, cz: (POD.z0 + midZ) / 2, side: -1, open: -1 },
-  { id: "peoplebot", cx: (midX + POD.x1) / 2, cz: (POD.z0 + midZ) / 2, side: 1, open: -1 },
-  { id: "growthbot", cx: (POD.x0 + midX) / 2, cz: (midZ + POD.z1) / 2, side: -1, open: 1 },
-  { id: "opsbot", cx: (midX + POD.x1) / 2, cz: (midZ + POD.z1) / 2, side: 1, open: 1 },
-];
+const CUBES = ["finbot", "peoplebot", "growthbot", "opsbot"].map((id, i) => ( // side = desk wall (-1 west / +1 east), open = +1 (front aisle)
+  { id, cx: ROWX[i] + CW / 2, cz: (ROW.z0 + ROW.z1) / 2, side: i % 2 ? 1 : -1, open: 1 }));
 for (const c of CUBES) {
   const { dx } = deskAndProps(c.id, c.cx, c.cz, c.side, c.open);
   const bx = dx - c.side * 0.72;
