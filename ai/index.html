@@ -55,6 +55,14 @@ h3{font-size:20px;line-height:1.15}
 .kick.y{background:var(--yel);color:var(--ink)}.kick.m{background:var(--mint);color:var(--ink)}.kick.s{background:var(--sky);color:var(--ink)}
 .lead{color:var(--dim);font-size:18px;margin:12px 0 0;max-width:640px}
 section{padding:54px 0}
+.rr{background:linear-gradient(160deg,#2a0f2e,#14102a 70%);border-top:3px solid var(--pink)}
+.rrGrid{display:grid;grid-template-columns:minmax(0,300px) 1fr;gap:28px;align-items:center}
+.rr video{width:100%;aspect-ratio:9/16;border-radius:22px;border:3px solid var(--pink);background:#000;display:block}
+.rr ol{list-style:none;padding:0;margin:18px 0;display:grid;gap:10px}
+.rr li{background:rgba(255,255,255,.06);border-radius:16px;padding:12px 14px;color:var(--dim)}.rr li b{color:#fff;display:block}
+.rr .heroCta{display:flex;flex-wrap:wrap;gap:10px}
+@media(max-width:700px){.rrGrid{grid-template-columns:1fr}.rr video{max-width:260px;margin:0 auto}}
+
 /* hero */
 .hero{padding:30px 0 40px;background:radial-gradient(1100px 500px at 15% -10%,#5b1d8a 0,transparent 60%),radial-gradient(900px 500px at 100% 10%,#1b3d8f 0,transparent 55%)}
 .squad{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:24px}
@@ -186,6 +194,26 @@ footer a{color:var(--dim)}
     <a href="#city" class="p p2"><span class="pi">🏙️</span><b>Virtual Dashboard HUBs</b><span>Every shop, page and bot you run becomes a building in your own live 3D city.</span><i>Hosted · full system · done for you →</i></a>
   </div>
 </div></header>
+
+
+<section class="rr" id="rose"><div class="wrap"><div class="rrGrid">
+  <video src="img/rose_reveal.mp4" poster="img/rose_reveal.jpg" autoplay muted loop playsinline preload="metadata" aria-label="Rose, made with AI"></video>
+  <div>
+    <span class="kick">You asked how it's done 🌹</span>
+    <h2>How we made <span class="hl">Rose</span></h2>
+    <p class="lead">One face, any outfit, any place. Rose is built from a single photo and works around the clock.</p>
+    <ol>
+      <li><b>1. One master photo</b>Design her face once, then put her anywhere: yacht, rooftop, gym. Each new picture costs cents.</li>
+      <li><b>2. Make her move</b>Every picture becomes a 5-second video clip with an image-to-video model.</li>
+      <li><b>3. Cut the reel</b>Add a hook, the numbers and a call to action, then post on a schedule.</li>
+    </ol>
+    <div class="heroCta">
+      <a class="btn pk" href="#kit">Build your own →</a>
+      <a class="btn gh" href="#avatar">We build one for you</a>
+      <a class="btn mt" href="#city">Run it all from your HUB</a>
+    </div>
+  </div>
+</div></div></section>
 
 <div class="marq" aria-hidden="true"><span>💃 GRANNY'S NOT DONE YET · 💙 ANOTHER DAY BEING THIS FIT · 👓 ALL-IN, STILL CELEBRATING · 🎬 TREND HIJACKS · 🧠 PROMPTS THAT WORK · 💃 GRANNY'S NOT DONE YET · 💙 ANOTHER DAY BEING THIS FIT · 👓 ALL-IN, STILL CELEBRATING · 🎬 TREND HIJACKS · 🧠 PROMPTS THAT WORK · </span></div>
 
