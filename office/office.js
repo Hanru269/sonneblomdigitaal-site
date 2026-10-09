@@ -139,14 +139,17 @@ function robot(color, name) {
 const screenSheet = textTex(["FinBot.xlsx", ["✓ BALANCED", "#3dffa8"], "70 lines · 39 auto"], { w: 256, h: 192, bg: "#0b3d2a", fg: "#b9ffd9", font: "bold 26px Courier New" });
 const screenSoon = textTex(["COMING", "SOON"], { w: 256, h: 192, bg: "#2a1450", fg: "#ff9fe9", font: "bold 40px Courier New" });
 const pods = [
-  { id: "finbot", x: -9, z: -9, color: "#28e0ff", name: "FINBOT", live: true },
-  { id: "social", x: 0, z: -9, color: "#ff3fbf", name: "SOCIALBOT", live: false },
-  { id: "pa", x: 9, z: -9, color: "#ffd23f", name: "PA-BOT", live: false },
+  { id: "chiefbot", x: 0, z: -9, color: "#ffd23f", name: "CHIEFBOT", live: true },
+  { id: "finbot", x: -7, z: -9, color: "#28e0ff", name: "FINBOT", live: true },
+  { id: "peoplebot", x: 7, z: -9, color: "#3dffa8", name: "PEOPLEBOT", live: true },
+  { id: "growthbot", x: -14, z: -9, color: "#ff3fbf", name: "GROWTHBOT", live: false },
+  { id: "opsbot", x: 14, z: -9, color: "#ff8a1f", name: "OPSBOT", live: false },
 ];
 const bots = {};
 for (const p of pods) {
   desk(p.x, p.z, 0, p.live ? "#ff8a1f" : "#a58cff");
-  crt(p.x - 0.5, 0.82, p.z - 0.15, 0, p.live ? screenSheet : screenSoon);
+  const SCREEN = { chiefbot: ["MORNING BRIEF", ["✓ sent 07:00", "#3dffa8"], "1 needs your yes"], peoplebot: ["PAYROLL OCT", ["✓ 3 payslips", "#3dffa8"], "EMP201 ready"] };
+  crt(p.x - 0.5, 0.82, p.z - 0.15, 0, !p.live ? screenSoon : SCREEN[p.id] ? textTex(SCREEN[p.id], { w: 256, h: 192, bg: "#0b3d2a", fg: "#b9ffd9", font: "bold 24px Courier New" }) : screenSheet);
   box(0.5, 0.05, 0.18, "#efe6cf", p.x - 0.5, 0.84, p.z + 0.3);
   const r = robot(p.color, p.name);
   r.position.set(p.x + 0.2, 0, p.z - 1.0);
@@ -158,7 +161,7 @@ for (const p of pods) {
   const rug = new THREE.Mesh(new THREE.CircleGeometry(2.4, 40), mat(p.live ? "#3dffa8" : "#d9ccff")); rug.rotation.x = -Math.PI / 2; rug.position.set(p.x, 0.01, p.z + 0.4); scene.add(rug);
 }
 // whiteboard with today's numbers
-sign(textTex([["TODAY ON THE FLOOR", "#16112e"], ["FinBot: 70 lines, 0 errors", "#e0249b"], ["SocialBot: training", "#7b4dff"], ["PA-Bot: training", "#7b4dff"]], { w: 768, h: 384, bg: "#ffffff", font: "bold 40px Comic Sans MS" }), 4.4, 2.2, 14.5, 2.4, -D + 0.18);
+sign(textTex([["TODAY ON THE FLOOR", "#16112e"], ["FinBot: 70 lines, 0 errors", "#e0249b"], ["PeopleBot: payroll ready", "#0a8f5a"], ["Growth + Ops: training", "#7b4dff"]], { w: 768, h: 384, bg: "#ffffff", font: "bold 40px Comic Sans MS" }), 4.4, 2.2, 14.5, 2.4, -D + 0.18);
 box(4.6, 2.4, 0.06, "#c0c0d0", 14.5, 2.4, -D + 0.14);
 
 // ---------- zone: arcade (right wall) ----------
@@ -215,9 +218,11 @@ rug.rotation.x = -Math.PI / 2; rug.position.set(16, 0.012, 13.6); scene.add(rug)
 
 // ---------- interactions ----------
 const spots = [
-  { x: -9, z: -7.6, r: 2.4, label: "Talk to FinBot", fn: () => openFinbot() },
-  { x: 0, z: -7.6, r: 2.4, label: "Meet SocialBot", fn: () => openSoon("social") },
-  { x: 9, z: -7.6, r: 2.4, label: "Meet PA-Bot", fn: () => openSoon("pa") },
+  { x: -7, z: -7.6, r: 2.4, label: "Talk to FinBot", fn: () => openFinbot() },
+  { x: 0, z: -7.6, r: 2.4, label: "Talk to ChiefBot", fn: () => openSoon("chiefbot") },
+  { x: 7, z: -7.6, r: 2.4, label: "Talk to PeopleBot", fn: () => openSoon("peoplebot") },
+  { x: -14, z: -7.6, r: 2.4, label: "Meet GrowthBot", fn: () => openSoon("growthbot") },
+  { x: 14, z: -7.6, r: 2.4, label: "Meet OpsBot", fn: () => openSoon("opsbot") },
   { x: 18, z: 2, r: 1.5, label: "Play SNAKE", fn: () => openSnake("SNAKE") },
   { x: 18, z: 4, r: 1.5, label: "Play PONG", fn: () => openPong() },
   { x: 18, z: 6, r: 1.5, label: "Play SNAKE II", fn: () => openSnake("SNAKE II", true) },
@@ -298,7 +303,7 @@ let toastT;
 function toast(t) { const el = $("#toast"); el.textContent = t; el.classList.add("on"); clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove("on"), 2600); }
 $("#enter").onclick = () => { $("#intro").remove(); toast(touch ? "👈 Walk with your left thumb" : "WASD to walk · drag to look"); };
 $("#mapBtn").onclick = () => openPanel(`<div class="kick">Floor plan</div><h2>Where is everyone?</h2>
-  <ul class="sk"><li>🤖 <b>Back wall:</b> the AI employees. FinBot is at work; SocialBot and PA-Bot are in training.</li>
+  <ul class="sk"><li>🤖 <b>Back wall:</b> the AI employees. ChiefBot (team lead) in the middle, FinBot and PeopleBot at work beside it, GrowthBot and OpsBot in training on the ends.</li>
   <li>🕹️ <b>Right wall:</b> the arcade (Snake, Pong, Snake II).</li><li>🛋️ <b>By the windows:</b> lounge, beanbags, lava lamps.</li>
   <li>🏓 <b>Middle:</b> ping pong.</li><li>🥤 <b>Front left:</b> the Fizz-O-Matic and water cooler.</li></ul>`);
 
@@ -312,10 +317,13 @@ function openFinbot(tab = "hi") {
   if (tab === "hi") body = `<p>Hi! I'm <b>FinBot</b>, your bookkeeping employee. Send me a bank statement (any SA bank, even a scanned PDF) and I'll hand back a finished Excel file.</p>
     <p>I check every line against the bank's running balance, so the totals tie to the cent before you see them. Anything I'm unsure about goes on a short question list for your client, never into the wrong account.</p>
     <button class="big" data-t="demo">▶ Watch me work</button>`;
-  if (tab === "skills") body = `<ul class="sk"><li>📄 Bank statement PDF → Excel (FNB, ABSA, Standard Bank, Nedbank, Capitec, scans too)</li>
-    <li>✅ Line-by-line balance check + full reconciliation sheet</li><li>🗂️ Allocates to your chart of accounts (Sage/Pastel-style codes)</li>
-    <li>🧾 Splits out VAT for VAT-registered clients</li><li>❓ Builds the client query list for unclear items</li>
-    <li>🧠 Learns each client's rules: correct me once, I remember</li><li>📤 Import file for Sage, Xero or QuickBooks</li></ul>`;
+  if (tab === "skills") body = `<ul class="sk"><li>✅ Bank statement PDF → Excel (any SA bank, scans too), balanced to the cent</li>
+    <li>✅ Allocates to your chart of accounts, splits VAT, builds the client question list</li>
+    <li>✅ Sales invoices (tax invoice PDF) and matching payments from the bank</li>
+    <li>✅ Debtors: age analysis + polite-to-firm reminders (sent only after your yes)</li>
+    <li>✅ Supplier invoices read from PDF or photo, with duplicate and VAT checks</li>
+    <li>✅ SARS + CIPC calendar: EMP201, VAT201, IRP6, EMP501, ITR14, annual return</li>
+    <li>🛠️ VAT201 preparation and management accounts</li><li>📤 Import file for Sage, Xero or QuickBooks</li></ul>`;
   if (tab === "hire") body = `<p><b>Two ways to work with FinBot:</b></p><ul class="sk">
     <li>🏠 <b>Rent:</b> monthly subscription. FinBot lives here in our office; you send statements, it sends back the files.</li>
     <li>🔑 <b>Own:</b> buy FinBot outright with its own office hub, plus a monthly maintenance plan or a fee per call-out.</li></ul>
@@ -341,16 +349,23 @@ function runDemo() {
       <p><b>Questions FinBot asks the client:</b></p><ul class="sk">${demo.questions.map((q) => `<li class="q">${q}</li>`).join("")}</ul>`;
   }, 500 + steps.length * 800);
 }
-const SOON = {
-  social: ["SocialBot", "AI employee · Social media", "Deep social media know-how: hooks, posting times, captions, hashtags and SEO for every platform. It plans your month, writes the posts and tells you what's working.", ["📅 Content calendar for the month", "✍️ Captions, hooks and hashtags in your voice", "🔎 SEO and Google Business posts", "📈 Weekly 'what worked' report"]],
-  pa: ["PA-Bot", "AI employee · Personal assistant", "A personal assistant that can run your computer for you: email, calendar, forms, files and the boring admin.", ["📥 Sorts and drafts replies to email", "📆 Books and moves meetings", "🧾 Fills in forms and portals", "🗂️ Files documents where they belong"]],
+const SOON = { // [name, role, pitch, skills ("✓ " = working today)]
+  chiefbot: ["ChiefBot", "Team lead · Your chief of staff", "Runs the team. Every morning it reads what the other four did and sends you one brief: deadlines, money owed, what needs your yes. Nothing leaves the building without your approval.",
+    ["✓ Morning brief from the whole team", "✓ Approval queue: emails, payments, filings wait for your yes", "✓ Audit log of every action", "Email + calendar assistant", "Runs your computer for the boring admin"]],
+  peoplebot: ["PeopleBot", "AI employee · HR, payroll, legal admin, reception", "Your HR office, payroll clerk and front desk in one. Knows the BCEA, LRA, UIF and COIDA rules and keeps your people admin clean.",
+    ["✓ Payroll: PAYE (SARS 2026/27 tables), UIF, SDL", "✓ Payslips (PDF) + EMP201 totals", "Contracts, warnings and leave from BCEA-safe templates", "Receptionist: answers WhatsApp/email, books appointments", "UIF, COIDA and EMP501 admin"]],
+  growthbot: ["GrowthBot", "AI employee · Marketing + sales", "Deep social media and SEO know-how plus a sales engine: content, Google profile, leads, quotes and follow-ups.",
+    ["Content calendar, captions, hooks for every platform", "Google Business Profile + AI search visibility", "Finds leads and drafts outreach", "Quotes and follow-ups until a yes or no", "Weekly 'what worked' report"]],
+  opsbot: ["OpsBot", "AI employee · Operations", "Keeps the work flowing: suppliers, stock, job scheduling, documents and the small IT jobs nobody wants.",
+    ["Stock levels and reorder alerts", "Supplier orders and delivery follow-ups", "Job / project schedule and reminders", "Files every document where it belongs", "Compliance paperwork checklist"]],
 };
 function openSoon(id) {
   const [n, k, d, sk] = SOON[id];
-  openPanel(`<div class="kick">${k}</div><h2>${n} 🛠️</h2><p>${d}</p><ul class="sk">${sk.map((s) => `<li>${s}</li>`).join("")}</ul><p class="dim">In training. Want to be first in line? <a href="mailto:hello@eaafix.com?subject=${n}%20early%20access" style="color:#28e0ff">Ask for early access</a>.</p>`);
+  const live = sk.some((s) => s.startsWith("✓"));
+  openPanel(`<div class="kick">${k}</div><h2>${n} ${live ? "🤖" : "🛠️"}</h2><p>${d}</p><ul class="sk">${sk.map((s) => `<li>${s.startsWith("✓") ? "✅ " + s.slice(2) : "🛠️ " + s}</li>`).join("")}</ul><p class="dim">✅ working today · 🛠️ in training. <a href="mailto:hello@eaafix.com?subject=${n}%20early%20access" style="color:#28e0ff">Ask for early access</a>.</p>`);
 }
 function openBoard() {
-  openPanel(`<div class="kick">Whiteboard</div><h2>Today on the floor</h2><ul class="sk"><li>🤖 FinBot: test statement, 70 lines, balanced to the cent.</li><li>🛠️ SocialBot: studying platform playbooks.</li><li>🛠️ PA-Bot: learning to drive a computer.</li><li>🍕 Friday: pizza for humans.</li></ul>`);
+  openPanel(`<div class="kick">Whiteboard</div><h2>Today on the floor</h2><ul class="sk"><li>🤖 FinBot: test statement, 70 lines, balanced to the cent.</li><li>👥 PeopleBot: October payroll, 3 payslips, EMP201 ready.</li><li>☀️ ChiefBot: morning brief sent.</li><li>🛠️ GrowthBot + OpsBot: in training.</li><li>🍕 Friday: pizza for humans.</li></ul>`);
 }
 const DRINKS = ["🍒 Cherry Fizz", "🍋 Lemon Zap", "🫐 Blueberry Blast", "🥭 Mango Mayhem", "☕ Iced Rooibos"];
 function fizz() { toast(`Clunk! You got a ${DRINKS[Math.floor(Math.random() * DRINKS.length)]} (+5 energy)`); }
