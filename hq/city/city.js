@@ -58,7 +58,7 @@ function model(D) {
     ["Highest profit day", `${pnl(x.best_day)} · ${x.best_day_date || ""}`], ["Worst day", `${pnl(x.worst_day)} · ${x.worst_day_date || ""}`],
     ["Days traded", x.days_traded ?? "–"], ["Last trade", x.last_trade ? ago(x.last_trade) : "–"], ["Bot", x.running ? "🟢 running" : "⚪ stopped"]];
   const ks = bo.kalshi || {}, pm = bo.polymarket || {}, kb = bo.krypto || {};
-  const ls = s.longshot || {}; const lb = s.lsbot || {}; const lr = s.lslive || {}; const polyReal = lr.value != null ? +(lr.value - (lr.start_real || lr.start || 19.53)).toFixed(2) : 0; const kx = s.k10x || {}; const sb = s.solbot || {}; const cb = s.copybot || {};
+  const ls = s.longshot || {}; const lb = s.lsbot || {}; const lr = s.lslive || {}; const polyReal = lr.value != null ? +(lr.value - (lr.start_real || lr.start || 19.53)).toFixed(2) : 0; const kx = s.k10x || {}; const sb = s.solbot || {}; const cb = s.copybot || {}; const br = s.botrace || {}; const brr = br.racers || [];
   const race = [{ name: "Polymarket LIVE", method: "same style, REAL money", value: lr.value, start: lr.start_real || lr.start || 19.53, trades: lr.trades || 0, wins: lr.wins || 0, live: true },
     { name: "Polymarket", method: "momentum on favourites", value: lb.value, trades: lb.trades || 0, wins: lb.wins || 0 },
     { name: "Copy Desk", method: "copies 5 top Polymarket traders", value: cb.value, start: cb.start || 125, trades: sum(cb.traders || [], t => t.trades), wins: sum(cb.traders || [], t => t.wins) },
@@ -263,6 +263,17 @@ function model(D) {
         (cb.traders || []).map(t => [`${t.name} (+$${num(t.month_pnl)} this month)`, `${usd(t.value ?? 25)} · ${pct(t.value ?? 25, 25)} · ${t.open || 0} open · ${t.trades} done`]),
         (cb.traders || []).flatMap(t => (t.log || []).slice(0, 3).map(l => [`${t.name.slice(0, 10)}: ${l.msg}`, (l.ts || "").slice(5, 16).replace("T", " ")])).slice(0, 12), "Latest copied trades",
         "https://polymarket.com/leaderboard", "Started " + (cb.started || "–") + ". Checks for new trades every 5 minutes.") },
+
+    { id: "botrace", name: "Live Arena", short: "LIVE ARENA", icon: "📺", color: 0xff3b5c, pos: [8, -128], w: 7, d: 7, h: 13, kind: "coin", face: [0, 1],
+      status: br.ts ? "ok" : "unknown", today: 0, total: 0,
+      tag: brr.length ? [br.status === "running" ? `🥇 ${brr[0].name} ${usd(brr[0].value)}` : "race starts soon", `${brr.length} bots · $1,000 each · YouTube live`] : ["setting up", ""],
+      board: { title: "AI BOT RACE · LIVE", main: brr.length ? brr[0].name : "–", mainLabel: br.status === "running" ? `leading · ${usd(brr[0].value)}` : "starts when the stream goes live",
+        rows: brr.map((r, i) => [`${["🥇", "🥈", "🥉"][i] || (i + 1) + "."} ${r.name.slice(0, 16)}`, `${usd(r.value)} · ${r.pct >= 0 ? "+" : ""}${r.pct}%`]) },
+      sheet: () => sheetHTML("Live Arena", "The 24/7 YouTube livestream race: 5 top Polymarket traders (copied, public wallets; every Monday the 2 worst are swapped for the next best), your 3 bots (Long Shot, Kalshi Fair Value, SOL Dip Buyer) and 2 new bots (Weather Bot on Kalshi temperature markets, Bond Bot on 90c+ Polymarket outcomes). $1,000 practice money each, real prices. Reels from Ollie, Granny Mae and Mr Nobody loop next to the board.",
+        brr.length ? brr[0].name : "–", br.status === "running" ? "in the lead" : (br.status || "setting up"),
+        brr.map((r, i) => [`${i + 1}. ${r.name} (${r.who.toLowerCase()}, ${r.venue})`, `${usd(r.value)} · ${r.pct >= 0 ? "+" : ""}${r.pct}% · ${r.trades} trades`]),
+        (br.feed || []).slice(0, 10).map(f => [f, ""]), "Latest trades",
+        "", (br.started ? "Started " + br.started.slice(0, 16).replace("T", " ") + " UTC." : "Not started yet.") + ((br.dropped || []).length ? " Kicked out so far: " + br.dropped.map(d => d.name).join(", ") + "." : "")) },
 
     { id: "longshot", name: "Bot Olympics", short: "BOT OLYMPICS", icon: "🏅", color: 0xffd166, pos: [0, -174], w: 38, d: 3, h: 21, lift: 22, kind: "bigboard", face: [0, 1], draw: g => drawOlympics(g, race),
       status: "ok", today: 0, total: 0,
