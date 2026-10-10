@@ -415,8 +415,45 @@ function openBot(id) {
     <p>${b.pitch}</p>
     <div class="btns"><a class="big" href="mailto:hello@eaafix.com?subject=${b.name}%20for%20my%20business">Hire ${b.name}</a>
     <a class="big ghost" href="/ai-team/#prices">See prices</a>
-    ${id === "finbot" ? `<button class="big ghost" id="demoBtn">▶ See a demo</button>` : ""}</div><div id="res"></div>`);
+    ${id === "finbot" ? `<button class="big ghost" id="demoBtn">▶ See a demo</button>` : ""}</div>${JOBS[id] ? workForm(id) : ""}<div id="res"></div>`);
   if (id === "finbot") $("#demoBtn").onclick = runDemo;
+  if (JOBS[id]) wireWork(id);
+}
+
+// ---- give an employee work (owner 2026-10-10): files in, download links out (owner-only passcode) ----
+const WORKS = "https://chat.sonneblomdigitaal.co.za/works";
+const JOBS = {
+  finbot: [["bank", "Bank statement → allocated workbook + Sage import", true], ["recon", "Blank VAT reconciliation (year end 28 Feb)", false]],
+  peoplebot: [["uif", "UIF / IRP5 termination check (staff list, UI-19 list, IRP5 list)", true]],
+};
+function workForm(id) {
+  const pass = localStorage.getItem("works-pass") || "";
+  return `<div class="work"><div class="kick">Give ${BOTS[id].name} work</div>
+    ${pass ? "" : `<input id="wPass" type="password" placeholder="Office passcode (asked once)">`}
+    <select id="wTask">${JOBS[id].map(([v, t]) => `<option value="${v}">${t}</option>`).join("")}</select>
+    <input id="wClient" placeholder="Client name">
+    <div class="wRow"><input id="wOpen" placeholder="Opening balance (bank only)" inputmode="decimal"><input id="wYear" placeholder="Year end (recon), e.g. 2027" inputmode="numeric"></div>
+    <label class="wFile">📎 <span id="wFn">Choose file(s): CSV, Excel or PDF</span><input id="wFiles" type="file" multiple accept=".csv,.xlsx,.xlsm,.pdf"></label>
+    <button class="big" id="wGo">Hand it over</button><div id="wOut" class="dim"></div></div>`;
+}
+function wireWork(id) {
+  $("#wFiles").onchange = e => { $("#wFn").textContent = [...e.target.files].map(f => f.name).join(", ") || "Choose file(s)"; };
+  $("#wGo").onclick = async () => {
+    const pass = ($("#wPass") && $("#wPass").value) || localStorage.getItem("works-pass") || "";
+    if (!pass) return ($("#wOut").textContent = "Enter the office passcode first.");
+    const fd = new FormData(); fd.append("bot", id); fd.append("task", $("#wTask").value); fd.append("client", $("#wClient").value);
+    fd.append("opening", $("#wOpen").value); fd.append("year", $("#wYear").value); fd.append("lang", "af");
+    [...$("#wFiles").files].slice(0, 3).forEach(f => fd.append("files", f, f.name));
+    $("#wGo").disabled = true; $("#wOut").innerHTML = `⏳ ${BOTS[id].name} is working on it… (PDFs take about a minute)`;
+    try {
+      const r = await fetch(WORKS + "/job", { method: "POST", headers: { "X-Pass": pass }, body: fd }); const d = await r.json();
+      if (r.status === 401) { localStorage.removeItem("works-pass"); $("#wOut").textContent = "Wrong passcode."; return; }
+      if (!d.ok) { $("#wOut").textContent = "⚠️ " + (d.error || "Something went wrong."); return; }
+      localStorage.setItem("works-pass", pass);
+      $("#wOut").innerHTML = `✅ ${d.summary}<br>${d.links.map(l => `<a class="dl" href="${l.url}">⬇ ${l.name}</a>`).join("")}<br><span class="dim">Links work for ${d.expires_hours} hours, then the files are deleted.</span>`;
+    } catch (e) { $("#wOut").textContent = "⚠️ Couldn't reach the office server. Try again."; }
+    finally { $("#wGo").disabled = false; }
+  };
 }
 let demo = null;
 fetch("demo.json?v=1").then((r) => r.json()).then((d) => (demo = d)).catch(() => {});
