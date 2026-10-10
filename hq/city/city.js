@@ -112,7 +112,32 @@ function model(D) {
       board: { title: x.name, main: x.status, mainLabel: x.title || "", rows: [] }, sheet: () => homeHTML(x, team) };
   });
 
+  // Trading Town = the AI Bot Race (owner 2026-10-10): only the 10 racers, one building each, height grows with the bankroll
+  const RSLOT = [[-32, -168], [-16, -168], [0, -168], [16, -168], [32, -168], [-32, -146], [-16, -146], [0, -146], [16, -146], [32, -146]];
+  const RORD = ["longshot", "kalshi", "sol", "weather", "bond"];
+  const RDESC = { longshot: "Polymarket momentum: favourites at 60-90c ending within a day whose price is rising; sells at 97c, stop at -25%.",
+    kalshi: "Kalshi fair value: Coinbase price + 6 h volatility -> real probability for Bitcoin/Ethereum 'above $X' markets; buys when Kalshi is 8c too cheap.",
+    sol: "SOL dip buyer: buys unusual drops vs the 4-hour average (z-score), skips falling knives, sells at +1.5%, stop -4%. Real Jupiter quotes.",
+    weather: "Kalshi daily high-temperature brackets in 7 US cities: NWS forecast + live station readings, buys when 8c+ under fair value.",
+    bond: "Polymarket 'bonds': outcomes at 90-97c ending within 48 h, 10% per bet, max 8, max 2 crypto, stop at -15%." };
+  const rRank = id => brr.findIndex(x => x.id === id) + 1;
+  const rOrder = [...brr].sort((a, b) => { const ia = RORD.indexOf(a.id), ib = RORD.indexOf(b.id); if (ia >= 0 || ib >= 0) return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib); return (a.joined || 0) - (b.joined || 0) || a.name.localeCompare(b.name); });
+  const RACERS = rOrder.slice(0, 10).map((r, i) => {
+    const rk = rRank(r.id), up = (r.pct || 0) >= 0, trader = r.who === "TOP TRADER";
+    return { id: "racer_" + r.id, name: r.name, short: r.name.toUpperCase().slice(0, 14), icon: trader ? "👤" : "🤖", color: parseInt((r.color || "#9945ff").slice(1), 16),
+      pos: RSLOT[i], w: 9, d: 7, h: Math.round(10 + Math.max(0, Math.min(22, (r.value / (r.start || 1000) - 0.7) * 30))), kind: "coin", face: [0, 1],
+      status: br.status === "running" ? "ok" : "unknown", today: 0, total: 0,
+      tag: [`${usd(r.value)} · ${up ? "+" : ""}${(r.pct || 0).toFixed(1)}%`, `#${rk} · ${trader ? "top trader" : r.who === "NEW BOT" ? "new bot" : "our bot"} · ${r.venue}`],
+      board: { title: r.name.toUpperCase(), main: usd(r.value), mainLabel: `#${rk} of ${brr.length} in the race · ${br.status || "waiting"}`,
+        rows: [["Return", `${up ? "+" : ""}${(r.pct || 0).toFixed(1)}%`], ["Trades", num(r.trades || 0)], ["Won", num(r.wins || 0)], ["Open", num(r.open || 0)], ["Venue", r.venue]] },
+      sheet: () => sheetHTML(r.name, trader ? `Top Polymarket trader, copied trade for trade with $1,000 practice money (same share of the bankroll they use, 1c worse prices). Every Monday the 2 worst traders are swapped out.` : (RDESC[r.id] || r.venue),
+        usd(r.value), `#${rk} of ${brr.length} · started with ${usd(r.start || 1000)}`,
+        [["Return", `${up ? "+" : ""}${(r.pct || 0).toFixed(2)}%`], ["Trades closed", num(r.trades || 0)], ["Won", num(r.wins || 0)], ["Open now", num(r.open || 0)], ["Type", r.who.toLowerCase()], ["Venue", r.venue]],
+        (r.log || []).map(l => [l.msg, (l.ts || "").slice(5, 16).replace("T", " ")]), "Latest trades",
+        trader && r.wallet ? `https://polymarket.com/profile/${r.wallet}` : "", (br.started ? "Race started " + br.started.slice(0, 16).replace("T", " ") + " UTC." : "Race starts when the YouTube stream goes live.") + " Paper money, real prices.") };
+  });
   const B = [
+    ...(DEMO ? [] : RACERS),
     { id: "etsy", name: "Etsy Megastore", short: "ETSY", icon: "🛍️", color: 0xff8a3d, pos: [120, -16], w: 13, d: 9, h: 12, kind: "factory", face: [0, 1],
       status: st("etsy"), today: eDay, total: eTot,
       tag: [`${num(L.length)} listings`, eDay ? usd(eDay) + " today" : `${num(views)} views`],
@@ -146,20 +171,13 @@ function model(D) {
          ...ia.map(a => [`${a.emoji || ""} ${a.name}${a.username ? " @" + a.username : ""}`, a.error ? a.error : `${num(a.followers)} followers · ${num(a.posts)} posts`])],
         ia.filter(a => a.top).map(a => [`${a.name}: ${a.top.text || "top post"}`, `${num(a.top.views)} views`]), "Top post per account", "https://www.instagram.com/") },
 
-    { id: "rose", name: "Rose Tower", short: "ROSE", icon: "🌹", color: 0xff3d9a, pos: [-162, 26], w: 8, d: 8, h: 36, kind: "spire", face: [1, 0],
-      status: worst(st("rose"), sv("companion"), sv("rose-web")), today: rd.money_today_usd || 0, total: rd.money_usd || 0, zar: roseZar,
-      tag: [`${num(rd.followers)} followers`, `${plus(rd.gained_24h)} today`],
-      board: { title: "ROSE · MY DAY", main: num(rd.followers), mainLabel: "followers (Facebook + Instagram)",
-        rows: [["New today", plus(rd.gained_24h)], ["New this week", plus(rd.gained_7d)], ["Messages today", num(rd.messages_today)], ["Likes this week", num(rd.likes_7d)], ["Comments (week)", num(rd.comments_7d)], ["Money made", usd(rd.money_usd)]] },
-      sheet: () => sheetHTML("Rose Tower", "Rose, 28 · AI influencer · her day in numbers", rd.followers ?? 0, "followers (FB + IG)",
-        [["New followers today", plus(rd.gained_24h)], ["New this week", plus(rd.gained_7d)], ["Instagram", num(rd.ig_followers)], ["Facebook", num(rd.fb_followers)],
-         ["Messages today", num(rd.messages_today)], ["Chatting (24h)", num(rd.chatters_24h)], ["Messenger chats", num(ro.fb_dm_chats)],
-         ["Likes this week", num(rd.likes_7d)], ["Comments this week", num(rd.comments_7d)], ["Views (24h)", num(rd.views_24h)], ["Posts this week", num(rd.posts_7d)],
-         ["Money today", usd(rd.money_today_usd)], ["Money this week", usd(rd.money_7d_usd)], ["Money all time", usd(rd.money_usd)],
-         ["Fans paying now", num(rd.fans)], ["Albums sold", num((rd.sales_by_item || {}).album || 0)], ["VIP girlfriend weeks", num((rd.sales_by_item || {}).gf || 0)],
-         ["Bot", svLabel("companion")], ["Web chat", svLabel("rose-web")]], [], "", "https://rosecompanion.github.io/chat.html",
-        `<i>Dear diary 💕 ${rd.gained_7d > 0 ? `${num(rd.gained_7d)} new followers this week` : "a quiet week for followers"}, ${num(rd.likes_7d)} likes and ${num(rd.comments_7d)} comments. ` +
-        `${rd.messages_today ? `${num(rd.messages_today)} messages from my guys today` : "No messages yet today"}${rd.money_usd ? `, and ${usd(rd.money_usd)} made so far` : ", still waiting for my first sale"} 🌹</i>`) },
+    { id: "youtube", name: "YouTube Tower", short: "YOUTUBE", icon: "📺", color: 0xff0033, pos: [-162, 26], w: 8, d: 8, h: 36, kind: "spire", face: [1, 0],
+      status: yt.ts ? "ok" : "unknown", today: 0, total: yt.views || 0,
+      tag: yt.ts ? [`${num(yt.subs || 0)} subs · ${num(yt.views || 0)} views`, `${(yt.list || []).length} videos · ${yt.live_ready ? "LIVE ready" : "live unlocks soon"}`] : ["connecting", ""],
+      board: { title: "AI BOT RACE · YOUTUBE", main: `${num(yt.subs || 0)} subs`, mainLabel: `${num(yt.views || 0)} channel views`, rows: (yt.list || []).slice(0, 6).map(v => [v.title.slice(0, 26), v.privacy === "public" ? `${num(v.views)} views` : "⏳ " + v.privacy]) },
+      sheet: () => sheetHTML("YouTube Tower", "The AI Bot Race channel: how-we-built-it series (uploaded by API, scheduled; approve in the YouTube app) plus the 24/7 live race once streaming unlocks. Series 2 = the City, 3 = AI influencers, 4 = e-commerce.",
+        `${num(yt.subs || 0)} subs`, `${num(yt.views || 0)} views · ${(yt.list || []).length} videos`,
+        (yt.list || []).map(v => [v.title, v.privacy === "public" ? `${num(v.views)} views` : `${v.privacy}`]), [], "", "https://studio.youtube.com", "Updated " + (yt.ts || "–")) },
 
     { id: "contra", name: "Contra Studio", short: "CONTRA", icon: "💼", color: 0x00e5ff, pos: [-26, 18], w: 7, d: 7, h: 26, kind: "glass", face: [1, 0],
       status: "ok", today: 0, total: ct.earned_usd || 0,
@@ -207,100 +225,13 @@ function model(D) {
         [["Actors", (ap.actors || []).length], ["Users", apUsers], ["x402 balance", "$" + (x4.balance_usdc ?? 0)], ["x402 paid calls", x4.external_tx_since_oct2 ?? 0], ["x402 server", svLabel("x402-agentedge")]],
         [...(ap.actors || [])].sort((a, b) => b.runs - a.runs).slice(0, 6).map(a => [a.title, `${a.runs} runs`]), "Busiest actors", "https://console.apify.com/actors") },
 
-    { id: "krypto", name: "Krypto Mint", short: "KRYPTO", icon: "🪙", color: 0x9945ff, pos: [-24, -150], w: 7, d: 7, h: 15, kind: "coin", face: [0, 1],
-      status: st("krypto"), today: 0, total: 0,
-      tag: sb.value != null ? [usd(sb.value) + " of $250 (practice)", `${(sb.lots || []).length} open · ${sb.trades || 0} done`] : [usd(kr.usd || 0) + " wallet", kr.armed_scripts?.length ? "bot trading" : "bot off"],
-      board: sb.value != null ? { title: "PHANTOM $25 → $250", main: usd(sb.value), mainLabel: "SOL dip bot · practice money",
-        rows: [["Profit", `${pnlU(sb.value, 25)} (${pct(sb.value, 25)})`], ["Open lots", (sb.lots || []).length], ["Trades done", `${sb.trades || 0} (${sb.wins || 0} wins)`], ["Race place", place("Phantom SOL")]] } : { title: "KRYPTO MINT", main: usd(kr.usd || 0), mainLabel: "Phantom wallet (SOL + tokens)",
-        rows: sb.value != null ? [["SOL dip bot", usd(sb.value) + " of $250"], ["Bot trades", `${sb.trades || 0} (${sb.wins || 0} wins)`], ["Profit", `${pnlU(sb.value, 25)} (${pct(sb.value, 25)})`], ["Race place", place("Phantom SOL")]] : [["SOL", (kr.sol ?? 0).toFixed(4)], ["Rand", "R" + num(Math.round(kr.zar || 0))], ["Bot today", pnl(kb.today)], ["Best day", pnl(kb.best_day)]] },
-      sheet: () => sheetHTML("Krypto Mint", "Phantom / Krypto Bot wallet on Solana (read-only)", usd(kr.usd || 0), "wallet value",
-        [...(sb.value != null ? [["SOL dip bot (practice)", usd(sb.value) + " of $250"], ["Bot trades", `${sb.trades || 0} (${sb.wins || 0} wins)`], ["Open lots", (sb.lots || []).length], ["Dip score now", (sb.z ?? 0).toFixed(1) + " (buys at -1.8)"], ["Profit", `${pnlU(kx.value, 25)} (${pct(kx.value, 25)})`], ["Race place", place("Kalshi")]] : []),
-         ["SOL", (kr.sol ?? 0).toFixed(4)], ["Tokens (open)", usd(kr.tokens_usd || 0)], ["Rand", "R" + num(Math.round(kr.zar || 0))], ["Trading script", kr.armed_scripts?.length ? kr.armed_scripts.join(", ") : "off"], ["Bot app", kr.app_running ? "🟢 running" : "🔴 stopped"], ...botSheet(kb).slice(0, 9)],
-        (kr.tokens || []).map(t => [t.symbol, usd(t.usd)]), "Open tokens", kr.address ? "https://solscan.io/account/" + kr.address : "", "Balance read from the public Solana chain on every HQ refresh.") },
-
-    { id: "kalshi", name: "Kalshi Casino", short: "KALSHI", icon: "🎲", color: 0x00d395, pos: [24, -150], w: 7, d: 7, h: 13, kind: "coin", face: [0, 1],
-      status: st("bots"), today: 0, total: 0,
-      tag: kx.value != null ? [usd(kx.value) + " of $250 (practice)", `${(kx.positions || []).length} open · ${kx.trades || 0} done`] : [pnl(ks.today) + " today", "best day " + pnl(ks.best_day)],
-      board: kx.value != null ? { title: "KALSHI $25 → $250", main: usd(kx.value), mainLabel: "fair-value bot · practice money",
-          rows: [["Open trades", (kx.positions || []).length], ["Trades done", `${kx.trades || 0} (${kx.wins || 0} wins)`], ["Profit", `${pnlU(kx.value, 25)} (${pct(kx.value, 25)})`], ["Race place", place("Kalshi")]] }
-        : { title: "KALSHI BOT", main: pnl(ks.today), mainLabel: "profit today", rows: botRows(ks) },
-      sheet: () => kx.value != null ? sheetHTML("Kalshi Casino", "$25 → $250 challenge on Kalshi, FAIR-VALUE method: it prices Bitcoin/Ethereum 'above $X' markets itself from the live price and volatility, buys only when Kalshi is at least 5c too cheap (after fees), and holds to settlement. Practice money, real Kalshi prices.",
-          usd(kx.value), "bot value (cash + open trades)",
-          [["Cash", usd(kx.cash || 0)], ["Progress", Math.round(100 * (kx.progress || 0)) + "%"], ["Trades done", `${kx.trades || 0} (${kx.wins || 0} wins)`], ["Profit", `${pnlU(kx.value, 25)} (${pct(kx.value, 25)})`], ["Race place", place("Kalshi")]]
-            .concat((kx.positions || []).map(p => [`${p.side.toUpperCase()} ${p.label}`, `${p.contracts} @ ${Math.round(p.price * 100)}c · fair ${Math.round(p.fair * 100)}%`])),
-          (kx.log || []).slice(0, 8).map(l => [l.msg, (l.ts || "").slice(5, 16).replace("T", " ")]), "Latest bot moves", "https://kalshi.com", "The old 15-minute Kalshi bot stays switched off.")
-        : sheetHTML("Kalshi Casino", "BTC/ETH 15-minute contracts · numbers from Kalshi's own settlements", pnl(ks.lifetime), "lifetime profit",
-        botSheet(ks).concat([["Balance", usd(ks.balance || 0)]]), [], "", "https://kalshi.com/portfolio", "Read-only: the bot itself is switched off.") },
-
-    { id: "poly", name: "Polymarket Practice", short: "POLY PRACTICE", icon: "📈", color: 0x2e5cff, pos: [-8, -146], w: 7, d: 7, h: 14, kind: "coin", face: [0, 1],
-      status: st("longshot"), today: 0, total: 0,
-      tag: [usd(lb.value || 0) + " of $250" + (lb.mode === "paper" ? " (practice)" : ""), `${(lb.positions || []).length} open · ${lb.trades || 0} done`],
-      board: { title: "POLYMARKET $25 → $250", main: usd(lb.value || 0), mainLabel: `${lb.style_name || "–"} style` + (lb.mode === "paper" ? " · practice money" : ""),
-        rows: [["Profit", `${pnlU(lb.value, 25)} (${pct(lb.value, 25)})`], ["Open trades", (lb.positions || []).length], ["Trades done", `${lb.trades || 0} (${lb.wins || 0} wins)`], ["Race place", place("Polymarket")], ["REAL money", lr.value != null ? `${usd(lr.value)} (${pct(lr.value, lr.start_real || 19.53)}) · ${(lr.positions || []).length} open` : "–"]] },
-      sheet: () => sheetHTML("Polymarket Exchange", "The Polymarket $25 → $250 bot. Style now: '" + (lb.style_name || "–") + "' (favourites 60-90c with rising prices, no sports/esports, sells at 97c or settlement, stop at -25%). " + (lb.mode === "paper" ? "Practice mode: real prices, simulated money." : "Live mode."),
-        usd(lb.value || 0), "bot value (cash + open trades)",
-        [["Profit", pnlU(lb.value, 25)], ["Profit %", pct(lb.value, 25)], ["Cash", usd(lb.cash || 0)], ["Trades done", `${lb.trades || 0} (${lb.wins || 0} wins)`], ["Status", lb.status || "–"], ["Race place", place("Polymarket")]]
-          .concat((lb.positions || []).map(p => [`${p.q} · ${p.outcome}`, `${usd(p.stake)} @ ${Math.round(p.entry * 100)}c → now ${Math.round((p.mark ?? p.entry) * 100)}c`])),
-        (lb.log || []).slice(0, 8).map(l => [l.msg, (l.ts || "").slice(5, 16).replace("T", " ")]), "Latest bot moves", "https://polymarket.com", "The old 5-minute Up/Down bot stays switched off.") },
-
-    { id: "polylive", name: "Polymarket LIVE", short: "POLY LIVE", icon: "💵", color: 0x00e676, pos: [8, -146], w: 8, d: 8, h: 17, kind: "coin", face: [0, 1],
-      status: lr.status === "running" ? "ok" : lr.value != null ? "stale" : "unknown", today: 0, total: polyReal,
-      tag: lr.value != null ? [`${usd(lr.value)} REAL · ${pnlU(lr.value, lr.start_real || 19.53)}`, `${(lr.positions || []).length} open · ${lr.trades || 0} done`] : ["not started", ""],
-      board: { title: "POLYMARKET LIVE", main: usd(lr.value || 0), mainLabel: "REAL money · " + (lr.style_name || "–") + " style",
-        rows: [["Profit", `${pnlU(lr.value, lr.start_real || 19.53)} (${pct(lr.value, lr.start_real || 19.53)})`], ["Open trades", (lr.positions || []).length], ["Trades done", `${lr.trades || 0} (${lr.wins || 0} wins)`], ["Race place", place("Polymarket LIVE")]] },
-      sheet: () => sheetHTML("Polymarket LIVE", "The real-money Polymarket bot (same style as the practice bot). Its profit is NOT counted in the Vault (Vault = sales only).",
-        usd(lr.value || 0), "bot value (cash + open trades)",
-        [["Started with", usd(lr.start_real || 19.53)], ["Profit", pnlU(lr.value, lr.start_real || 19.53)], ["Profit %", pct(lr.value, lr.start_real || 19.53)], ["Cash", usd(lr.cash || 0)], ["Trades done", `${lr.trades || 0} (${lr.wins || 0} wins)`], ["Status", lr.status || "–"], ["Race place", place("Polymarket LIVE")]]
-          .concat((lr.positions || []).map(p => [`${p.q} · ${p.outcome}`, `${usd(p.stake)} @ ${Math.round(p.entry * 100)}c → now ${Math.round((p.mark ?? p.entry) * 100)}c`])),
-        (lr.log || []).slice(0, 8).map(l => [l.msg, (l.ts || "").slice(5, 16).replace("T", " ")]), "Latest bot moves", "https://polymarket.com") },
-
-    { id: "copy", name: "Copy Desk", short: "COPY DESK", icon: "🪞", color: 0xffb020, pos: [-8, -128], w: 7, d: 7, h: 12, kind: "coin", face: [0, 1],
-      status: cb.ts ? "ok" : "unknown", today: 0, total: 0,
-      tag: cb.value != null ? [`${usd(cb.value)} of ${usd(cb.start || 125)} (practice)`, `${(cb.traders || []).length} traders copied`] : ["starting", ""],
-      board: { title: "COPY DESK", main: usd(cb.value || 0), mainLabel: "copying 5 top traders · practice money", rows: (cb.traders || []).map(t => [t.name.slice(0, 16), usd(t.value ?? 25)]) },
-      sheet: () => sheetHTML("Copy Desk", "Copies 5 top Polymarket traders trade-for-trade (same share of the bankroll as they use, $25 practice money each). Picked from the public leaderboard: profitable this month AND all time, active, no market makers or fast-crypto bots. Assess after 2-4 weeks before any real money.",
-        usd(cb.value || 0), `value of ${usd(cb.start || 125)} practice money`,
-        (cb.traders || []).map(t => [`${t.name} (+$${num(t.month_pnl)} this month)`, `${usd(t.value ?? 25)} · ${pct(t.value ?? 25, 25)} · ${t.open || 0} open · ${t.trades} done`]),
-        (cb.traders || []).flatMap(t => (t.log || []).slice(0, 3).map(l => [`${t.name.slice(0, 10)}: ${l.msg}`, (l.ts || "").slice(5, 16).replace("T", " ")])).slice(0, 12), "Latest copied trades",
-        "https://polymarket.com/leaderboard", "Started " + (cb.started || "–") + ". Checks for new trades every 5 minutes.") },
-
-    { id: "botrace", name: "Live Arena", short: "LIVE ARENA", icon: "📺", color: 0xff3b5c, pos: [8, -128], w: 7, d: 7, h: 13, kind: "coin", face: [0, 1],
-      status: br.ts ? "ok" : "unknown", today: 0, total: 0,
-      tag: brr.length ? [br.status === "running" ? `🥇 ${brr[0].name} ${usd(brr[0].value)}` : "race starts soon", `${brr.length} bots · $1,000 each · YouTube live`] : ["setting up", ""],
-      board: { title: "AI BOT RACE · LIVE", main: brr.length ? brr[0].name : "–", mainLabel: br.status === "running" ? `leading · ${usd(brr[0].value)}` : "starts when the stream goes live",
-        rows: brr.map((r, i) => [`${["🥇", "🥈", "🥉"][i] || (i + 1) + "."} ${r.name.slice(0, 16)}`, `${usd(r.value)} · ${r.pct >= 0 ? "+" : ""}${r.pct}%`]) },
-      sheet: () => sheetHTML("Live Arena", "The 24/7 YouTube livestream race: 5 top Polymarket traders (copied, public wallets; every Monday the 2 worst are swapped for the next best), your 3 bots (Long Shot, Kalshi Fair Value, SOL Dip Buyer) and 2 new bots (Weather Bot on Kalshi temperature markets, Bond Bot on 90c+ Polymarket outcomes). $1,000 practice money each, real prices. Reels from Ollie, Granny Mae and Mr Nobody loop next to the board.",
-        brr.length ? brr[0].name : "–", br.status === "running" ? "in the lead" : (br.status || "setting up"),
-        brr.map((r, i) => [`${i + 1}. ${r.name} (${r.who.toLowerCase()}, ${r.venue})`, `${usd(r.value)} · ${r.pct >= 0 ? "+" : ""}${r.pct}% · ${r.trades} trades`]),
-        (br.feed || []).slice(0, 10).map(f => [f, ""]), "Latest trades",
-        "", (br.started ? "Started " + br.started.slice(0, 16).replace("T", " ") + " UTC." : "Not started yet.") + ((br.dropped || []).length ? " Kicked out so far: " + br.dropped.map(d => d.name).join(", ") + "." : "")) },
-
-    { id: "whop", name: "Whop Store", short: "WHOP", icon: "🛍️", color: 0xff6243, pos: [135, -40], w: 11, d: 9, h: 14, kind: "coin", face: [0, 1],
+    { id: "whop", name: "Whop Store", short: "WHOP", icon: "🛍️", color: 0xff6243, pos: [112, 24], w: 11, d: 9, h: 14, kind: "coin", face: [0, 1],
       status: wp.ts ? "ok" : "unknown", today: 0, total: wp.revenue_usd || 0,
       tag: wp.ts ? [`${usd(wp.revenue_usd || 0)} · ${wp.sales || 0} sales`, `${(wp.products || []).length} products · ${wp.members || 0} members`] : ["setting up", ""],
       board: { title: "WHOP STORE", main: usd(wp.revenue_usd || 0), mainLabel: `${wp.sales || 0} sales · ${wp.members || 0} members`, rows: (wp.products || []).map(p => [p.title.slice(0, 22), `${p.members} members`]) },
       sheet: () => sheetHTML("Whop Store", "whop.com/sonneblomdigitaal: AI influencer templates, the Copy What We Did Club ($19/mo, linked from every AI Bot Race video), AI avatar setup service and Side Hustle City. Affiliates earn 30%.",
         usd(wp.revenue_usd || 0), `${wp.sales || 0} sales · ${wp.members || 0} members`,
         (wp.products || []).map(p => [p.title, `${p.members} members · ${p.visibility}`]), [], "", "https://whop.com/sonneblomdigitaal", "Updated " + (wp.ts || "–")) },
-
-    { id: "youtube", name: "YouTube Studio", short: "YOUTUBE", icon: "📺", color: 0xff0033, pos: [-116, 26], w: 8, d: 8, h: 16, kind: "coin", face: [0, 1],
-      status: yt.ts ? "ok" : "unknown", today: 0, total: yt.views || 0,
-      tag: yt.ts ? [`${num(yt.subs || 0)} subs · ${num(yt.views || 0)} views`, `${(yt.list || []).length} videos · ${yt.live_ready ? "LIVE ready" : "live unlocks soon"}`] : ["connecting", ""],
-      board: { title: "AI BOT RACE · YOUTUBE", main: `${num(yt.subs || 0)} subs`, mainLabel: `${num(yt.views || 0)} channel views`, rows: (yt.list || []).slice(0, 6).map(v => [v.title.slice(0, 26), v.privacy === "public" ? `${num(v.views)} views` : "⏳ " + v.privacy]) },
-      sheet: () => sheetHTML("YouTube Studio", "The AI Bot Race channel (ex CatchyClips): series 1 = 5 how-we-built-it episodes, uploaded private by API for your approval in the YouTube app, plus the 24/7 live race once streaming unlocks. Series 2 = the City, 3 = AI influencers, 4 = e-commerce.",
-        `${num(yt.subs || 0)} subs`, `${num(yt.views || 0)} views · ${(yt.list || []).length} videos`,
-        (yt.list || []).map(v => [v.title, v.privacy === "public" ? `${num(v.views)} views` : `${v.privacy}: approve in the app`]), [], "", "https://studio.youtube.com", "Updated " + (yt.ts || "–")) },
-
-    { id: "longshot", name: "Bot Olympics", short: "BOT OLYMPICS", icon: "🏅", color: 0xffd166, pos: [0, -174], w: 38, d: 3, h: 21, lift: 22, kind: "bigboard", face: [0, 1], draw: g => drawOlympics(g, race),
-      status: "ok", today: 0, total: 0,
-      tag: race.length ? [`🥇 ${race[0].name} ${pct(race[0].value, race[0].start)}`, `${race.length} bots · race to $250`] : ["no bots", ""],
-      board: { title: "BOT RACE · $25 → $250", main: race.length ? race[0].name : "–", mainLabel: "leading" + (race.length ? ` · ${pnlU(race[0].value, race[0].start)} (${pct(race[0].value, race[0].start)})` : ""),
-        rows: race.map((r, i) => [`${["🥇", "🥈", "🥉"][i] || ""} ${r.name}`, `${pct(r.value, r.start)} · ${pnlU(r.value, r.start)}`]) },
-      sheet: () => sheetHTML("Bot Olympics", "Every trading bot racing to $250 with its own method. Ranked by profit % from its own start (the LIVE Polymarket bot started with real money; the rest are practice money on real prices).",
-        race.length ? race[0].name : "–", "in the lead",
-        race.flatMap((r, i) => [[`${["🥇", "🥈", "🥉"][i] || (i + 1) + "th"} ${r.name}`, `${pct(r.value, r.start)} · ${pnlU(r.value, r.start)}`]]),
-        race.map(r => [`${r.name}: ${r.method}`, `${usd(r.value)} · ${r.trades} trades (${r.wins} wins)`]), "Leaderboard (value · trades)", "",
-        "Tap a bot's building for its open trades.") },
 
     { id: "pinterest", name: "Pinterest Studio", short: "PINTEREST", icon: "📌", color: 0xe60023, pos: [-130, -12], w: 7, d: 7, h: 14, kind: "pin", face: [1, 0],
       status: pi.error ? "stale" : pi.last_date && pi.last_date <= new Date(Date.now() + 2 * 864e5).toISOString().slice(0, 10) ? "stale" : "ok", today: 0, total: 0,
@@ -380,7 +311,10 @@ function model(D) {
       tag: [`${(av.avatars || []).filter(a => a.status === "live").length}/${(av.avatars || []).length} live`, `${num(av.credits?.left)} credits`],
       board: { title: "AI INFLUENCER ARMY", main: num(av.credits?.left), mainLabel: `Higgsfield credits left · ${av.credits?.plan || ""}`,
         rows: (av.avatars || []).slice(0, 5).map(a => [a.emoji + " " + a.short, a.status]) },
-      sheet: () => armyHTML(av) }]),
+      sheet: () => armyHTML(av) + `<div class="lt" style="margin-top:14px">🌹 Rose lives here now</div><div class="list">${[
+        ["Followers (FB + IG)", num(rd.followers)], ["New today", plus(rd.gained_24h)], ["New this week", plus(rd.gained_7d)], ["Messages today", num(rd.messages_today)],
+        ["Likes this week", num(rd.likes_7d)], ["Comments this week", num(rd.comments_7d)], ["Money all time", usd(rd.money_usd)], ["Rose bot", svLabel("companion")]]
+        .map(([k, v]) => `<div><span>${esc(k)}</span><span>${esc(String(v))}</span></div>`).join("")}</div>` }]),
 
     // the big billboards (owner 2026-10-08): one giant screen per quarter instead of a board on every building
     { id: "newfaces", name: "Media Billboard", short: "NEW FACES", icon: "✨", color: 0xff4fd8, pos: [-174, 0], w: 40, d: 3, h: 22, lift: 6, kind: "bigboard", face: [1, 0], neonOnly: true, noPay: true,
@@ -624,6 +558,7 @@ function drawProducts(g, p) {  // the 2 main products (owner 2026-10-08): Virtua
     g.textAlign = "left"; g.textBaseline = "alphabetic";
   });
 }
+const FACEIMG = Object.fromEntries(["ollie", "granny", "nobody"].map(id => { const im = new Image(); im.src = "faces/" + id + ".jpg"; return [id, im]; }));  // creator photos on the billboard (owner 2026-10-10)
 function drawFaces(g, faces) {  // "Introducing the new faces of SHC": one card per new influencer
   bigFrame(g, "#ff4fd8", "INTRODUCING THE NEW FACES OF SHC", "Side Hustle City's newest creators");
   const n = Math.max(1, faces.length), cw = Math.min(300, (944 - (n - 1) * 20) / n), x0 = (1024 - (n * cw + (n - 1) * 20)) / 2, cols = ["#ff4fd8", "#ffd166", "#38bdf8", "#3dffa8", "#ff8a3d"];
@@ -632,10 +567,13 @@ function drawFaces(g, faces) {  // "Introducing the new faces of SHC": one card 
     const x = x0 + i * (cw + 20), y = 140, h = 400, c = cols[i % cols.length];
     g.fillStyle = "rgba(255,255,255,0.05)"; g.fillRect(x, y, cw, h); g.strokeStyle = c; g.lineWidth = 4; g.strokeRect(x, y, cw, h);
     g.textAlign = "center"; g.textBaseline = "middle";
-    g.font = `${Math.round(cw * 0.42)}px serif`; g.fillText(f.emoji || "⭐", x + cw / 2, y + 120);
-    g.fillStyle = "#fff"; g.font = `800 ${Math.round(Math.min(40, cw * 0.15))}px Sora`; g.fillText(f.name, x + cw / 2, y + 250, cw - 20);
-    g.fillStyle = c; g.font = "600 22px Inter"; g.fillText(f.username ? "@" + f.username : "", x + cw / 2, y + 296, cw - 20);
-    if (f.followers != null) { g.fillStyle = "#a99cd6"; g.font = "700 24px Inter"; g.fillText(`${num(f.followers)} followers`, x + cw / 2, y + 344, cw - 20); }
+    const im = FACEIMG[f.id];
+    if (im && im.complete && im.naturalWidth) { const pw = cw - 24, ph = 230, r = Math.max(pw / im.naturalWidth, ph / im.naturalHeight), sw = pw / r, sh = ph / r;
+      g.drawImage(im, (im.naturalWidth - sw) / 2, (im.naturalHeight - sh) * 0.2, sw, sh, x + 12, y + 12, pw, ph); }
+    else { g.font = `${Math.round(cw * 0.42)}px serif`; g.fillText(f.emoji || "⭐", x + cw / 2, y + 120); }
+    g.fillStyle = "#fff"; g.font = `800 ${Math.round(Math.min(40, cw * 0.15))}px Sora`; g.fillText(f.name, x + cw / 2, y + 276, cw - 20);
+    g.fillStyle = c; g.font = "600 22px Inter"; g.fillText(f.username ? "@" + f.username : "", x + cw / 2, y + 316, cw - 20);
+    if (f.followers != null) { g.fillStyle = "#a99cd6"; g.font = "700 24px Inter"; g.fillText(`${num(f.followers)} followers`, x + cw / 2, y + 356, cw - 20); }
     g.textAlign = "left"; g.textBaseline = "alphabetic";
   });
 }
@@ -1824,7 +1762,7 @@ function liveStrip(p) {
   el.hidden = false;
   const inf = M.s.influencers;
   el.innerHTML = `<span class="lv">● LIVE</span>` + (inf && inf.accounts ? `<button id="infbtn">📊 Influencers <b>${num(inf.followers)}</b>${inf.gained_24h ? ` <em>${inf.gained_24h > 0 ? "+" : ""}${inf.gained_24h}</em>` : ""}</button>` : "") +
-    `<button data-id="rose">🌹 Rose users <b>${v(st.rose_users)}</b>${st.rose_new ? ` <em>+${st.rose_new}</em>` : ""}</button>` +
+    `<button data-id="army">🌹 Rose users <b>${v(st.rose_users)}</b>${st.rose_new ? ` <em>+${st.rose_new}</em>` : ""}</button>` +
     `<button data-id="showroom">🏙️ SHC visits <b>${v(st.shc_visits)}</b></button>` +
     `<button data-id="etsy" title="from ${esc(st.etsy_src || "")}">🛍️ Etsy visits <b>${v(st.etsy_visits)}</b></button>` +
     `<button data-id="gumroad" title="${st.gumroad_visits === null ? "read from Gumroad via Chrome on Go Bananas (last " + esc(st.gumroad_at || "never") + ")" : ""}">🎨 Gumroad visits <b>${v(st.gumroad_visits)}</b></button>`;
