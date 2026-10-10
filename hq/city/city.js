@@ -1860,7 +1860,8 @@ function liveStrip(p) {
   const v = x => x === null || x === undefined ? "—" : num(x);
   el.hidden = false;
   const inf = M.s.influencers;
-  el.innerHTML = `<span class="lv">● LIVE</span>` + (inf && inf.accounts ? `<button id="infbtn">📊 Influencers <b>${num(inf.followers)}</b>${inf.gained_24h ? ` <em>${inf.gained_24h > 0 ? "+" : ""}${inf.gained_24h}</em>` : ""}</button>` : "") +
+  const sv = M.s.site;
+  el.innerHTML = `<span class="lv">● LIVE</span>` + (sv && sv.today ? `<button id="sitebtn" title="Website visitors (not us), all pages">🌐 Website <b>${num(sv.today.visitors)}</b>${sv.d7.visitors ? ` <em>${num(sv.d7.visitors)}/7d</em>` : ""}</button>` : "") + (inf && inf.accounts ? `<button id="infbtn">📊 Influencers <b>${num(inf.followers)}</b>${inf.gained_24h ? ` <em>${inf.gained_24h > 0 ? "+" : ""}${inf.gained_24h}</em>` : ""}</button>` : "") +
     `<button data-id="army">🌹 Rose users <b>${v(st.rose_users)}</b>${st.rose_new ? ` <em>+${st.rose_new}</em>` : ""}</button>` +
     `<button data-id="showroom">🏙️ SHC visits <b>${v(st.shc_visits)}</b></button>` +
     `<button data-id="etsy" title="from ${esc(st.etsy_src || "")}">🛍️ Etsy visits <b>${v(st.etsy_visits)}</b></button>` +
@@ -1884,6 +1885,7 @@ function hud() {
   M.need = id => id === "vault" ? att.vault || [] : why(B.find(x => x.id === id) || {});
   liveStrip(s.pulse);
   creditsBubble(s.credits); if ($("#infbtn")) $("#infbtn").onclick = openInf;
+  if ($("#sitebtn")) $("#sitebtn").onclick = openSite;
   staffPanel();
   todoNote(s.todo);
   document.querySelectorAll("[data-id]").forEach(x => x.onclick = () => focus(x.dataset.id));
@@ -3452,6 +3454,21 @@ function skinPicker() {
     : window.CITY_SKIN_SHOP ? window.open(window.CITY_SKIN_SHOP, "_blank") : alert("This skin is $1 on the Side Hustle City page (link in your order email). Then add its id to skins.js."));
 }
 
+
+// 🌐 website visitors (owner 2026-10-10): anonymous visits to every public page, the owner's own devices excluded
+function openSite() {
+  const v = M.s.site || {}, k = (t, x) => `<div class="kv"><b>${num((x || {}).visitors || 0)}</b><span>${t} · ${num((x || {}).views || 0)} views</span></div>`;
+  const mx = Math.max(1, ...(v.daily || []).map(d => d[1]));
+  const bars = (v.daily || []).map(([d, n]) => `<div title="${d}: ${n}" style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:3px"><div style="width:70%;height:${Math.round(70 * n / mx)}px;min-height:2px;border-radius:4px;background:var(--c)"></div><small style="font-size:9px;color:var(--dim)">${d.slice(3)}</small></div>`).join("");
+  const sheet = $("#sheet"); sheet.style.setProperty("--c", "#22d3ee");
+  $("#sheetbody").innerHTML = `<h2>🌐 Website visitors</h2><div class="sub">People (not us) on any page of sonneblomdigitaal.co.za, from any link · counting since ${esc(v.since || "today")} · updated ${esc(v.ts || "–")}</div>
+    <div class="grid">${k("today", v.today)}${k("last 7 days", v.d7)}${k("last 30 days", v.d30)}${k("all time", v.all)}</div>
+    <div class="lt" style="margin-top:14px">Visitors per day (14 days)</div><div style="display:flex;gap:2px;height:96px;align-items:flex-end;margin:6px 0 4px">${bars}</div>
+    <div class="lt" style="margin-top:14px">Where they came from (7 days)</div><div class="list">${(v.sources || []).map(([n, c]) => `<div><span>${esc(n)}</span><span>${num(c)}</span></div>`).join("") || "<div><span>No visits yet</span><span></span></div>"}</div>
+    <div class="lt" style="margin-top:14px">Most viewed pages (7 days)</div><div class="list">${(v.pages || []).map(([p, c]) => `<div><span><a href="https://sonneblomdigitaal.co.za${esc(p)}" target="_blank" rel="noopener" style="color:inherit">${esc(p)}</a></span><span>${num(c)}</span></div>`).join("") || "<div><span>No visits yet</span><span></span></div>"}</div>
+    <div class="note">Phones: ${num((v.d7 || {}).mobile || 0)} of ${num((v.d7 || {}).views || 0)} views this week. Your own devices (any that opened the City) are never counted.</div>`;
+  sheet.hidden = false;
+}
 // 🔗 quick links (owner 2026-10-10): every landing page on sonneblomdigitaal.co.za + our shops/channels elsewhere
 const SITE = "https://sonneblomdigitaal.co.za";
 const QLINKS = [
