@@ -444,7 +444,7 @@ function wireWork(id) {
     const fd = new FormData(); fd.append("bot", id); fd.append("task", $("#wTask").value); fd.append("client", $("#wClient").value);
     fd.append("opening", $("#wOpen").value); fd.append("year", $("#wYear").value); fd.append("lang", "af");
     [...$("#wFiles").files].slice(0, 3).forEach(f => fd.append("files", f, f.name));
-    $("#wGo").disabled = true; $("#wOut").innerHTML = `⏳ ${BOTS[id].name} is working on it… (PDFs take about a minute)`;
+    $("#wGo").disabled = true; $("#wOut").innerHTML = `⏳ ${BOTS[id].name} is working on it… (PDFs can take up to 5 minutes, keep this screen open)`;
     try {
       const r = await fetch(WORKS + "/job", { method: "POST", headers: { "X-Pass": pass }, body: fd }); const d = await r.json();
       if (r.status === 401) { localStorage.removeItem("works-pass"); $("#wOut").textContent = "Wrong passcode."; return; }
