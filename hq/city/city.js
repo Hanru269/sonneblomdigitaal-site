@@ -485,6 +485,114 @@ function armyHTML(a) {
     ${(a.rules || []).length ? `<div class="note">📏 ${a.rules.map(esc).join("<br>📏 ")}</div>` : ""}`;
 }
 
+
+// ---------- outskirts (owner 2026-10-10): mountains west, beach + ocean east, wind farm north, sunflower fields south,
+// and four different corners between the quarters: pine forest + lake, golf course, farm, funfair ----------
+function outskirts() {
+  const F = (c, e = 0x000000, ei = 0, o = {}) => new THREE.MeshStandardMaterial({ color: c, emissive: e, emissiveIntensity: ei, roughness: 0.9, flatShading: true, ...o });
+  const add = (geo, m, x, y, z, ry = 0) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); o.rotation.y = ry; scene.add(o); return o; };
+  const flat = (geo, m, x, y, z, ry = 0) => { const o = new THREE.Mesh(geo.rotateX(-Math.PI / 2), m); o.position.set(x, y, z); o.rotation.y = ry; scene.add(o); return o; };
+  const R = (a, b) => a + Math.random() * (b - a);
+  // instanced pines + sunflowers (hundreds of them; one draw call per part keeps phones smooth)
+  const PI_ = { trunk: [], c: [[], [], []] }, SF = { stem: [], petal: [], core: [] }, o3 = new THREE.Object3D();
+  const mx = (x, y, z, sx, sy, sz, rx = 0) => { o3.position.set(x, y, z); o3.rotation.set(rx, 0, 0); o3.scale.set(sx, sy, sz); o3.updateMatrix(); return o3.matrix.clone(); };
+  const pine = (x, z, h = R(6, 11)) => { PI_.trunk.push(mx(x, h * 0.15, z, h, h, h)); for (let k = 0; k < 3; k++) PI_.c[k].push(mx(x, h * (0.35 + k * 0.2), z, h, h, h)); };
+  const inst = (geo, m, list) => { if (!list.length) return; const im = new THREE.InstancedMesh(geo, m, list.length); list.forEach((M4, i) => im.setMatrixAt(i, M4)); scene.add(im); };
+  const palm = (x, z) => { const h = R(7, 10), lean = R(-0.25, 0.25), t = add(new THREE.CylinderGeometry(0.25, 0.4, h, 6), F(0x8a6a44), x, h / 2, z); t.rotation.z = lean;
+    for (let k = 0; k < 6; k++) { const l = add(new THREE.ConeGeometry(0.6, 4.2, 4), F(0x2f8a3c, 0x0a3014, 0.4), x - Math.sin(lean) * h, h, z); l.rotation.set(Math.PI / 2 - 0.5, k * 1.05, 0); l.translateY(1.9); } };
+
+  // WEST: a mountain range behind Media Hill with snow caps
+  for (let k = 0; k < 9; k++) {
+    const z = -260 + k * 65 + R(-15, 15), x = -262 - R(0, 30), h = R(60, 120), r = R(32, 50);
+    add(new THREE.ConeGeometry(r, h, 7), F(0x6b6458, 0x1a1712, 0.35), x, h / 2 - 2, z, R(0, 3));
+    add(new THREE.ConeGeometry(r * 0.32, h * 0.32, 7), F(0xf4f6fa, 0x5a6070, 0.35), x, h - h * 0.16 - 2.5, z, R(0, 3));
+    for (let p = 0; p < 6; p++) pine(x + r * 0.9 + R(0, 18), z + R(-r, r), R(5, 9));
+  }
+  // EAST: sand beach along the whole side, the ocean beyond, palms, umbrellas, a pier and sailboats
+  flat(new THREE.PlaneGeometry(46, 520), F(0xe9d3a1, 0x3a2f18, 0.35), 236, 0.32, 0);
+  const sea = flat(new THREE.PlaneGeometry(900, 900), new THREE.MeshStandardMaterial({ color: 0x1b6fa8, emissive: 0x0d3f6b, emissiveIntensity: 0.5, metalness: 0.6, roughness: 0.15 }), 259 + 450, 0.2, 0);
+  anim.push((dt, t) => sea.material.emissiveIntensity = 0.45 + Math.sin(t * 0.7) * 0.06);
+  for (let k = 0; k < 6; k++) flat(new THREE.PlaneGeometry(3, 520), F(0xf4fbff, 0x9ad0ee, 0.6), 258 + k * 0.7, 0.25 + k * 0.001, 0); // surf line
+  for (let z = -230; z <= 230; z += R(14, 24)) palm(R(220, 232), z);
+  const umb = [0xff3b6b, 0xffd166, 0x22c55e, 0x38bdf8, 0xff8a00];
+  for (let z = -200; z <= 200; z += R(18, 30)) { const x = R(238, 252), c = umb[Math.floor(Math.random() * umb.length)];
+    add(new THREE.CylinderGeometry(0.08, 0.08, 3, 6), F(0xffffff), x, 1.5, z); add(new THREE.ConeGeometry(2.2, 0.9, 8), F(c, c, 0.25), x, 3, z);
+    add(new THREE.BoxGeometry(1, 0.15, 2), F(0xffffff), x + 1.6, 0.4, z); }
+  add(new THREE.BoxGeometry(70, 1, 5), F(0x8a6a44, 0x1f160c, 0.3), 285, 1.6, 40);                      // pier
+  for (let k = 0; k < 8; k++) add(new THREE.CylinderGeometry(0.3, 0.3, 4, 6), F(0x5a4430), 255 + k * 9, 0.5, 42.6);
+  for (let k = 0; k < 5; k++) { const b = new THREE.Group(); b.position.set(R(300, 420), 0.4, R(-200, 200)); scene.add(b);
+    const hull = new THREE.Mesh(new THREE.BoxGeometry(7, 1.2, 2.4), F(0xffffff, 0x666666, 0.3)); hull.position.y = 0.6; b.add(hull);
+    const sail = new THREE.Mesh(new THREE.ConeGeometry(2.4, 8, 3), F(0xf8fafc, 0xaaaaaa, 0.3)); sail.position.set(0, 5.2, 0); sail.scale.z = 0.15; b.add(sail);
+    const z0 = b.position.z; anim.push((dt, t) => { b.position.z = z0 + Math.sin(t * 0.05 + k) * 30; b.rotation.z = Math.sin(t * 0.8 + k) * 0.04; }); }
+  // NORTH: rolling hills with a wind farm behind Trading Town
+  for (let k = 0; k < 7; k++) { const x = -240 + k * 80 + R(-20, 20), z = -290 - R(0, 40), r = R(50, 80);
+    const hill = add(new THREE.SphereGeometry(r, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2), F(0x2f7a3e, 0x0b2a14, 0.35), x, -r * 0.55, z); hill.scale.y = 0.6; }
+  for (let k = 0; k < 8; k++) { const x = -210 + k * 60 + R(-10, 10), z = -262 - R(0, 30), h = 46;
+    add(new THREE.CylinderGeometry(0.8, 1.4, h, 8), F(0xf1f5f9, 0x8a95a3, 0.4), x, h / 2, z);
+    const hub = new THREE.Group(); hub.position.set(x, h, z + 1.6); scene.add(hub);
+    for (let b = 0; b < 3; b++) { const bl = new THREE.Mesh(new THREE.BoxGeometry(1, 20, 0.3), F(0xffffff, 0x9aa5b1, 0.4)); bl.geometry.translate(0, 10, 0); bl.rotation.z = b * 2.094; hub.add(bl); }
+    anim.push((dt, t) => hub.rotation.z = t * 0.6 + k); }
+  // SOUTH: sunflower fields (Sonneblom = sunflower) beyond the Suburbs
+  flat(new THREE.PlaneGeometry(420, 50), F(0x4f7a2a, 0x1a2a0c, 0.35), 0, 0.31, 232);
+  const stem = F(0x3f6b22, 0x10200a, 0.3), petal = F(0xffc81a, 0x8a5a00, 0.5), core = F(0x5a3a1a);
+  for (let x = -200; x <= 200; x += 5) for (let z = 214; z <= 252; z += 5) { const h = R(2.2, 3.4), xx = x + R(-1.5, 1.5), zz = z + R(-1.5, 1.5);
+    SF.stem.push(mx(xx, h / 2, zz, 1, h, 1)); SF.petal.push(mx(xx, h, zz, 1, 1, 1, 1.2)); SF.core.push(mx(xx, h + 0.05, zz - 0.04, 1, 1, 1, 1.2)); }
+  inst(new THREE.CylinderGeometry(0.08, 0.1, 1, 4), stem, SF.stem); inst(new THREE.CylinderGeometry(0.9, 0.9, 0.15, 8), petal, SF.petal); inst(new THREE.CylinderGeometry(0.42, 0.42, 0.2, 8), core, SF.core);
+
+  // CORNERS between the quarters
+  const C = { nw: [-122, -118], ne: [122, -118], sw: [-122, 118], se: [122, 118] };
+  { const [x, z] = C.nw;   // pine forest round a mountain lake with a log cabin and a jetty
+    const lake = flat(new THREE.CircleGeometry(16, 40), new THREE.MeshStandardMaterial({ color: 0x174d6b, emissive: 0x0c3550, emissiveIntensity: 0.5, metalness: 0.7, roughness: 0.1 }), x, 0.34, z); lake.scale.set(1.4, 1, 1);
+    for (let k = 0; k < 60; k++) { const a = R(0, 6.283), d = R(26, 42); pine(x + Math.cos(a) * d, z + Math.sin(a) * d * 0.9); }
+    const cab = new THREE.Group(); cab.position.set(x + 18, 0, z + 20); cab.rotation.y = -0.6; scene.add(cab);
+    const logs = F(0x7a4f2a, 0x2a1508, 0.35); const c1 = new THREE.Mesh(new THREE.BoxGeometry(9, 4, 7), logs); c1.position.y = 2; cab.add(c1);
+    const roof = new THREE.Mesh(new THREE.ConeGeometry(7, 3.5, 4), F(0x3b2a20)); roof.position.y = 5.7; roof.rotation.y = Math.PI / 4; roof.scale.set(1.15, 1, 0.9); cab.add(roof);
+    const win = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 1.2), new THREE.MeshBasicMaterial({ color: 0xffd38a })); win.position.set(2, 2.2, 3.51); cab.add(win);
+    add(new THREE.BoxGeometry(2.4, 0.4, 12), F(0x8a6a44, 0x1f160c, 0.3), x + 4, 0.6, z + 10); }
+  { const [x, z] = C.ne;   // golf course: fairway, green with a flag, sand bunkers, clubhouse
+    const fw = flat(new THREE.CircleGeometry(30, 32), F(0x4fb54f, 0x184d18, 0.35), x, 0.33, z); fw.scale.set(1.3, 1, 0.75);
+    flat(new THREE.CircleGeometry(7, 32), F(0x6fd66f, 0x1f5a1f, 0.4), x + 22, 0.35, z - 6);
+    add(new THREE.CylinderGeometry(0.08, 0.08, 4, 6), F(0xffffff), x + 22, 2, z - 6);
+    const flag = add(new THREE.PlaneGeometry(1.6, 1, 4, 1), F(0xff2b2b, 0xff2b2b, 0.5, { side: THREE.DoubleSide }), x + 22.8, 3.5, z - 6); anim.push((dt, t) => flag.rotation.y = Math.sin(t * 2) * 0.3);
+    for (const [dx, dz, r] of [[8, -10, 4], [14, 6, 3.5], [-12, 8, 5]]) { const b = flat(new THREE.CircleGeometry(r, 24), F(0xf0dcaa, 0x3a2f18, 0.3), x + dx, 0.36, z + dz); b.scale.set(1.5, 1, 1); }
+    const ch = new THREE.Group(); ch.position.set(x - 26, 0, z - 14); scene.add(ch);
+    const w = new THREE.Mesh(new THREE.BoxGeometry(14, 5, 8), F(0xf6f1e7, 0x3a352b, 0.3)); w.position.y = 2.5; ch.add(w);
+    const rf = new THREE.Mesh(new THREE.BoxGeometry(15, 0.8, 9), F(0x2f5d3a)); rf.position.y = 5.3; ch.add(rf);
+    for (let k = 0; k < 14; k++) { const a = R(0, 6.283), d = R(36, 44); pine(x + Math.cos(a) * d * 1.2, z + Math.sin(a) * d * 0.8, R(5, 8)); }
+    for (let k = 0; k < 3; k++) { const cart = add(new THREE.BoxGeometry(2, 1.4, 1.2), F(0xffffff, 0x777777, 0.3), x - 10 + k * 2.6, 0.9, z - 18); } }
+  { const [x, z] = C.sw;   // farm: crop rows, red barn, silo, a turning windmill
+    const crops = [0x9cc24a, 0x6b8f2a, 0xd9b84a, 0x7aa83a];
+    for (let k = 0; k < 12; k++) { const r = flat(new THREE.PlaneGeometry(56, 3.4), F(crops[k % 4], 0x18240a, 0.35), x, 0.33 + k * 0.0005, z - 22 + k * 4); }
+    const barn = new THREE.Group(); barn.position.set(x + 30, 0, z + 18); barn.rotation.y = 0.4; scene.add(barn);
+    const bw = new THREE.Mesh(new THREE.BoxGeometry(12, 7, 9), F(0xb32a2a, 0x3a0a0a, 0.35)); bw.position.y = 3.5; barn.add(bw);
+    const br = new THREE.Mesh(new THREE.CylinderGeometry(5.2, 5.2, 12.2, 3, 1), F(0x3a3a40)); br.rotation.z = Math.PI / 2; br.rotation.y = Math.PI / 2; br.position.y = 8.2; br.scale.set(1, 1, 0.6); barn.add(br);
+    const door = new THREE.Mesh(new THREE.PlaneGeometry(4, 5), F(0xffffff)); door.position.set(0, 2.5, 4.51); barn.add(door);
+    add(new THREE.CylinderGeometry(2.6, 2.6, 14, 14), F(0xd9dde2, 0x4a4f55, 0.35), x + 40, 7, z + 14); add(new THREE.SphereGeometry(2.6, 14, 8, 0, 6.3, 0, 1.6), F(0xb0b6bd), x + 40, 14, z + 14);
+    add(new THREE.CylinderGeometry(1.2, 2.2, 16, 8), F(0xf4efe6, 0x4a4538, 0.3), x - 32, 8, z + 20);
+    const mill = new THREE.Group(); mill.position.set(x - 32, 15, z + 22); scene.add(mill);
+    for (let b = 0; b < 4; b++) { const s2 = new THREE.Mesh(new THREE.BoxGeometry(1.6, 9, 0.2), F(0xe9e2d0, 0x555044, 0.3)); s2.geometry.translate(0, 4.5, 0); s2.rotation.z = b * Math.PI / 2; mill.add(s2); }
+    anim.push((dt, t) => mill.rotation.z = t * 0.5);
+    for (let k = 0; k < 8; k++) add(new THREE.BoxGeometry(1.6, 1, 0.8), F(0xffffff, 0x666666, 0.3), x + R(-20, 10), 0.8, z + R(16, 30), R(0, 3)); } // sheep
+  { const [x, z] = C.se;   // funfair: Ferris wheel, carousel, food stalls, string lights
+    const fw = new THREE.Group(); fw.position.set(x, 22, z); fw.rotation.y = -0.6; scene.add(fw);
+    const rim = new THREE.Mesh(new THREE.TorusGeometry(18, 0.5, 8, 48), F(0xffffff, 0xff2bd6, 0.9)); fw.add(rim);
+    for (let k = 0; k < 12; k++) { const sp = new THREE.Mesh(new THREE.BoxGeometry(0.3, 36, 0.3), F(0xdddddd, 0x00f0ff, 0.5)); sp.rotation.z = k * Math.PI / 12; fw.add(sp); }
+    const cabs = []; for (let k = 0; k < 12; k++) { const c = new THREE.Mesh(new THREE.BoxGeometry(2.4, 2.4, 2.4), F(NEON[k % NEON.length], NEON[k % NEON.length], 0.6)); fw.add(c); cabs.push(c); }
+    anim.push((dt, t) => { const a0 = t * 0.12; cabs.forEach((c, k) => { const a = a0 + k * Math.PI / 6; c.position.set(Math.cos(a) * 18, Math.sin(a) * 18 - 1.5, 0); }); rim.rotation.z = a0; });
+    for (const s2 of [-1, 1]) { const leg = add(new THREE.BoxGeometry(1, 24, 1), F(0xcfd4da), x + s2 * 6 * Math.cos(-0.6), 11, z - s2 * 6 * Math.sin(-0.6)); leg.rotation.z = s2 * 0.25; leg.rotation.y = -0.6; }
+    const car = new THREE.Group(); car.position.set(x - 22, 0, z + 14); scene.add(car);
+    const base = new THREE.Mesh(new THREE.CylinderGeometry(8, 8, 1, 24), F(0xffd166, 0x8a6a00, 0.4)); base.position.y = 0.5; car.add(base);
+    const top = new THREE.Mesh(new THREE.ConeGeometry(9, 4, 24), F(0xff3b6b, 0xff3b6b, 0.5)); top.position.y = 8; car.add(top);
+    for (let k = 0; k < 8; k++) { const a = k / 8 * 6.283, pole = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 6, 6), F(0xffffff)); pole.position.set(Math.cos(a) * 6, 4, Math.sin(a) * 6); car.add(pole);
+      const hs = new THREE.Mesh(new THREE.BoxGeometry(1.4, 1, 0.5), F(NEON[k % NEON.length], NEON[k % NEON.length], 0.4)); hs.position.set(Math.cos(a) * 6, 2.5, Math.sin(a) * 6); car.add(hs); }
+    anim.push((dt, t) => car.rotation.y = t * 0.4);
+    for (let k = 0; k < 5; k++) { const st = new THREE.Group(); st.position.set(x + 10 + k * 7, 0, z + 26); scene.add(st);
+      const b = new THREE.Mesh(new THREE.BoxGeometry(5, 3, 4), F(0xffffff, 0x555555, 0.3)); b.position.y = 1.5; st.add(b);
+      const aw = new THREE.Mesh(new THREE.BoxGeometry(5.6, 0.4, 4.6), F(NEON[k], NEON[k], 0.5)); aw.position.y = 3.4; st.add(aw); }
+  }  inst(new THREE.CylinderGeometry(0.035, 0.05, 0.3, 6), F(0x5a3d25), PI_.trunk);
+  [0, 1, 2].forEach(k => inst(new THREE.ConeGeometry(0.32 - k * 0.07, 0.45, 7), F(0x1f5a32, 0x06200f, 0.4), PI_.c[k]));
+}
+
 // ---------- textures ----------
 function windowTex(color, lit = 0.55, seed = 1) {
   const c = document.createElement("canvas"); c.width = 64; c.height = 128;
@@ -1390,19 +1498,9 @@ function life() {
   // Trading Town promenade and the Industrial Park's yard street
   seg(TR.c[0] - TR.h * 0.8, TR.c[1] + 16, TR.c[0] + TR.h * 0.8, TR.c[1] + 16, 5, TR.color);
   seg(IN.c[0] - IN.h * 0.8, IN.c[1] + 3, IN.c[0] + IN.h * 0.8, IN.c[1] + 3, 4, IN.color);
-  // the four big parks between the quarters: a loop walk round a pond, and a path in from Downtown's corner
-  const PARKS = [[-1, -1], [1, -1], [-1, 1], [1, 1]].map(([sx, sz]) => ({ x: sx * 122, z: sz * 118, r: 44, sx, sz }));
-  PARKS.forEach(P => {
-    const { x, z, r, sx, sz } = P;
-    const lr = r * 0.78, n = 20, wob = k => lr * (1 + 0.12 * Math.sin(k * 3 + x));   // a winding loop walk round the pond
-    for (let k = 0; k < n; k++) { const a0 = k / n * 6.283, a1 = (k + 1) / n * 6.283; seg(x + Math.cos(a0) * wob(a0), z + Math.sin(a0) * wob(a0), x + Math.cos(a1) * wob(a1), z + Math.sin(a1) * wob(a1), 3.6); }
-    const ang = Math.atan2(sz, sx), [ax, az] = blobPt(DN, ang, RW + 7), ea = Math.atan2(az - z, ax - x);
-    seg(ax, az, x + Math.cos(ea) * wob(ea), z + Math.sin(ea) * wob(ea), 4, 0x22ff88); seg(x - sx * wob(0) * 0.98, z, x - sx * 15, z, 3.2);
-    const pond = new THREE.Mesh(new THREE.CircleGeometry(12, 48), new THREE.MeshStandardMaterial({ color: 0x0a2a55, emissive: 0x1e5aa8, emissiveIntensity: 0.35, metalness: 0.9, roughness: 0.05 }));
-    pond.rotation.x = -Math.PI / 2; pond.position.set(x, 0.34, z); scene.add(pond);
-    const edge = new THREE.Mesh(new THREE.TorusGeometry(12.2, 0.35, 6, 64), new THREE.MeshStandardMaterial({ color: 0xd9d2c4, emissive: 0x332a1a, emissiveIntensity: 0.3 })); edge.rotation.x = Math.PI / 2; edge.position.set(x, 0.4, z); scene.add(edge);
-    anim.push((dt, t) => pond.material.emissiveIntensity = 0.3 + Math.sin(t * 0.8 + x) * 0.06);
-  });
+  // the four corners + the map edges (owner 2026-10-10): no more identical parks; each side has its own landscape (visual only)
+  outskirts();
+  const PARKS = [[-1, -1], [1, -1], [-1, 1], [1, 1]].map(([sx, sz]) => ({ x: sx * 122, z: sz * 118 }));  // corner features: keep street trees out
   // Vault plaza paving, reflecting pool, Library forecourt, paved squares in Trading Town + the factory yard
   const paveAt = (w, h, x, z) => { const p = new THREE.Mesh(new THREE.PlaneGeometry(w, h), stone); p.rotation.x = -Math.PI / 2; p.position.set(x, 0.325, z); scene.add(p); };
   paveAt(PLAZA[1] - PLAZA[0], PLAZA[3] - PLAZA[2], 0, (PLAZA[2] + PLAZA[3]) / 2);
@@ -1421,7 +1519,7 @@ function life() {
   const hillR = (x, z) => Math.hypot(x - HILL.c[0], z - HILL.c[1]);
   const open = (x, z, pad) => Math.abs(x) < EXT - 3 && Math.abs(z) < EXT - 3 && !nearSolid(x, z, pad) && !nearPath(x, z, pad) && roadDist(x, z) > RW + 1 + pad
     && !paved(x, z, pad) && !inRect(x, z, PLAZA, pad) && !inRect(x, z, POOL, pad + 3) && !inRect(x, z, [-16, 16, -34, -14], pad)
-    && hillR(x, z) > HILL.h + 3 && PARKS.every(P => Math.hypot(x - P.x, z - P.z) > 13 + pad);
+    && hillR(x, z) > HILL.h + 3 && PARKS.every(P => Math.hypot(x - P.x, z - P.z) > 46 + pad);
 
   // trees: rows along the avenues, loose groves in the parks and on the hillside
   const spots = [];
