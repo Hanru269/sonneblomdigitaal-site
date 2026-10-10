@@ -3450,6 +3450,26 @@ function skinPicker() {
   el.querySelectorAll("[data-sk]").forEach(b => b.onclick = () => own(b.dataset.sk) ? applySkin(b.dataset.sk)
     : window.CITY_SKIN_SHOP ? window.open(window.CITY_SKIN_SHOP, "_blank") : alert("This skin is $1 on the Side Hustle City page (link in your order email). Then add its id to skins.js."));
 }
+
+// 🔗 quick links (owner 2026-10-10): every landing page on sonneblomdigitaal.co.za + our shops/channels elsewhere
+const SITE = "https://sonneblomdigitaal.co.za";
+const QLINKS = [
+  ["Main site", [["🏠 Home + shop hub", "/"], ["🛍️ All products", "/shop/"], ["ℹ️ How buying works", "/info/"], ["🔒 Privacy", "/privacy/"]]],
+  ["Selling now", [["🤖 AI employees (sale page)", "/ai-team/"], ["🏢 AI Works virtual office", "/office/"], ["🏙️ Side Hustle City", "/side-hustle-city/"],
+    ["✨ AI influencers + templates", "/ai/"], ["🤝 Partners (affiliates)", "/ai/partners/"], ["🌹 Rose: how she's made", "/rose/"], ["📍 Potch websites + AI visibility", "/potch/"], ["🌐 Webwerwe (local sites)", "/webwerwe/"]]],
+  ["Demos + tours", [["🎥 City tour (public demo)", "/city-tour/"], ["🧭 Demo city", "/city-tour/city/"], ["📊 Accounting City demo", "/firm-demo/"], ["💼 Consulting demo", "/consult-demo/"], ["🪙 Community coins", "/community/"], ["🧩 Hubs", "/hubs/"], ["📸 Influencers page", "/influencers/"]]],
+  ["Elsewhere", [["🛒 Whop store", "https://whop.com/sonneblomdigitaal/"], ["🧠 Copy What We Did Club", "https://whop.com/sonneblomdigitaal/copy-what-we-did-club-sd/"],
+    ["📺 YouTube · AI Bot Race", "https://www.youtube.com/channel/UCMV6u5f2BcmPNGqJPjTxKhQ"], ["🎨 Gumroad", "https://sonneblomdigitaal.gumroad.com/"], ["♿ EAA Fix", "https://eaafix.com/"],
+    ["💬 Rose chat", "https://rosecompanion.github.io/chat.html"]]],
+];
+$("#linksbtn").onclick = () => {
+  const sheet = $("#sheet"); sheet.style.setProperty("--c", "#00e5ff");
+  $("#sheetbody").innerHTML = `<h2>🔗 All our links</h2><div class="sub">Every landing page on sonneblomdigitaal.co.za, plus our shops and channels. Tap to open, ⧉ to copy.</div>` +
+    QLINKS.map(([t, items]) => `<div class="lt" style="margin-top:14px">${esc(t)}</div><div class="list">${items.map(([n, u]) => { const full = u.startsWith("http") ? u : SITE + u;
+      return `<div><span><a href="${full}" target="_blank" rel="noopener" style="color:inherit;text-decoration:none">${esc(n)}</a></span><span><button class="cp" data-u="${full}" style="background:none;border:0;color:var(--c);cursor:pointer;font-size:15px" title="Copy link">⧉</button></span></div>`; }).join("")}</div>`).join("");
+  $("#sheetbody").querySelectorAll("button.cp").forEach(b => b.onclick = e => { e.stopPropagation(); navigator.clipboard?.writeText(b.dataset.u); b.textContent = "✓"; setTimeout(() => (b.textContent = "⧉"), 1200); });
+  sheet.hidden = false;
+};
 $("#skinbtn").onclick = () => { const el = $("#skins"); el.hidden = !el.hidden; if (!el.hidden) (DEMO ? skinPicker() : themePicker()); };
 async function reload() {
   try { D = await decrypt(PW); } catch (e) { return; }
