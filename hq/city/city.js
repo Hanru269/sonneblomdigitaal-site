@@ -173,7 +173,7 @@ function model(D) {
         ia.filter(a => a.top).map(a => [`${a.name}: ${a.top.text || "top post"}`, `${num(a.top.views)} views`]), "Top post per account", "https://www.instagram.com/") },
 
     { id: "youtube", name: "YouTube Tower", short: "YOUTUBE", icon: "📺", color: 0xff0033, pos: [-162, 26], w: 8, d: 8, h: 36, kind: "spire", face: [1, 0],
-      status: yt.ts ? "ok" : "unknown", today: 0, total: yt.views || 0,
+      status: yt.ts ? "ok" : "unknown", today: 0, total: 0,  // views are not money (owner 2026-10-10: it showed $151)
       tag: yt.ts ? [`${num(yt.subs || 0)} subs · ${num(yt.views || 0)} views`, `${(yt.list || []).length} videos · ${yt.live_ready ? "LIVE ready" : "live unlocks soon"}`] : ["connecting", ""],
       board: { title: "AI BOT RACE · YOUTUBE", main: `${num(yt.subs || 0)} subs`, mainLabel: `${num(yt.views || 0)} channel views`, rows: (yt.list || []).slice(0, 6).map(v => [v.title.slice(0, 26), v.privacy === "public" ? `${num(v.views)} views` : "⏳ " + v.privacy]) },
       sheet: () => sheetHTML("YouTube Tower", "The AI Bot Race channel: how-we-built-it series (uploaded by API, scheduled; approve in the YouTube app) plus the 24/7 live race once streaming unlocks. Series 2 = the City, 3 = AI influencers, 4 = e-commerce.",
@@ -1890,7 +1890,9 @@ function hud() {
   todoNote(s.todo);
   document.querySelectorAll("[data-id]").forEach(x => x.onclick = () => focus(x.dataset.id));
   $("#updated").textContent = `data ${ago(s.ts)} · refreshes every 30 min`;
-  const rows = B.filter(b => b.id !== "library" && !b.noPay).map(b => {
+  // payroll = only the places that actually take payments (owner 2026-10-10); tools/funnels (GitHub, warehouses, R&D, AI Army, YouTube, racers...) are left out so sales are not counted twice
+  const PAY = ["etsy", "gumroad", "kdp", "whop", "showroom", "contra", "zoho", "lab"];
+  const rows = B.filter(b => PAY.includes(b.id)).map(b => {
     const earned = b.id === "rose" ? (b.zar ? "R" + num(b.zar) : "R0") : usd(b.today);
     const total = b.id === "rose" ? "R" + num(b.zar || 0) : usd(b.total);
     return `<tr><td>${b.icon} ${esc(b.short)}</td><td><span class="dot" style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${dc[b.status]}"></span></td><td>${earned}</td><td>${total}</td></tr>`; });
