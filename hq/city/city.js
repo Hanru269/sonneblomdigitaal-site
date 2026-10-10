@@ -58,7 +58,7 @@ function model(D) {
     ["Highest profit day", `${pnl(x.best_day)} · ${x.best_day_date || ""}`], ["Worst day", `${pnl(x.worst_day)} · ${x.worst_day_date || ""}`],
     ["Days traded", x.days_traded ?? "–"], ["Last trade", x.last_trade ? ago(x.last_trade) : "–"], ["Bot", x.running ? "🟢 running" : "⚪ stopped"]];
   const ks = bo.kalshi || {}, pm = bo.polymarket || {}, kb = bo.krypto || {};
-  const ls = s.longshot || {}; const lb = s.lsbot || {}; const lr = s.lslive || {}; const polyReal = lr.value != null ? +(lr.value - (lr.start_real || lr.start || 19.53)).toFixed(2) : 0; const kx = s.k10x || {}; const sb = s.solbot || {}; const cb = s.copybot || {}; const br = s.botrace || {}; const brr = br.racers || [];
+  const ls = s.longshot || {}; const lb = s.lsbot || {}; const lr = s.lslive || {}; const polyReal = lr.value != null ? +(lr.value - (lr.start_real || lr.start || 19.53)).toFixed(2) : 0; const kx = s.k10x || {}; const sb = s.solbot || {}; const cb = s.copybot || {}; const br = s.botrace || {}; const brr = br.racers || []; const wp = s.whop || {}; const yt = s.youtube || {};
   const race = [{ name: "Polymarket LIVE", method: "same style, REAL money", value: lr.value, start: lr.start_real || lr.start || 19.53, trades: lr.trades || 0, wins: lr.wins || 0, live: true },
     { name: "Polymarket", method: "momentum on favourites", value: lb.value, trades: lb.trades || 0, wins: lb.wins || 0 },
     { name: "Copy Desk", method: "copies 5 top Polymarket traders", value: cb.value, start: cb.start || 125, trades: sum(cb.traders || [], t => t.trades), wins: sum(cb.traders || [], t => t.wins) },
@@ -274,6 +274,22 @@ function model(D) {
         brr.map((r, i) => [`${i + 1}. ${r.name} (${r.who.toLowerCase()}, ${r.venue})`, `${usd(r.value)} · ${r.pct >= 0 ? "+" : ""}${r.pct}% · ${r.trades} trades`]),
         (br.feed || []).slice(0, 10).map(f => [f, ""]), "Latest trades",
         "", (br.started ? "Started " + br.started.slice(0, 16).replace("T", " ") + " UTC." : "Not started yet.") + ((br.dropped || []).length ? " Kicked out so far: " + br.dropped.map(d => d.name).join(", ") + "." : "")) },
+
+    { id: "whop", name: "Whop Store", short: "WHOP", icon: "🛍️", color: 0xff6243, pos: [135, -40], w: 11, d: 9, h: 14, kind: "coin", face: [0, 1],
+      status: wp.ts ? "ok" : "unknown", today: 0, total: wp.revenue_usd || 0,
+      tag: wp.ts ? [`${usd(wp.revenue_usd || 0)} · ${wp.sales || 0} sales`, `${(wp.products || []).length} products · ${wp.members || 0} members`] : ["setting up", ""],
+      board: { title: "WHOP STORE", main: usd(wp.revenue_usd || 0), mainLabel: `${wp.sales || 0} sales · ${wp.members || 0} members`, rows: (wp.products || []).map(p => [p.title.slice(0, 22), `${p.members} members`]) },
+      sheet: () => sheetHTML("Whop Store", "whop.com/sonneblomdigitaal: AI influencer templates, the Copy What We Did Club ($19/mo, linked from every AI Bot Race video), AI avatar setup service and Side Hustle City. Affiliates earn 30%.",
+        usd(wp.revenue_usd || 0), `${wp.sales || 0} sales · ${wp.members || 0} members`,
+        (wp.products || []).map(p => [p.title, `${p.members} members · ${p.visibility}`]), [], "", "https://whop.com/sonneblomdigitaal", "Updated " + (wp.ts || "–")) },
+
+    { id: "youtube", name: "YouTube Studio", short: "YOUTUBE", icon: "📺", color: 0xff0033, pos: [-116, 26], w: 8, d: 8, h: 16, kind: "coin", face: [0, 1],
+      status: yt.ts ? "ok" : "unknown", today: 0, total: yt.views || 0,
+      tag: yt.ts ? [`${num(yt.subs || 0)} subs · ${num(yt.views || 0)} views`, `${(yt.list || []).length} videos · ${yt.live_ready ? "LIVE ready" : "live unlocks soon"}`] : ["connecting", ""],
+      board: { title: "AI BOT RACE · YOUTUBE", main: `${num(yt.subs || 0)} subs`, mainLabel: `${num(yt.views || 0)} channel views`, rows: (yt.list || []).slice(0, 6).map(v => [v.title.slice(0, 26), v.privacy === "public" ? `${num(v.views)} views` : "⏳ " + v.privacy]) },
+      sheet: () => sheetHTML("YouTube Studio", "The AI Bot Race channel (ex CatchyClips): series 1 = 5 how-we-built-it episodes, uploaded private by API for your approval in the YouTube app, plus the 24/7 live race once streaming unlocks. Series 2 = the City, 3 = AI influencers, 4 = e-commerce.",
+        `${num(yt.subs || 0)} subs`, `${num(yt.views || 0)} views · ${(yt.list || []).length} videos`,
+        (yt.list || []).map(v => [v.title, v.privacy === "public" ? `${num(v.views)} views` : `${v.privacy}: approve in the app`]), [], "", "https://studio.youtube.com", "Updated " + (yt.ts || "–")) },
 
     { id: "longshot", name: "Bot Olympics", short: "BOT OLYMPICS", icon: "🏅", color: 0xffd166, pos: [0, -174], w: 38, d: 3, h: 21, lift: 22, kind: "bigboard", face: [0, 1], draw: g => drawOlympics(g, race),
       status: "ok", today: 0, total: 0,
@@ -1823,7 +1839,7 @@ function hud() {
   const why = b => [...(att[b.id] || []), ...(b.status === "down" ? ["Something here is down"] : [])];
   const chip = (id, label, color, w) => `<button class="chip${w.length ? " need" : ""}" data-id="${id}" title="${esc(w.join(" · "))}" style="border-color:${color}88;color:${color}">${w.length ? `<i class="blip"></i>` : ""}${esc(label)}</button>`;
   const names = { vault: "Vault", etsy: "Etsy", fb: "Meta", ig: "Instagram", copy: "Copy Desk", polylive: "Poly LIVE", poly: "Poly Practice", longshot: "Olympics", newfaces: "Media Board", output: "Output", whdig: "Digital WH", whpod: "Print WH", rose: "Rose", contra: "Contra", zoho: "Outreach", gumroad: "Gumroad", kdp: "KDP", lab: "API Lab",
-    krypto: "Krypto", kalshi: "Kalshi", pinterest: "Pinterest", github: "GitHub", rnd: "R&D", showroom: "SHC", army: "AI Army", library: "Library", aiworks: "AI Works" };
+    krypto: "Krypto", kalshi: "Kalshi", pinterest: "Pinterest", github: "GitHub", rnd: "R&D", showroom: "SHC", army: "AI Army", library: "Library", aiworks: "AI Works", botrace: "Live Arena", whop: "Whop", youtube: "YouTube" };
   const list = [chip("vault", "Vault", "#ffd166", att.vault || [])].concat(B.filter(b => !b.home).map(b => chip(b.id, names[b.id] || b.short, hex(b.color), why(b))));
   const dn = { down: "Downtown", media: "Media Hill", trade: "Trading Town", ind: "Industrial", subs: "Suburbs" };
   $("#chips").innerHTML = (WLD ? [] : DIST.map(D => `<button class="chip dchip" data-dist="${D.id}" style="border-color:${hex(D.color)}88;color:${hex(D.color)}">📍 ${dn[D.id]}</button>`)).join("");  // owner 2026-10-09: towns only, no building shortcuts
