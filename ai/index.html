@@ -24,6 +24,7 @@ const HIGGSFIELD_REFERRAL = "https://higgsfield.ai?fpr=sonneblomdigitaal";  // p
 const BUY = {                    // checkout links per button (data-buy="...")
   kit:          "https://sonneblomdigitaal.gumroad.com/l/ai-influencer-kit",
   kit_pro:      "https://sonneblomdigitaal.gumroad.com/l/ai-influencer-kit-pro",
+  starter:      "https://whop.com/checkout/plan_kbQRjHlfzx4SH",
   avatar:       "mailto:hello@eaafix.com?subject=AI%20Avatar%20Setup%20($397)",
   squad:        "mailto:hello@eaafix.com?subject=AI%20Avatar%20Squad%20($897)",
   ecom_starter: "mailto:hello@eaafix.com?subject=AI%20E-commerce%20Automation%20-%20Starter%20($497)",
@@ -150,12 +151,29 @@ footer a{color:var(--dim)}
   .shcWrap{display:grid;grid-template-columns:1fr 1fr;gap:28px;align-items:center}
 }
 @media (max-width:560px){.squad{grid-template-columns:repeat(2,1fr);gap:12px}.av .tag{left:5px;right:5px;bottom:5px;padding:6px 7px;border-radius:12px}.av .tag span{display:none}.av .tag b{font-size:13.5px}.av .tag a{font-size:11px;padding:4px 8px;margin-top:4px}.bar nav a.n{display:none}}
+
+.bld{padding:70px 0}.bGrid{display:grid;grid-template-columns:1.1fr .9fr;gap:26px;margin-top:22px}
+.bForm{background:var(--ink2);border-radius:22px;padding:20px}.bForm label{display:block;font-weight:800;margin-bottom:12px}
+.bForm input{display:block;width:100%;margin-top:6px;padding:12px 14px;border-radius:12px;border:0;font:inherit;font-weight:600}
+.bRow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:10px 0}.bRow b{width:58px;color:var(--dim);font-size:14px}
+.bRow button,.mini{background:#ffffff14;color:#fff;border:1px solid #ffffff2a;border-radius:99px;padding:7px 13px;font:700 14px Inter,system-ui;cursor:pointer}
+.bRow button.on{background:var(--mint);color:var(--ink);border-color:var(--mint)}
+.bNote{color:var(--dim);font-size:13px;margin:8px 0 0}.bOut{display:flex;flex-direction:column;gap:12px}
+.bImg{aspect-ratio:3/4;border-radius:22px;background:var(--ink2);display:grid;place-items:center;overflow:hidden;color:var(--dim);font-weight:700}
+.bImg img{width:100%;height:100%;object-fit:cover}.bCode{margin:0;font-weight:700}.bCode b{color:var(--yel);font-size:20px}
+.spin{width:46px;height:46px;border-radius:50%;border:5px solid #ffffff22;border-top-color:var(--mint);animation:sp 1s linear infinite}@keyframes sp{to{transform:rotate(360deg)}}
+.pvBtn{align-self:flex-start}
+#pv{position:fixed;inset:0;background:#000c;z-index:50;display:none;align-items:center;justify-content:center;padding:16px}#pv.on{display:flex}
+#pv .box{background:var(--ink2);border-radius:22px;max-width:920px;width:100%;max-height:90vh;overflow:auto;padding:20px;position:relative}
+#pv h3{margin:0 0 12px}#pv .g{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px}#pv img,#pv video{width:100%;border-radius:12px;display:block;background:#000}
+#pv .x{position:absolute;right:14px;top:12px;background:#ffffff1a;border:0;color:#fff;border-radius:10px;width:36px;height:36px;font-size:18px;cursor:pointer}
+@media(max-width:820px){.bGrid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 <div class="bar"><div class="wrap">
   <a class="logo" href="#top">AI <b>Influencer</b> Templates</a>
-  <nav><a class="n" href="#kit">AI Influencers</a><a class="n" href="#services">Done for you</a><a class="cta" href="#kit">Get the kit</a></nav>
+  <nav><a class="n" href="#builder">Build yours</a><a class="n" href="#kit">AI Influencers</a><a class="n" href="#services">Done for you</a><a class="cta" href="#kit">Get the kit</a></nav>
 </div></div>
 
 <header class="hero" id="top"><div class="wrap">
@@ -212,6 +230,35 @@ footer a{color:var(--dim)}
 
 <div class="marq" aria-hidden="true"><span>💃 GRANNY'S NOT DONE YET · 💙 ANOTHER DAY BEING THIS FIT · 👓 ALL-IN, STILL CELEBRATING · 🎬 TREND HIJACKS · 🧠 PROMPTS THAT WORK · 💃 GRANNY'S NOT DONE YET · 💙 ANOTHER DAY BEING THIS FIT · 👓 ALL-IN, STILL CELEBRATING · 🎬 TREND HIJACKS · 🧠 PROMPTS THAT WORK · </span></div>
 
+
+<section class="bld" id="builder"><div class="wrap">
+  <span class="kick m">New · free preview</span>
+  <h2>Build your <span class="hl">own AI avatar</span></h2>
+  <p class="lead">Pick a look, hit preview and meet your character in seconds. Love it? Get the Starter Pack: the clean avatar file, 4 videos ready to post and a PDF guide with captions. <b>$29.99</b>. Come back for more videos any time.</p>
+  <div class="bGrid">
+    <form id="bForm" class="bForm" onsubmit="return false">
+      <label>Name <input id="bName" maxlength="24" placeholder="e.g. Archie"></label>
+      <div class="bRow" data-k="gender"><b>Who</b><button data-v="man" class="on">Man</button><button data-v="woman">Woman</button></div>
+      <div class="bRow" data-k="age"><b>Age</b><button data-v="20s" class="on">20s</button><button data-v="30s">30s</button><button data-v="50s">50s</button><button data-v="70s">70s</button></div>
+      <div class="bRow" data-k="vibe"><b>Vibe</b><button data-v="posh" class="on">Posh</button><button data-v="gym">Gym</button><button data-v="glam">Glam</button><button data-v="granny">Granny/Grandpa</button><button data-v="nerd">Tech nerd</button><button data-v="chef">Chef</button></div>
+      <div class="bRow" data-k="hair"><b>Hair</b><button data-v="blonde" class="on">Blonde</button><button data-v="brown">Brown</button><button data-v="black">Black</button><button data-v="ginger">Ginger</button><button data-v="blue">Blue</button><button data-v="grey">Grey</button></div>
+      <div class="bRow" data-k="outfit"><b>Outfit</b><button data-v="suit" class="on">Suit</button><button data-v="streetwear">Streetwear</button><button data-v="sporty">Gym wear</button><button data-v="dress">Smart</button><button data-v="cosy">Cosy knit</button><button data-v="kit">Football kit</button></div>
+      <div class="bRow" data-k="setting"><b>Place</b><button data-v="city" class="on">City</button><button data-v="gym">Gym</button><button data-v="kitchen">Kitchen</button><button data-v="beach">Beach</button><button data-v="office">Office</button><button data-v="studio">Studio</button></div>
+      <button class="btn pk full" id="bGo">✨ Preview my avatar (free)</button>
+      <p class="bNote">Free previews: 5 a day. Previews are watermarked.</p>
+    </form>
+    <div class="bOut">
+      <div class="bImg" id="bImg"><span>Your character appears here</span></div>
+      <div id="bBuy" hidden>
+        <p class="bCode">Your avatar code: <b id="bCode"></b> <button id="bCopy" class="mini">Copy</button></p>
+        <a class="btn full" id="bCheckout" data-buy="starter" href="#" target="_blank" rel="noopener">Get the Starter Pack · $29.99</a>
+        <p class="bNote">Paste your code at checkout. We send the clean file, 4 videos and the guide within 24 hours.</p>
+      </div>
+      <button class="mini pvBtn" data-pv="starter">👀 See a sample pack</button>
+    </div>
+  </div>
+</div></section>
+
 <section class="kit" id="kit"><div class="wrap">
   <span class="kick y">Templates + setup instructions</span>
   <h2>Just <span class="hl">copy what we did</span></h2>
@@ -236,6 +283,7 @@ footer a{color:var(--dim)}
         <div class="amt">$27 <s>$49</s></div>
         <p>PDF guide + Notion-style copy. Everything above.</p>
         <a class="btn full" data-buy="kit" href="#">Get the templates · $27</a>
+        <button class="mini pvBtn" data-pv="kit">👀 Preview</button>
       </div>
       <div class="price pop">
         <span class="badge">BEST VALUE</span>
@@ -243,6 +291,7 @@ footer a{color:var(--dim)}
         <div class="amt">$67 <s>$97</s></div>
         <p>Everything in Templates <b>+ PRO Vault</b>: 54 archetypes, 100 hooks, scene &amp; pose prompt bank, character bible, media kit + brand pitch, reply bank, 90-day calendar and an editable cost calculator.</p>
         <a class="btn pk full" data-buy="kit_pro" href="#">Get Templates PRO · $67</a>
+        <button class="mini pvBtn" data-pv="kit_pro">👀 Preview</button>
       </div>
       <p class="fine">Launch prices. Instant download via Gumroad (card, PayPal, Apple/Google Pay). 14-day refund. No follower or income numbers are promised: results depend on your content. Questions after you buy? <a href="https://ig.me/m/rose.companion" target="_blank" rel="noopener">DM us on Instagram</a>.<br>This is a how-to, not a ready-made avatar. Rather have us build it? <a href="#avatar">AI Avatar Setup from $397 →</a></p>
     </div>
@@ -271,6 +320,7 @@ footer a{color:var(--dim)}
         <div class="amt">$397 <s>$497</s></div>
         <ul><li>Character concept + master image</li><li>10-image consistency pack</li><li>5 trend-hijack reels, ready to post</li><li>Name, bio, 15 captions, setup sheet</li><li>About 7 days</li></ul>
         <a class="btn full" data-buy="avatar" href="#">Start my avatar</a>
+        <button class="mini pvBtn" data-pv="avatar">👀 Preview</button>
       </div>
       <div class="tier best">
         <span class="badge">BEST VALUE · $299 EACH</span>
@@ -278,6 +328,7 @@ footer a{color:var(--dim)}
         <div class="amt">$897 <s>$1,297</s></div>
         <ul><li>3 characters that collab and roast each other</li><li>15 reels (5 each) + 45 captions</li><li>30-day posting plan</li><li>About 10 days</li></ul>
         <a class="btn pk full" data-buy="squad" href="#">Build my squad</a>
+        <button class="mini pvBtn" data-pv="squad">👀 Preview</button>
       </div>
     </div>
     <p class="fine" style="color:#ffe9f3">50% deposit to start, 50% after you've seen the preview. Video generation credits included.</p>
@@ -356,6 +407,44 @@ if (HIGGSFIELD_REFERRAL) document.getElementById("refLink").href = HIGGSFIELD_RE
 // sticky buy button on phones after the hero
 const st = document.getElementById("stick"), kit = document.getElementById("kit");
 addEventListener("scroll", () => { const r = kit.getBoundingClientRect(); st.classList.toggle("on", scrollY > 500 && (r.top > innerHeight || r.bottom < 0)); }, { passive: true });
+
+// ---- avatar builder (owner 2026-10-10) ----
+const API = "https://chat.sonneblomdigitaal.co.za/avatar";
+const pick = {};
+document.querySelectorAll(".bRow").forEach(r => { pick[r.dataset.k] = r.querySelector(".on").dataset.v;
+  r.querySelectorAll("button").forEach(b => b.onclick = () => { r.querySelectorAll("button").forEach(x => x.classList.remove("on")); b.classList.add("on"); pick[r.dataset.k] = b.dataset.v; }); });
+document.getElementById("bGo").onclick = async () => {
+  const box = document.getElementById("bImg"), go = document.getElementById("bGo");
+  box.innerHTML = '<div class="spin"></div>'; go.disabled = true;
+  try {
+    const r = await fetch(API + "/preview", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...pick, name: document.getElementById("bName").value }) });
+    const d = await r.json();
+    if (!r.ok) { box.innerHTML = `<span style="padding:20px;text-align:center">${d.error || "Something went wrong. Try again."}</span>`; return; }
+    box.innerHTML = `<img src="${d.img}" alt="Your AI avatar preview">`;
+    document.getElementById("bCode").textContent = d.code; document.getElementById("bBuy").hidden = false;
+    try { navigator.clipboard.writeText(d.code); } catch (e) {}
+  } catch (e) { box.innerHTML = '<span>Preview service is busy. Try again in a minute.</span>'; }
+  finally { go.disabled = false; }
+};
+document.getElementById("bCopy").onclick = e => { navigator.clipboard?.writeText(document.getElementById("bCode").textContent); e.target.textContent = "Copied"; };
+document.getElementById("bCheckout").addEventListener("click", () => { try { navigator.clipboard.writeText(document.getElementById("bCode").textContent); } catch (e) {} });
+// ---- previews for every product ----
+const IMG = "img/pv/";
+const PV = {
+  kit: ["AI Influencer Templates · sample pages", ["kit-01.jpg", "kit-02.jpg", "kit-03.jpg", "kit-04.jpg"]],
+  kit_pro: ["Templates PRO · PRO Vault sample pages", ["pro-1.jpg", "pro-2.jpg", "pro-3.jpg", "pro-4.jpg"]],
+  avatar: ["Done-for-you avatars we built", ["ollie.jpg", "granny.jpg", "nobody.jpg", "rose.jpg"]],
+  squad: ["An avatar squad: characters that collab", ["ollie.jpg", "granny.jpg", "nobody.jpg"]],
+  shc: ["Side Hustle City · inside the dashboard", ["../../side-hustle-city/skins/neon.jpg", "../../side-hustle-city/skins/golden.jpg", "../../side-hustle-city/skins/arctic.jpg", "../../side-hustle-city/skins/vapor.jpg"]],
+  starter: ["Sample Starter Pack (character 'Archie')", ["starter-avatar.jpg", "starter-v1.mp4", "starter-v2.mp4", "starter-guide.jpg"]],
+};
+const pv = document.createElement("div"); pv.id = "pv"; pv.innerHTML = '<div class="box"><button class="x">✕</button><h3></h3><div class="g"></div></div>'; document.body.appendChild(pv);
+pv.onclick = e => { if (e.target === pv || e.target.classList.contains("x")) pv.classList.remove("on"); };
+document.querySelectorAll("[data-pv]").forEach(b => b.onclick = e => { e.preventDefault(); const [t, files] = PV[b.dataset.pv];
+  pv.querySelector("h3").textContent = t;
+  pv.querySelector(".g").innerHTML = files.map(f => f.endsWith(".mp4") ? `<video src="${IMG + f}" muted loop autoplay playsinline controls></video>` : `<img src="${IMG + f}" loading="lazy" alt="">`).join("");
+  pv.classList.add("on"); });
 </script>
+<script src="/assets/sd-track.js" defer></script>
 </body>
 </html>
