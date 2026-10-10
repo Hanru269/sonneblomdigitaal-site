@@ -45,6 +45,9 @@ canvas.game{display:block;margin:10px auto;background:#000;border-radius:10px;ma
 .pad button{height:48px;border-radius:12px;border:0;background:#ffffff14;color:#fff;font-size:20px}
 
 .work{margin-top:14px;padding:12px;border-radius:14px;background:#ffffff0d;display:flex;flex-direction:column;gap:8px}
-.work input,.work select{width:100%;padding:10px 12px;border-radius:10px;border:1px solid #ffffff26;background:#0f1115;color:#fff;font:inherit}
+.work input,.work select,.work textarea{width:100%;padding:10px 12px;border-radius:10px;border:1px solid #ffffff26;background:#0f1115;color:#fff;font:inherit}
 .wRow{display:flex;gap:8px}.wFile{display:block;padding:10px 12px;border:1px dashed #ffffff40;border-radius:10px;cursor:pointer;color:#d7dce5}
 .wFile input{display:none}.work .dl{display:inline-block;margin:6px 8px 0 0;padding:7px 11px;border-radius:10px;background:#2f5bea;color:#fff;text-decoration:none;font-weight:700}
+
+.wFile.over{border-color:#2f5bea;background:#2f5bea22}.work textarea{width:100%;box-sizing:border-box;resize:vertical;font:inherit}
+.wItem{display:flex;align-items:center;gap:6px;font-size:13px;padding:3px 0}.wItem button{margin-left:auto;background:none;border:0;color:#ff8a8a;cursor:pointer;font-size:14px}

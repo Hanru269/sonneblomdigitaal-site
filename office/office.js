@@ -432,18 +432,35 @@ function workForm(id) {
     ${pass ? "" : `<input id="wPass" type="password" placeholder="Office passcode (asked once)">`}
     <select id="wTask">${JOBS[id].map(([v, t]) => `<option value="${v}">${t}</option>`).join("")}</select>
     <input id="wClient" placeholder="Client name">
+    ${id === "finbot" ? `<textarea id="wAbout" rows="4" placeholder="About the business (optional, saved per client): what they do, who their customers and suppliers are, what regular deposits and payments are, which costs are personal…"></textarea>` : ""}
     <div class="wRow"><input id="wOpen" placeholder="Opening balance (bank only)" inputmode="decimal"><input id="wYear" placeholder="Year end (recon), e.g. 2027" inputmode="numeric"></div>
-    <label class="wFile">📎 <span id="wFn">Choose file(s): CSV, Excel or PDF</span><input id="wFiles" type="file" multiple accept=".csv,.xlsx,.xlsm,.pdf"></label>
+    <label class="wFile" id="wDrop">📎 <span>Drag & drop files here, or tap to choose (CSV, Excel, PDF)</span><input id="wFiles" type="file" multiple accept=".csv,.xlsx,.xlsm,.pdf"></label>
+    <div id="wList"></div>
     <button class="big" id="wGo">Hand it over</button><div id="wOut" class="dim"></div></div>`;
 }
 function wireWork(id) {
-  $("#wFiles").onchange = e => { $("#wFn").textContent = [...e.target.files].map(f => f.name).join(", ") || "Choose file(s)"; };
+  let picked = [];   // files from the picker and drag & drop, kept across several drops
+  const ok = f => /\.(csv|xlsx|xlsm|pdf)$/i.test(f.name);
+  const show = () => { $("#wList").innerHTML = picked.map((f, i) => `<div class="wItem">📄 ${f.name.replace(/</g, "&lt;")} <span class="dim">${(f.size / 1024).toFixed(0)} KB</span><button data-i="${i}" title="Remove">✕</button></div>`).join("");
+    $("#wList").querySelectorAll("button").forEach(b => (b.onclick = () => { picked.splice(+b.dataset.i, 1); show(); })); };
+  const add = fl => { for (const f of fl) if (ok(f) && !picked.some(p => p.name === f.name && p.size === f.size)) picked.push(f); show(); };
+  $("#wFiles").onchange = e => { add(e.target.files); e.target.value = ""; };
+  const dz = $("#wDrop");
+  ["dragenter", "dragover"].forEach(ev => dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.add("over"); }));
+  ["dragleave", "drop"].forEach(ev => dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.remove("over"); }));
+  dz.addEventListener("drop", e => add(e.dataTransfer.files));
+  if ($("#wAbout")) {   // pre-fill the saved backstory when a known client is typed
+    const load = async () => { const pass = localStorage.getItem("works-pass"), n = $("#wClient").value.trim(); if (!pass || !n || $("#wAbout").value.trim()) return;
+      try { const r = await fetch(WORKS + "/client?name=" + encodeURIComponent(n), { headers: { "X-Pass": pass } }); const d = await r.json(); if (d.about && !$("#wAbout").value.trim()) $("#wAbout").value = d.about; } catch (e) {} };
+    $("#wClient").addEventListener("change", load); $("#wClient").addEventListener("blur", load);
+  }
   $("#wGo").onclick = async () => {
     const pass = ($("#wPass") && $("#wPass").value) || localStorage.getItem("works-pass") || "";
     if (!pass) return ($("#wOut").textContent = "Enter the office passcode first.");
     const fd = new FormData(); fd.append("bot", id); fd.append("task", $("#wTask").value); fd.append("client", $("#wClient").value);
     fd.append("opening", $("#wOpen").value); fd.append("year", $("#wYear").value); fd.append("lang", "af");
-    [...$("#wFiles").files].slice(0, 3).forEach(f => fd.append("files", f, f.name));
+    if ($("#wAbout")) fd.append("about", $("#wAbout").value);
+    (fd.get("task") === "bank" ? picked : picked.slice(0, 3)).forEach(f => fd.append("files", f, f.name));
     $("#wGo").disabled = true; $("#wOut").innerHTML = `⏳ ${BOTS[id].name} is working on it… (PDFs can take up to 5 minutes, keep this screen open)`;
     try {
       const r = await fetch(WORKS + "/job", { method: "POST", headers: { "X-Pass": pass }, body: fd }); const d = await r.json();
