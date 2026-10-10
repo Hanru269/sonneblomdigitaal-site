@@ -423,8 +423,8 @@ function openBot(id) {
 // ---- give an employee work (owner 2026-10-10): files in, download links out (owner-only passcode) ----
 const WORKS = "https://chat.sonneblomdigitaal.co.za/works";
 const JOBS = {
-  finbot: [["bank", "Bank statement → allocated workbook + Sage import", true], ["recon", "Blank VAT reconciliation (year end 28 Feb)", false]],
-  peoplebot: [["uif", "UIF / IRP5 termination check (staff list, UI-19 list, IRP5 list)", true]],
+  finbot: [["bank", "Bank statement → allocated workbook + Sage import", true], ["recon", "Blank VAT reconciliation (year end 28 Feb)", false], ["itax", "Income tax calculation (ITR12 workbook: blank, or attach inputs .json)", false]],
+  peoplebot: [["uif", "UIF / IRP5 termination check (staff list, UI-19 list, IRP5 list)", true], ["coida", "Compensation Fund return of earnings (blank, or attach Month | Director | Employees file)", false]],
 };
 function workForm(id) {
   const pass = localStorage.getItem("works-pass") || "";
@@ -433,14 +433,14 @@ function workForm(id) {
     <select id="wTask">${JOBS[id].map(([v, t]) => `<option value="${v}">${t}</option>`).join("")}</select>
     <input id="wClient" placeholder="Client name">
     ${id === "finbot" ? `<textarea id="wAbout" rows="4" placeholder="About the business (optional, saved per client): what they do, who their customers and suppliers are, what regular deposits and payments are, which costs are personal…"></textarea>` : ""}
-    <div class="wRow"><input id="wOpen" placeholder="Opening balance (bank only)" inputmode="decimal"><input id="wYear" placeholder="Year end (recon), e.g. 2027" inputmode="numeric"></div>
-    <label class="wFile" id="wDrop">📎 <span>Drag & drop files here, or tap to choose (CSV, Excel, PDF)</span><input id="wFiles" type="file" multiple accept=".csv,.xlsx,.xlsm,.pdf"></label>
+    <div class="wRow"><input id="wOpen" placeholder="Opening balance (bank only)" inputmode="decimal"><input id="wYear" placeholder="Year (VAT recon / tax / COIDA), e.g. 2027" inputmode="numeric"></div>
+    <label class="wFile" id="wDrop">📎 <span>Drag & drop files here, or tap to choose (CSV, Excel, PDF)</span><input id="wFiles" type="file" multiple accept=".csv,.xlsx,.xlsm,.pdf,.json"></label>
     <div id="wList"></div>
     <button class="big" id="wGo">Hand it over</button><div id="wOut" class="dim"></div></div>`;
 }
 function wireWork(id) {
   let picked = [];   // files from the picker and drag & drop, kept across several drops
-  const ok = f => /\.(csv|xlsx|xlsm|pdf)$/i.test(f.name);
+  const ok = f => /\.(csv|xlsx|xlsm|pdf|json)$/i.test(f.name);
   const show = () => { $("#wList").innerHTML = picked.map((f, i) => `<div class="wItem">📄 ${f.name.replace(/</g, "&lt;")} <span class="dim">${(f.size / 1024).toFixed(0)} KB</span><button data-i="${i}" title="Remove">✕</button></div>`).join("");
     $("#wList").querySelectorAll("button").forEach(b => (b.onclick = () => { picked.splice(+b.dataset.i, 1); show(); })); };
   const add = fl => { for (const f of fl) if (ok(f) && !picked.some(p => p.name === f.name && p.size === f.size)) picked.push(f); show(); };
