@@ -113,19 +113,20 @@ function model(D) {
   });
 
   // Trading Town = the AI Bot Race (owner 2026-10-10): only the 10 racers, one building each, height grows with the bankroll
-  const RSLOT = [[-32, -168], [-16, -168], [0, -168], [16, -168], [32, -168], [-32, -146], [-16, -146], [0, -146], [16, -146], [32, -146]];
-  const RORD = ["longshot", "kalshi", "sol", "weather", "bond"];
+  const RSLOT = [[-32.5, -168], [-19.5, -168], [-6.5, -168], [6.5, -168], [19.5, -168], [32.5, -168], [-26, -146], [-13, -146], [0, -146], [13, -146], [26, -146]];
+  const RORD = ["longshot", "kalshi", "sol", "weather", "bond", "bull"];
   const RDESC = { longshot: "Polymarket momentum: favourites at 60-90c ending within a day whose price is rising; sells at 97c, stop at -25%.",
     kalshi: "Kalshi fair value: Coinbase price + 6 h volatility -> real probability for Bitcoin/Ethereum 'above $X' markets; buys when Kalshi is 8c too cheap.",
     sol: "SOL dip buyer: buys unusual drops vs the 4-hour average (z-score), skips falling knives, sells at +1.5%, stop -4%. Real Jupiter quotes.",
     weather: "Kalshi daily high-temperature brackets in 7 US cities: NWS forecast + live station readings, buys when 8c+ under fair value.",
+    bull: "Always bets Bitcoin goes UP: buys 'Up' on every 15-minute Polymarket Bitcoin market with 10% of the bankroll, holds to the result.",
     bond: "Polymarket 'bonds': outcomes at 90-97c ending within 48 h, 10% per bet, max 8, max 2 crypto, stop at -15%." };
   const rRank = id => brr.findIndex(x => x.id === id) + 1;
   const rOrder = [...brr].sort((a, b) => { const ia = RORD.indexOf(a.id), ib = RORD.indexOf(b.id); if (ia >= 0 || ib >= 0) return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib); return (a.joined || 0) - (b.joined || 0) || a.name.localeCompare(b.name); });
-  const RACERS = rOrder.slice(0, 10).map((r, i) => {
+  const RACERS = rOrder.slice(0, 11).map((r, i) => {
     const rk = rRank(r.id), up = (r.pct || 0) >= 0, trader = r.who === "TOP TRADER";
     return { id: "racer_" + r.id, name: r.name, short: r.name.toUpperCase().slice(0, 14), icon: trader ? "👤" : "🤖", color: parseInt((r.color || "#9945ff").slice(1), 16),
-      pos: RSLOT[i], w: 9, d: 7, h: Math.round(10 + Math.max(0, Math.min(22, (r.value / (r.start || 1000) - 0.7) * 30))), kind: "coin", face: [0, 1],
+      pos: RSLOT[i], w: 8.5, d: 7, h: Math.round(10 + Math.max(0, Math.min(22, (r.value / (r.start || 1000) - 0.7) * 30))), kind: "coin", face: [0, 1],
       status: br.status === "running" ? "ok" : "unknown", today: 0, total: 0,
       tag: [`${usd(r.value)} · ${up ? "+" : ""}${(r.pct || 0).toFixed(1)}%`, `#${rk} · ${trader ? "top trader" : r.who === "NEW BOT" ? "new bot" : "our bot"} · ${r.venue}`],
       board: { title: r.name.toUpperCase(), main: usd(r.value), mainLabel: `#${rk} of ${brr.length} in the race · ${br.status || "waiting"}`,
@@ -3455,7 +3456,7 @@ function skinPicker() {
 const SITE = "https://sonneblomdigitaal.co.za";
 const QLINKS = [
   ["Main site", [["🏠 Home + shop hub", "/"], ["🛍️ All products", "/shop/"], ["ℹ️ How buying works", "/info/"], ["🔒 Privacy", "/privacy/"]]],
-  ["Selling now", [["🤖 AI employees (sale page)", "/ai-team/"], ["🏢 AI Works virtual office", "/office/"], ["🏙️ Side Hustle City", "/side-hustle-city/"],
+  ["Selling now", [["🤖 AI employees (sale page)", "/ai-team/"], ["🎬 AI UGC agency (Creator Studio)", "/ugc/"], ["📈 AI Bot Race", "/bot-race/"], ["🏢 AI Works virtual office", "/office/"], ["🏙️ Side Hustle City", "/side-hustle-city/"],
     ["✨ AI influencers + templates", "/ai/"], ["🤝 Partners (affiliates)", "/ai/partners/"], ["🌹 Rose: how she's made", "/rose/"], ["📍 Potch websites + AI visibility", "/potch/"], ["🌐 Webwerwe (local sites)", "/webwerwe/"]]],
   ["Demos + tours", [["🎥 City tour (public demo)", "/city-tour/"], ["🧭 Demo city", "/city-tour/city/"], ["📊 Accounting City demo", "/firm-demo/"], ["💼 Consulting demo", "/consult-demo/"], ["🪙 Community coins", "/community/"], ["🧩 Hubs", "/hubs/"], ["📸 Influencers page", "/influencers/"]]],
   ["Elsewhere", [["🛒 Whop store", "https://whop.com/sonneblomdigitaal/"], ["🧠 Copy What We Did Club", "https://whop.com/sonneblomdigitaal/copy-what-we-did-club-sd/"],
